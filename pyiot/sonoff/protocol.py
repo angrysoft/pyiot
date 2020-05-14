@@ -1,101 +1,8 @@
-
-from urllib.parse import quote
-from urllib.request import urlopen, Request
-import urllib.error
-from base64 import b64encode
 from zeroconf import ServiceBrowser, Zeroconf, ServiceStateChange
-from time import sleep
 import json
 import socket
 from threading import Thread, Event, RLock
 
-class SessionError(Exception):
-    pass
-
-class Response:
-    def __init__(self, resp):
-        self.resp = resp
-        self._headers = {}
-        if resp.readable:
-            self.body = resp.read()
-            self._headers = resp.headers
-
-    @property
-    def code(self):
-        return self.resp.code
-
-    @property
-    def status(self):
-        return self.resp.status
-
-    @property
-    def json(self):
-        try:
-            msg = json.loads(self.body)
-            dev_data = msg.get('data')
-            if type(dev_data) == str:
-                dev_data = json.loads(dev_data)
-                msg['data'] = dev_data
-            return msg
-        except json.JSONDecodeError:
-            raise SessionError(self.body)
-
-    @property
-    def headers(self):
-        return self.resp.headers
-
-class Session:
-    def __init__(self, url, port, timeout=5):
-        self.headers = {'Accept': 'application/json', 'Content-Type': 'application/json'}
-        self.url = f'{url}:{port}'
-        self.port = port
-        self.timeout = timeout
-        self.lock = RLock()
-        
-    def post(self, path='', data=None, headers={}, query={}):
-        return self.request(path, method='POST', data=data, headers=headers, query=query)
-
-    def request(self, path, method='GET', data=None, headers={}, query={}):
-        headers.update(self.headers)
-        _query = '&'.join([f'{q}={query[q]}' for q in query])
-        if data is not None and type(data) is not str:
-            try:
-                data = json.dumps(data)
-            except json.JSONDecodeError:
-                raise SessionError(f'params parsing error {data}')
-            data = data.encode('utf8')
-        if query:
-            _query = f'?{_query}'  
-        req = Request(url=f'{self.url}/{quote(path)}{_query}', method=method, data=data, headers=headers)
-        with self.lock:    
-            try:
-                return Response(urlopen(req))
-            except urllib.error.HTTPError as err:
-                return Response(err)
-            
-class WatcherBaseDriver:
-    def watch(self, handeler):
-        pass
-    
-    def stop(self):
-        pass    
-
-    
-class Watcher:
-    def __init__(self, driver=None):
-        self._report_handlers = set()
-        if isinstance(driver, WatcherBaseDriver):
-            Thread(target=driver.watch, args=(self._handler,), daemon=True).start()
-            
-    def _handler(self, msg: dict) -> None:
-        Thread(target=self._handle_events, args=(msg,)).start()
-    
-    def add_report_handler(self, handler):
-        self._report_handlers.add(handler)
-    
-    def _handle_events(self, event):
-        for handler in self._report_handlers:
-            handler(event)
 
 class EwelinkWatcher(WatcherBaseDriver):
     def __init__(self):
@@ -130,6 +37,7 @@ class EwelinkWatcher(WatcherBaseDriver):
 
     def stop(self):
         self.ev.set()
+        
 
 class Discover:
     def __init__(self, timeout=10):

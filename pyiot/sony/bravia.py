@@ -1,4 +1,4 @@
-from .session import Session
+from pyiot.session import Session
 import json
 import socket
 from threading import Thread

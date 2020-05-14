@@ -7,8 +7,6 @@ import json
 
 class Session:
     def __init__(self, url, port=None, ssl=None, timeout=5, user=None, password=None):
-        if user and password:
-            pass
         self._headers = {'Accept': 'application/json', 'Content-Type': 'application/json'}
         if port:
             self.url = f'{url}:{port}'

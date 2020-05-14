@@ -22,7 +22,7 @@ import binascii
 from Cryptodome.Cipher import AES
 import threading
 from datetime import datetime
-from .protocol import Watcher, WatcherBaseDriver
+from pyiot.watcher import Watcher, WatcherBaseDriver
 
 
 class GatewayWatcher(WatcherBaseDriver):

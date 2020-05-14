@@ -1,6 +1,9 @@
 __all__ = ['PowerState', 'Pulse', 'Mini', 'DiyPlug']
 
-from .protocol import Session, Discover,Watcher ,EwelinkWatcher
+from pyiot.session import Session
+from .protocol import Discover
+from pyiot.watcher import Watcher ,EwelinkWatcher
+from pyiot.base import BaseDeviceInterface
 from enum import Enum
 
 
@@ -20,15 +23,14 @@ class Pulse(Enum):
    ON = 'on'
    OFF = 'off'
 
-class BaseSONOFFDIYDevice:
+class BaseSONOFFDIYDevice(BaseDeviceInterface):
     """Base class for sonnoff DIY device: to parint device you need hotspot with
     WiFi SSID: sonoffDiy
 ​    WiFi password: 20170618sn
     then you need to discover device and if you have an ip of device you can set new wifi ssid and password with set_wifi method
     """
     def __init__(self, sid , ip=None, port=8081):
-        self._data = dict()
-        self.sid = sid
+        super().__init__(sid)
         if ip is None:
             self._find_device()
         else:
@@ -47,10 +49,6 @@ class BaseSONOFFDIYDevice:
         dsc = Discover()
         self.report(dsc.search(self.sid))
         
-    def report(self, data:dict) -> None:
-        self._data.update(data.pop('data', {}))
-        self._data.update(data)
-    
     def set_power(self, state):
         """This method is used to switch on or off.
         
@@ -89,7 +87,6 @@ class BaseSONOFFDIYDevice:
         if resp.code == 200:
             return resp.json
     
-        
     def set_pulse(self, pulse:str, pulse_width:500):
         """Set pulse
         
@@ -163,7 +160,7 @@ class BaseSONOFFDIYDevice:
         return {'deviceid': self.sid, 'data':kwargs}
     
     def device_status(self):
-        return {'power': self.power}
+        return super().device_status().update({"power": self.power})
     
         
 class Mini(BaseSONOFFDIYDevice):

@@ -1,2 +1,3 @@
 #!/bin/sh
-python -m unittest -v tests/test_dev.py
+echo ">>> Run sonoff Testing"
+python -m unittest -v tests/test_sonoff.py

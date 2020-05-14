@@ -23,7 +23,7 @@ from urllib.parse import urlparse
 from time import sleep
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
-from .protocol import Watcher, WatcherBaseDriver
+from pyiot.watcher import Watcher, WatcherBaseDriver
 
 class YeelightConst(Enum):
     MULTICAST = '239.255.255.250'
