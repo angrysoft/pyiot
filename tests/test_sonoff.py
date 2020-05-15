@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from pysonoff import *
+from pyiot.sonoff import Mini, PowerState
 from time import sleep
 import unittest
 

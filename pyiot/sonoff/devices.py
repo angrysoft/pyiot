@@ -1,10 +1,11 @@
 __all__ = ['PowerState', 'Pulse', 'Mini', 'DiyPlug']
 
+from .protocol import Discover, EwelinkWatcher
 from pyiot.session import Session
-from .protocol import Discover
-from pyiot.watcher import Watcher ,EwelinkWatcher
+from pyiot.watcher import Watcher
 from pyiot.base import BaseDeviceInterface
 from enum import Enum
+import json
 
 
 class PowerState(Enum):
@@ -111,7 +112,10 @@ class BaseSONOFFDIYDevice(BaseDeviceInterface):
     def info(self):
         resp = self._session.post(path='zeroconf/info', data=self._cmd())
         if resp.code == 200:
-            return resp.json.get('data')
+            ret = resp.json.get('data')
+            if type(ret) == str:
+                ret = json.loads(ret)
+            return ret
     
     def get_singnal_strength(self):
         """The WiFi signal strength currently received by the device, negative integer, dBm"""
