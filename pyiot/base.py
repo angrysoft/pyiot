@@ -4,6 +4,9 @@ class BaseDeviceInterface:
         self._data["sid"] = sid
         self.cmd = dict()
     
+    def heartbeat(self, data):
+        self.report(data)
+    
     def report(self, data:dict) -> None:
         self._data.update(data.pop('data', {}))
         self._data.update(data)

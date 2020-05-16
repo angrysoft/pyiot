@@ -141,7 +141,7 @@ class ColorMode(Enum):
     COLOR_FLOW = 4
     NIGHT = 5
         
-class YeelightDev:
+class YeelightDev(BaseDeviceInterface):
     """ Class to controling yeelight devices color bulb BedSide lamp etc.
     
     Args:
@@ -149,8 +149,7 @@ class YeelightDev:
         port (:obj:`int`, optional): Port number. Defaults is 55443."""
         
     def __init__(self, sid):
-        self.sid = sid
-        self._data = dict()
+        super().__init__(sid)
         self._find_device()
         self.answers = dict()
         self.answer_id = 1
@@ -167,7 +166,7 @@ class YeelightDev:
         y = Yeelight()
         dev = y.discover(sid=self.sid)
         if not dev:
-            raise YeelightError(f'Device is offline {sid}')
+            raise YeelightError(f'Device is offline {self.sid}')
         self._data.update(dev)
         pass
     
@@ -175,29 +174,7 @@ class YeelightDev:
         return super().device_status().update({"power": self.power,
                                                "ct_pc": self.ct_pc,
                                                "bright": self.bright})
-                                              
-    def write(self, data):
-        _data = data.get('data', {}).copy()
-        if not _data:
-            raise ValueError('Yeelight write :data is empty')
-            return
-        c, v = _data.popitem()
-        if type(v) == dict:
-            self.cmd.get(c, self._unknown)(**v)
-        else:
-            self.cmd.get(c, self._unknown)(v)
-    
-    def _unknown(self, value):
-        raise ValueError(f'unknown parameter {value}')
-    
-    def report(self, data):
-        if 'data' in data:
-            data = data['data'] 
-        self._data.update(data)
-    
-    def heartbeat(self, data):
-        self.report(data)
-    
+          
     @property
     def ip(self):
         return self._data.get('ip', '')
@@ -469,7 +446,7 @@ class YeelightDev:
         for now only one cron type is working (power off)
         
         Args:
-            cront_type (int): Currently can only be 0. (means power off)
+            cron_type (int): Currently can only be 0. (means power off)
             value (int): The length of the timer (in minutes)."""
 
         if cron_type != 0:
@@ -481,7 +458,7 @@ class YeelightDev:
         """This method is used to retrieve the setting of the current cron job of the specified type.
         
         Args:
-            cront_type (int):  the type of the cron job. (currently only support 0)."""
+            cron_type (int):  the type of the cron job. (currently only support 0)."""
 
         return self._send('cron_get', cron_type)
 
@@ -489,7 +466,7 @@ class YeelightDev:
         """This method is used to stop the specified cron job.
         
         Args:
-            cront_type (int):  the type of the cron job. (currently only support 0)."""
+            cron_type (int):  the type of the cron job. (currently only support 0)."""
 
         if cron_type != 0:
             cron_type = 0

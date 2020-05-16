@@ -35,6 +35,10 @@ class TestColor(unittest.TestCase):
         self.dev.set_rgb(blue=255)
         sleep(0.8)
         self.assertEqual(self.dev.rgb, 255)
+        
+        self.dev.set_color(16711680)
+        sleep(0.8)
+        self.assertEqual(self.dev.rgb, 16711680)
     
     def test_c_ct(self):
         sleep(0.5)
