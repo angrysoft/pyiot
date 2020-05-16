@@ -24,6 +24,8 @@ from time import sleep
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from pyiot.watcher import Watcher, WatcherBaseDriver
+from pyiot.base import BaseDeviceInterface
+
 
 class YeelightConst(Enum):
     MULTICAST = '239.255.255.250'
@@ -41,9 +43,6 @@ class Yeelight:
         >>> y = Yeelight()
         >>> y.discover()
     """
-    
-    def __init__(self):
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def discover(self, timeout=10, sid=None):
         """Discover devices
@@ -66,7 +65,9 @@ class Yeelight:
                     if sid is None:
                         devices[dev['id']] = dev
                     elif sid == dev['id']:
-                        return dev
+                        devices = dev
+                        break
+                    
         sock.close()
         return devices
 
@@ -168,12 +169,13 @@ class YeelightDev:
         if not dev:
             raise YeelightError(f'Device is offline {sid}')
         self._data.update(dev)
+        pass
     
     def device_status(self):
-        return {"power": self.power,
-                "ct_pc": self.ct_pc,
-                "bright": self.bright}
-    
+        return super().device_status().update({"power": self.power,
+                                               "ct_pc": self.ct_pc,
+                                               "bright": self.bright})
+                                              
     def write(self, data):
         _data = data.get('data', {}).copy()
         if not _data:
@@ -212,11 +214,9 @@ class YeelightDev:
     def power(self):
         return self._data.get('power', 'unknown')
     
-    @property
     def is_on(self):
         return self._data.get('power') == 'on'
     
-    @property
     def is_off(self):
         return self._data.get('power') == 'off'
     
@@ -531,20 +531,20 @@ class YeelightDev:
 
         return self._send('set_name', [name])
 
-    def adjust_bright(self, percentage, duration):
+    def adjust_bright(self, percentage, duration=500):
         """This method is used to adjust the brightness by specified percentage
         within specified duration."""
 
         return self.adjust('adjust_bright', percentage, duration)
 
-    def adjust_ct(self, percentage, duration):
+    def adjust_ct(self, percentage, duration=500):
         """This method is used to adjust the color temperature by specified
         percentage within specified duration."""
 
         return self.adjust('adjust_ct', percentage, duration)
 
     def adjust(self, mode, percentage, duration):
-        self._check_range(percentage, 1, 100)
+        self._check_range(percentage, -100, 100)
         return self._send(mode, [percentage, duration])
 
     @staticmethod
@@ -573,11 +573,12 @@ class YeelightDev:
             # desk lamp need to send in separate msg instead recv freeze
             sock.sendall('\r\n'.encode())
             ret = self._get_result(sock, _id)
-            sock.shutdown(socket.SHUT_RDWR)
-            sock.close()
         except ConnectionRefusedError:
             self._find_device()
             ret = self._send(method,params)
+        finally:
+            sock.shutdown(socket.SHUT_RDWR)
+            sock.close()
         return ret
     
     def _get_result(self, sock, _id):
@@ -594,7 +595,7 @@ class YeelightDev:
             if _id in self.answers:
                 return self.answers[_id]
             sleep(0.01)
-        return ''  
+        return {}
 
 
 class DeskLamp(YeelightDev):
@@ -611,10 +612,7 @@ class Color(YeelightDev):
         self.cmd['set_color'] = self.set_color
         
     def device_status(self):
-        ret = super().device_status()
-        ret["color_mode"] = self.color_mode
-        ret["rgb"] = self.rgb
-        return ret
+        return super().device_status().update({"color_mode": self.color_mode, "rgb": self.rgb})
         
     def set_rgb(self, red=0, green=0, blue=0, efx='smooth', duration=500):
         """This method is used to change the color of a smart LED.

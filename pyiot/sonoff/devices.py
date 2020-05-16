@@ -48,7 +48,9 @@ class BaseSONOFFDIYDevice(BaseDeviceInterface):
         
     def _find_device(self):
         dsc = Discover()
-        self.report(dsc.search(self.sid))
+        dev = dsc.search(self.sid)
+        if dev:
+            self.report(dev)
         
     def set_power(self, state):
         """This method is used to switch on or off.
@@ -56,13 +58,11 @@ class BaseSONOFFDIYDevice(BaseDeviceInterface):
         Args:
             state (str): can only be `on` or `off`.
         """
-        st = {'on': True, 'off': False}.get(state)
+        st = {'on': self.on, 'off': self.off}.get(state)
         if st is None:
             raise ValueError('state (str): can only be `on` or `off`.')
-        elif st:
-            self.on()
         else:
-            self.off()
+            st()
     
     def on(self):
         """Set power state on"""
@@ -117,7 +117,7 @@ class BaseSONOFFDIYDevice(BaseDeviceInterface):
                 ret = json.loads(ret)
             return ret
     
-    def get_singnal_strength(self):
+    def get_signal_strength(self):
         """The WiFi signal strength currently received by the device, negative integer, dBm"""
         resp = self._session.post(path='zeroconf/signal_strength', data=self._cmd())
         if resp.code == 200:
