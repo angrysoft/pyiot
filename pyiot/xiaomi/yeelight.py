@@ -203,7 +203,7 @@ class YeelightDev(BaseDeviceInterface):
     
     @property
     def rgb(self):
-        return self._data.get('rgb')
+        return int(self._data.get('rgb', -1))
     
     @property
     def ct(self):

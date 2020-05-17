@@ -4,6 +4,7 @@ from pyiot.xiaomi import Color
 
 
 sid = '0x0000000007e7bae0'
+# sid = '0x000000000545b741'
 
 class TestColor(unittest.TestCase):
     @classmethod

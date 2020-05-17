@@ -10,6 +10,10 @@ yeelight_test() {
     python -m unittest -v tests/test_yeelight.py
 }
 
+aqara_test() {
+    echo ">>> Run Aqara Test"
+    python -m unittest -v tests/test_aqara.py
+}
 
 while [ "$1" != "" ]; do
     arg=$1;shift
@@ -17,6 +21,7 @@ while [ "$1" != "" ]; do
     case ${arg} in 
         "sonoff") sonoff_test;;
         "yeelight") yeelight_test;;
+        "aqara")aqara_test;;
     esac
 done
 

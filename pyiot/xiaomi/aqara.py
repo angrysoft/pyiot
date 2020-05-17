@@ -253,7 +253,7 @@ class Gateway:
 
     @property
     def rgb(self):
-        return self._data.get('rgb', -1)
+        return int(self._data.get('rgb', -1))
     
     @rgb.setter
     def rgb(self, value):
