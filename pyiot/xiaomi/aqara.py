@@ -23,6 +23,7 @@ from Cryptodome.Cipher import AES
 import threading
 from datetime import datetime
 from pyiot.watcher import Watcher, WatcherBaseDriver
+from pyiot.base import BaseDeviceInterface
 
 
 class GatewayWatcher(WatcherBaseDriver):
@@ -54,8 +55,9 @@ class GatewayWatcher(WatcherBaseDriver):
         self.sock.close()
         
 
-class Gateway:
+class Gateway(BaseDeviceInterface):
     def __init__(self, ip='auto', port=9898, sid='', gwpasswd=''):
+        super().__init__(sid)
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
         self.aes_key_iv = bytes([0x17, 0x99, 0x6d, 0x09, 0x3d, 0x28, 0xdd, 0xb3, 0xba, 0x69, 0x5a, 0x2e, 0x6f, 0x58, 0x56, 0x2e])
         self.multicast = ('224.0.0.50', 4321)
@@ -68,7 +70,6 @@ class Gateway:
             self.sid = sid
         self.gwpasswd = gwpasswd
         self._token = None
-        self._data = {}
         self._subdevices = dict()
         self._init_device()
         self.watcher = Watcher(GatewayWatcher())
@@ -76,16 +77,8 @@ class Gateway:
            
     def _init_device(self):
         data = self.read_device(self.sid)
-        self.short_id = data.get('short_id')
         self.report(data)
-        del data['data']
-        del data['cmd']
-        self._data.update(data)
         self.register_sub_device(self)
-    
-    def report(self, data:dict) -> None:
-        if 'data' in data:
-            self._data.update(data['data'])
     
     def heartbeat(self, data:dict) -> None:
         if 'token' in data:
@@ -262,6 +255,10 @@ class Gateway:
     @property
     def model(self):
         return self._data.get('model')
+    
+    @property
+    def short_id(self):
+        return self._data.get('short_id')
     
     
 class AqaraSubDevice:
