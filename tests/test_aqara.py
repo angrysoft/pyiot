@@ -16,7 +16,7 @@ class TestAqara(unittest.TestCase):
     def test_a_gateway(self):
         token = self.gw.token
         self.gw.set_rgb(red=255)
-        sleep(0.5)
+        sleep(1)
         self.assertEqual(self.gw.rgb, 1694433280)
         self.gw.off_led()
         sleep(1)

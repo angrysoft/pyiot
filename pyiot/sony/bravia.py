@@ -26,11 +26,12 @@ class Bravia:
     """
 
     def __init__(self, ip, macaddres=None, psk='0000'):
+        self._data = dict()
         self.host = f'http://{ip}'
         self.ip = ip
         self.psk = psk
         self.commands = {}
-        self.mac_address = macaddres
+        self.mac = macaddres
         self._report_handelers = set()
         self.session = Session(f'http://{ip}/sony')
         self.session.add_header('X-Auth-PSK', self.psk)
@@ -38,7 +39,6 @@ class Bravia:
         self.cmd = {'set_power': self.set_power,
                     'button': self.send_ircc,
                     'set_source_uri': self.set_sources_uri}
-        self._data = dict()
         self._dev_init()
     
     def _dev_init(self):
@@ -135,16 +135,11 @@ class Bravia:
         """This API provides the function to change the current power status of the device.
         The power set on True is supported only in “Sleep” mode.
         If the Remote start setting (Settings - Network) is OFF, an error is received form the client when setting power = True."""
-        try:
-            st = {'on': True, 'off': False, True: True, False: False}[status]
-            if st:
-                self.on()
-                return
-        except KeyError:
-            raise ValueError(f'Argument status need to by one of [on , off , True , False]')
-        
-        self.session.post(path='system',
-                          data=self._cmd('setPowerStatus', params=[{"status": st}]))
+        st = {'on': self.on, 'off': self.off}.get(status)
+        if st is None:
+            raise ValueError(f'Argument status need to by one of [on , off]')
+        else:
+            st()
     
     def supported_api(self):
         """This API provides the supported services and their information"""
@@ -310,13 +305,12 @@ class Bravia:
         # Split up the hex values and pack.
         for i in range(0, len(data), 2):
             send_data += struct.pack('B', int(data[i: i + 2], 16))
-
+        
         # Broadcast it to the LAN.
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        sock.sendto(send_data, ('<broadcast>', 9))
-        sock.close()
-
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            sock.sendto(send_data, ('255.255.255.255', 7))
+     
     def off(self):
         """Power off tv"""
         ret = self.session.post(path='system',

@@ -15,6 +15,12 @@ aqara_test() {
     python -m unittest -v tests/test_aqara.py
 }
 
+bravia_test() {
+    echo ">>> Run Sony Bravia Test"
+    python -m unittest -v tests/test_sony_bravia.py
+}
+
+
 while [ "$1" != "" ]; do
     arg=$1;shift
 
@@ -22,6 +28,12 @@ while [ "$1" != "" ]; do
         "sonoff") sonoff_test;;
         "yeelight") yeelight_test;;
         "aqara")aqara_test;;
+        "bravia")bravia_test;;
+        "all")
+        sonoff_test &&
+        yeelight_test &&
+        aqara_test &&v echo "All Test Pass"
+        ;;
     esac
 done
 

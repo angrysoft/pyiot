@@ -45,5 +45,9 @@ class BaseDeviceInterface:
     def place(self, value):
         self._data['place'] = value
     
+    @property
+    def model(self):
+        return self._data.get('model', 'unknown')
+    
     def device_status(self) -> dict:
         return {"sid": self.sid, "name": self.name, "place": self.place}

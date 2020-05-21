@@ -64,7 +64,7 @@ class Gateway(BaseDeviceInterface):
         if ip == 'auto':
             gateway = self.whois()
             self.unicast = (gateway.get('ip'), int(gateway.get('port')))
-            self.sid = gateway.get('sid')
+            self._data['sid'] = gateway.get('sid')
         else:
             self.unicast = (ip, port)
             self.sid = sid
@@ -261,33 +261,18 @@ class Gateway(BaseDeviceInterface):
         return self._data.get('short_id')
     
     
-class AqaraSubDevice:
+class AqaraSubDevice(BaseDeviceInterface):
     def __init__(self, sid:str, gateway:Gateway):
+        super().__init__(sid)
         self.gateway = gateway
-        self.sid = sid
-        self._voltage = 3300
-        self.low_voltage = 2800
-        self._data = dict()
+        self._data["voltage"] = 3300
+        self._data["low_voltage"] = 2800
         self._init_device()
         self.writable =False
     
     def _init_device(self):
-        data = self.gateway.read_device(self.sid)
-        self.short_id = data.get('short_id')
-        self.report(data.pop('data'))
-        self._data.update(data)
+        self.report(self.gateway.read_device(self.sid))
         self.gateway.register_sub_device(self)
-    
-    def device_status(self):
-        return self._data.copy()
-
-    @property
-    def voltage(self):
-        return self._data.get('voltage', -1)
-    
-    @property
-    def model(self):
-        return self._data.get('model', 'unknown')
 
     def write(self, data):
         if type(data) is not dict:
@@ -299,13 +284,13 @@ class AqaraSubDevice:
                                   self.short_id,
                                   data.get('data'))
     
-    def report(self, data:dict) -> None:
-        if 'data' in data:
-            data = data['data']
-        self._data.update(data)
-    
-    def heartbeat(self, data:dict) -> None:
-        self.report(data)
+    @property
+    def voltage(self):
+        return self._data.get('voltage', -1)
+        
+    @property
+    def short_id(self):
+        return self._data.get('short_id')
 
             
             
@@ -320,6 +305,9 @@ class CtrlNeutral(AqaraSubDevice):
         
     def off(self):
         self.channel_0.off()
+    
+    def device_status(self):
+        return super().device_status().update({"channel_0": self._data.get("channel_0")})
         
 
 class CtrlNeutral2(CtrlNeutral):
@@ -332,6 +320,9 @@ class CtrlNeutral2(CtrlNeutral):
         
     def off(self):
         self.write({'data': {'channel_0': 'off', 'channel_1': 'off'}})
+    
+    def device_status(self):
+        return super().device_status().update({"channel_1": self._data.get("channel_1")})
 
 
 class Plug(AqaraSubDevice):
@@ -339,6 +330,13 @@ class Plug(AqaraSubDevice):
         super(Plug, self).__init__(sid, gateway)
         self.power = Button('status', self)
         self.writable = True
+    
+    @property
+    def status(self):
+        return self._data.get("status")
+    
+    def device_status(self):
+        return super().device_status().update({"status": self.status})
 
 
 class SensorSwitchAq2(AqaraSubDevice):
@@ -346,7 +344,12 @@ class SensorSwitchAq2(AqaraSubDevice):
 
 
 class Switch(AqaraSubDevice):
-    pass
+    @property
+    def status(self):
+        return self._data.get("status")
+    
+    def device_status(self):
+        return super().device_status().update({"status": self.status})
 
 
 class SensorHt(AqaraSubDevice):
@@ -357,13 +360,19 @@ class SensorHt(AqaraSubDevice):
     @property
     def humidity(self) -> str:
         return self._data.get('humidity', '')
-        
+    
+    def device_status(self):
+        return super().device_status().update({"temperature": self.temperature, "humidity": self.humidity})
 
 
 class WeatherV1(SensorHt):
     @property
     def pressure(self) -> str:
         return self._data.get('pressure', '')
+    
+    def device_status(self):
+        return super().device_status().update({"pressure": self.pressure})
+        
 
 
 class Magnet(AqaraSubDevice):
@@ -380,6 +389,9 @@ class Magnet(AqaraSubDevice):
     @property
     def status(self):
         return self._data.get('status')
+    
+    def device_status(self):
+        return super().device_status().update({"status": self.status, "when": self.when})
 
 
 class SensorMotionAq2(AqaraSubDevice):
