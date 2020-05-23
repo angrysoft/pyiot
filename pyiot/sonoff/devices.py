@@ -42,6 +42,10 @@ class BaseSONOFFDIYDevice(BaseDeviceInterface):
         self._init_device()
         self.watcher = Watcher(EwelinkWatcher())
         self.watcher.add_report_handler(self.report)
+    
+    def report(self, data):
+        if self.sid == data.get('id'):
+            super().report(data)
        
     def _init_device(self):
         self.report(self.info())

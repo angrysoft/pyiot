@@ -4,7 +4,7 @@ __url__ = 'https://bitbucket.org/angrysoft/pyxiaomi/src/master'
 __author__ ='AngrySoft'
 __email__ ='sebastian.zwierzchowski@gmail.com'
 
-__all__ = ['DiyPlug', 'Mini', 'PowerState', 'Pulse', 'Discover']
+__all__ = ['DiyPlug', 'Mini', 'PowerState', 'Pulse', 'Discover', 'EwelinkWatcher']
 
 from .devices import *
-from .protocol import Discover
+from .protocol import Discover, EwelinkWatcher

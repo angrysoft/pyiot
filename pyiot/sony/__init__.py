@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__all__ = ['Bravia', 'IrccCode']
+__all__ = ['Bravia', 'BraviaError']
 
 
-from .bravia import Bravia
-from .bravia import IrccCode
+from .bravia import Bravia, BraviaError
  

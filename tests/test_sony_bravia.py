@@ -1,7 +1,7 @@
 from time import sleep
 import unittest
 import os
-from pyiot.sony import Bravia
+from pyiot.sony import Bravia, BraviaError
 
 class BraviaTest(unittest.TestCase):
     @classmethod
@@ -11,44 +11,58 @@ class BraviaTest(unittest.TestCase):
     def test_a_power(self):
         self.power = self.tv.power
         self.assertIsInstance(self.power, bool, msg=f'Tv power is {self.power}')
-        
         self.tv.on()
         sleep(2)
         self.assertTrue(self.tv.power)
     
+    def _cmd(self, cmd):
+        try:
+            ret = cmd()
+        except BraviaError as err:
+            if err.code_no == 12:
+                self.skipTest(str(err))
+            else:
+                raise Exception(str(err))
+        return ret
+    
     def test_supported_apiinfo(self):
-        ret = self.tv.supported_api()
-        self.assertIsInstance(ret, dict, msg=ret)
+        ret = self._cmd(self.tv.get_supported_api)
+        self.assertIsInstance(ret, list, msg=ret)
     
     def test_application_list(self):
-        ret = self.tv.application_list()
+        ret = self._cmd(self.tv.get_application_list)
         self.assertIsInstance(ret, list, msg=ret)
     
     def test_application_status(self):
-        ret = self.tv.application_status()
+        ret = self._cmd(self.tv.get_application_status)
         self.assertIsInstance(ret, list, msg=ret)
     
     def test_content_info(self):
-        ret = self.tv.content_info()
+        ret = self._cmd(self.tv.get_content_info)
         self.assertIsInstance(ret, dict, msg=ret)
     
-    # def test_sound_settings(self):
-    #     print(self.tv.sound_settings())
+    def test_sound_settings(self):
+        ret = self._cmd(self.tv.get_sound_settings)
+        self.assertIsInstance(ret, dict, msg=ret)
+        
+    def test_speaker_settings(self):
+        ret = self._cmd(self.tv.get_speaker_settings)
+        self.assertIsInstance(ret, dict, msg=ret)
     
-    # def test_speaker_settings(self):
-    #     print(self.tv.speaker_settings())
+    def test_sources(self):
+        ret = self._cmd(self.tv.get_sources)
+        self.assertIsInstance(ret, list, msg=ret)
     
-    # def test_sources(self):
-    #     print(self.tv.sources())
-    
-    # def test_a_volume_set(self):
-        # self.tv.set_volume('+50', target='speaker')
+    def test_a_volume_set(self):
+        ret = self.tv.set_volume('+50', target='speaker')
+        print(ret, type(ret))
+        self.assertIsInstance(ret, dict, msg=ret)
     
     # def test_b_volume(self):
     #     print(self.tv.get_volume())
     
-    # def test_mute(self):
-    #     self.tv.mute(False)
+    def test_mute(self):
+        self.tv.set_mute(False)
     
     #def test_set_source(self):
     #    self.tv.set_sources('cec', port=3)
@@ -69,7 +83,7 @@ class BraviaTest(unittest.TestCase):
     #     for s in self.tv.connected_sources():
     #         print(s)
     
-    def test_zz_off(self):
-        self.tv.off()
-        sleep(0.5)
-        self.assertFalse(self.tv.power)
+    # def test_zz_off(self):
+    #     self.tv.off()
+    #     sleep(0.5)
+    #     self.assertFalse(self.tv.power)

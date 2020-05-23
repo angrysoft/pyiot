@@ -5,6 +5,7 @@ from time import sleep
 import unittest
 
 sid = '1000b6063e'
+# sid = "1000b6e1c8"
 
 class TestSonoff(unittest.TestCase):
       @classmethod
@@ -13,17 +14,17 @@ class TestSonoff(unittest.TestCase):
       
       def test_a_set_power(self):
             self.dev.on()
-            sleep(0.5)
+            sleep(1)
             self.assertTrue(self.dev.is_on())
             self.dev.off()
-            sleep(0.5)
+            sleep(1)
             self.assertTrue(self.dev.is_off())
             sleep(1)
             self.dev.set_power('on')
-            sleep(0.5)
+            sleep(1)
             self.assertTrue(self.dev.is_on())
             self.dev.write({'data':{'status': 'off'}})
-            sleep(0.5)
+            sleep(1)
             self.assertTrue(self.dev.is_off())
             
       def test_c_power(self):
@@ -37,5 +38,5 @@ class TestSonoff(unittest.TestCase):
       
       def test_d_set_power_on_state(self):
             self.dev.set_power_on_state(PowerState.OFF)
-            sleep(0.5)
+            sleep(1)
             self.assertIn(self.dev.startup, ['on', 'off', 'stay'])

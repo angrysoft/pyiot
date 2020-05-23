@@ -44,7 +44,7 @@ class Bravia:
     def _dev_init(self):
         if self.power:
             self.ircc_code = self.get_all_commands()
-            self._data.update(self.system_info())
+            self._data.update(self.get_system_info())
     
     def device_status(self):
         _status = dict()
@@ -54,14 +54,6 @@ class Bravia:
         else:
             _status['power'] = 'off'
         return _status
-    
-    @property
-    def sid(self):
-        return self._data.get('cid', '')
-
-    @property
-    def model(self):
-        return self._data.get('model', '')
     
     def write(self, data):
         _data = data.get('data', {}).copy()
@@ -90,16 +82,6 @@ class Bravia:
         Thread(target=self._handle_events,
                args=({'cmd': 'report', 'sid': self.sid, 'model': self.model, 'data': data},)).start()
         
-    @property
-    def mac(self):
-        return self._data.get('mac', '')
-
-    @mac.setter
-    def mac(self, val):
-        if len(val) == 17:
-            self._data['mac'] = val
-        else:
-            raise ValueError('Incorrect MAC address format')
     
     @property
     def power(self):
@@ -141,15 +123,16 @@ class Bravia:
         else:
             st()
     
-    def supported_api(self):
+    def get_supported_api(self):
         """This API provides the supported services and their information"""
         
-        ret = self.session.post(path='guide',
-                                data=self._cmd('getSupportedApiInfo', params=[{"services": ["system","avContent"]}], pid=5))
-        if ret.code == 200:
-            return self._parse_result(ret.json)
+        return self._get('guide', 'getSupportedApiInfo')
     
-    def system_info(self):
+    def get_interface_information(self):
+        """This API provides information of the REST API interface provided by the server. This API must not include private information."""
+        return self._get('system', 'getInterfaceInformation')
+    
+    def get_system_info(self):
         """This API provides general information on the device."""
         
         ret = self.session.post(path='system',
@@ -157,7 +140,7 @@ class Bravia:
         if ret.code == 200:
             return self._parse_result(ret.json)
     
-    def connected_sources(self):
+    def get_connected_sources(self):
         """This API provides information on the current status of all external input sources of the device."""
         
         ret = self.session.post(path='avContent',
@@ -165,7 +148,7 @@ class Bravia:
         if ret.code == 200:
             return self._parse_result(ret.json)
     
-    def application_list(self):
+    def get_application_list(self):
         """This API provides the list of applications that can be launched by setActiveApp"""
         
         ret = self.session.post(path='appControl',
@@ -173,7 +156,7 @@ class Bravia:
         if ret.code == 200:
             return self._parse_result(ret.json)
     
-    def application_status(self):
+    def get_application_status(self):
         """This API provides the status of the application itself or the accompanying status related to a specific application."""
         
         ret = self.session.post(path='appControl',
@@ -181,14 +164,14 @@ class Bravia:
         if ret.code == 200:
             return self._parse_result(ret.json)
     
-    def content_info(self):
+    def get_content_info(self):
         """This API provides information of the currently playing content or the currently selected input."""
         ret = self.session.post(path='avContent',
                                 data=self._cmd('getPlayingContentInfo'))
         if ret.code == 200:
             return self._parse_result(ret.json)
     
-    def sources(self):
+    def get_sources(self):
         """This API provides the list of sources in the scheme."""
         ret = self.session.post(path='avContent',
                                 data=self._cmd('getSourceList', params=[{"scheme": "extInput"}]))
@@ -215,7 +198,7 @@ class Bravia:
         if ret.code == 200:
             return self._parse_result(ret.json)
     
-    def sound_settings(self, target=''):
+    def get_sound_settings(self, target=''):
         """This API provides the current settings and supported settings related to the sound configuration items."""
         
         ret = self.session.post(path='audio',
@@ -223,7 +206,7 @@ class Bravia:
         if ret.code == 200:
             return self._parse_result(ret.json)
     
-    def speaker_settings(self):
+    def get_speaker_settings(self):
         """TThis API provides current settings and supported settings related to speaker configuration items."""
         
         ret = self.session.post(path='audio',
@@ -231,7 +214,7 @@ class Bravia:
         if ret.code == 200:
             return self._parse_result(ret.json)
     
-    def mute(self, status):
+    def set_mute(self, status):
         """This API provides the function to change the audio mute status.
         
         Args:
@@ -296,6 +279,12 @@ class Bravia:
     def _cmd(cmd, params=[], pid=10, version='1.0'):
         return {'method': cmd, 'params': params, 'id': pid, 'version': version}
 
+    def _get(self, path, cmd):
+        ret = self.session.post(path=path,
+                                data=self._cmd(cmd))
+        if ret.code == 200:
+            return self._parse_result(ret.json)
+        
     def on(self):
         """Power on tv"""
         mac = self.mac.replace(":", "")
@@ -325,54 +314,26 @@ class Bravia:
                 raise BraviaError(msg['error'])
             elif 'result' in msg and msg['result']:
                 return msg['result'][0]
+    
+    @property
+    def sid(self):
+        return self._data.get('cid', '')
 
-class IrccCode:
-    Power = 'AAAAAQAAAAEAAAAVAw=='
-    Input = 'AAAAAQAAAAEAAAAlAw=='
-    SyncMenu = 'AAAAAgAAABoAAABYAw=='
-    Hdmi1 = 'AAAAAgAAABoAAABaAw=='
-    Hdmi2 = 'AAAAAgAAABoAAABbAw=='
-    Hdmi3 = 'AAAAAgAAABoAAABcAw=='
-    Hdmi4 = 'AAAAAgAAABoAAABdAw=='
-    Num1 = 'AAAAAQAAAAEAAAAAAw=='
-    Num2 = 'AAAAAQAAAAEAAAABAw=='
-    Num3 = 'AAAAAQAAAAEAAAACAw=='
-    Num4 = 'AAAAAQAAAAEAAAADAw=='
-    Num5 = 'AAAAAQAAAAEAAAAEAw=='
-    Num6 = 'AAAAAQAAAAEAAAAFAw=='
-    Num7 = 'AAAAAQAAAAEAAAAGAw=='
-    Num8 = 'AAAAAQAAAAEAAAAHAw=='
-    Num9 = 'AAAAAQAAAAEAAAAIAw=='
-    Num0 = 'AAAAAQAAAAEAAAAJAw=='
-    Dot = 'AAAAAgAAAJcAAAAdAw=='
-    CC = 'AAAAAgAAAJcAAAAoAw=='
-    Red = 'AAAAAgAAAJcAAAAlAw=='
-    Green = 'AAAAAgAAAJcAAAAmAw=='
-    Yellow = 'AAAAAgAAAJcAAAAnAw=='
-    Blue = 'AAAAAgAAAJcAAAAkAw=='
-    Up = 'AAAAAQAAAAEAAAB0Aw=='
-    Down = 'AAAAAQAAAAEAAAB1Aw=='
-    Right = 'AAAAAQAAAAEAAAAzAw=='
-    Left = 'AAAAAQAAAAEAAAA0Aw=='
-    Confirm = 'AAAAAQAAAAEAAABlAw=='
-    Help = 'AAAAAgAAAMQAAABNAw=='
-    Display = 'AAAAAQAAAAEAAAA6Aw=='
-    Options = 'AAAAAgAAAJcAAAA2Aw=='
-    Back = 'AAAAAgAAAJcAAAAjAw=='
-    Home = 'AAAAAQAAAAEAAABgAw=='
-    VolumeUp = 'AAAAAQAAAAEAAAASAw=='
-    VolumeDown = 'AAAAAQAAAAEAAAATAw=='
-    Mute = 'AAAAAQAAAAEAAAAUAw=='
-    Audio = 'AAAAAQAAAAEAAAAXAw=='
-    ChannelUp = 'AAAAAQAAAAEAAAAQAw=='
-    ChannelDown = 'AAAAAQAAAAEAAAARAw=='
-    Play = 'AAAAAgAAAJcAAAAaAw=='
-    Pause = 'AAAAAgAAAJcAAAAZAw=='
-    Stop = 'AAAAAgAAAJcAAAAYAw=='
-    FlashPlus = 'AAAAAgAAAJcAAAB4Aw=='
-    FlashMinus = 'AAAAAgAAAJcAAAB5Aw=='
-    Prev = 'AAAAAgAAAJcAAAA8Aw=='
-    Next = 'AAAAAgAAAJcAAAA9Aw=='
+    @property
+    def model(self):
+        return self._data.get('model', '')
+
+    @property
+    def mac(self):
+        return self._data.get('mac', '')
+
+    @mac.setter
+    def mac(self, val):
+        if len(val) == 17:
+            self._data['mac'] = val
+        else:
+            raise ValueError('Incorrect MAC address format')
+
 
 class BraviaError(Exception):
     _codes = {
@@ -384,5 +345,16 @@ class BraviaError(Exception):
         }
     
     def __init__(self, code=[], messeage=f'Unknow Error'):
-        print(code[0])
-        self.message = self._codes.get(code[0], code)
+        self._code_no = 0
+        if code:
+            self.message = self._codes.get(code[0], code)
+            self._code_no = code[0]
+        else:
+            self.message = message
+    
+    def __str__(self):
+        return self.message
+    
+    @property
+    def code_no(self):
+        return self._code_no
