@@ -51,3 +51,12 @@ class BaseDeviceInterface:
     
     def device_status(self) -> dict:
         return {"sid": self.sid, "name": self.name, "place": self.place}
+    
+    def sync(self):
+        pass
+    
+    def query(self):
+        pass
+    
+    def execute(self, cmd):
+        pass
