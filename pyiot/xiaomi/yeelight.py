@@ -117,14 +117,14 @@ class YeelightWatcher(WatcherBaseDriver):
             
             if 'params' in jdata:
                 if 'ct' in jdata['params']:
-                    jdata['params']['ct_pc'] = self._ct2pc(jdata['params'])
+                    jdata['params']['ct_pc'] = self._ct2pc(jdata['params']['ct'])
                 handler({'cmd': 'report',
                          'sid': self.dev.sid,
                          'model': self.dev.model,
-                         'data': jdata['params']})
+                         'data': jdata['params'].copy()})
     
     def _ct2pc(self, value):
-        ct = int(value['ct'])
+        ct = int(value)
         return int(100 - (self.dev.max_ct - ct) / (self.dev.max_ct-self.dev.min_ct) * 100)
         
                 

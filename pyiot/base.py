@@ -8,8 +8,9 @@ class BaseDeviceInterface:
         self.report(data)
     
     def report(self, data:dict) -> None:
-        self._data.update(data.pop('data', {}))
-        self._data.update(data)
+        _data = data.copy()
+        self._data.update(_data.pop('data', {}))
+        self._data.update(_data)
     
     def write(self, data):
         _data = data.get('data', {}).copy()

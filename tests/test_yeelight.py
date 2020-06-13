@@ -10,6 +10,7 @@ class TestColor(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.dev = Color(sid)
+        cls.dev.watcher.add_report_handler(print)
     
     def test_a_power(self):
         self.dev.on()
