@@ -40,3 +40,6 @@ class TestSonoff(unittest.TestCase):
             self.dev.set_power_on_state(PowerState.OFF)
             sleep(1)
             self.assertIn(self.dev.startup, ['on', 'off', 'stay'])
+            
+      def test_e_device_status(self):
+            self.assertIsInstance(self.dev.device_status(), dict)

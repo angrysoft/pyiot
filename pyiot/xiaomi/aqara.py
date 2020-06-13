@@ -234,7 +234,7 @@ class Gateway(BaseDeviceInterface):
             return {}
     
     def device_status(self):
-        return {'illumination': self.illumination, 'rgb': self.rgb}
+        return {**super().device_status(), 'illumination': self.illumination, 'rgb': self.rgb}.copy()
     
     @property
     def illumination(self):
@@ -307,7 +307,7 @@ class CtrlNeutral(AqaraSubDevice):
         self.channel_0.off()
     
     def device_status(self):
-        return super().device_status().update({"channel_0": self._data.get("channel_0")})
+        return {**super().device_status(), "channel_0": self._data.get("channel_0")}.copy()
         
 
 class CtrlNeutral2(CtrlNeutral):
@@ -322,7 +322,7 @@ class CtrlNeutral2(CtrlNeutral):
         self.write({'data': {'channel_0': 'off', 'channel_1': 'off'}})
     
     def device_status(self):
-        return super().device_status().update({"channel_1": self._data.get("channel_1")})
+        return {**super().device_status(), "channel_1": self._data.get("channel_1")}.copy()
 
 
 class Plug(AqaraSubDevice):
@@ -336,7 +336,7 @@ class Plug(AqaraSubDevice):
         return self._data.get("status")
     
     def device_status(self):
-        return super().device_status().update({"status": self.status})
+        return {**super().device_status(), "status": self.status}.copy()
 
 
 class SensorSwitchAq2(AqaraSubDevice):
@@ -349,7 +349,7 @@ class Switch(AqaraSubDevice):
         return self._data.get("status")
     
     def device_status(self):
-        return super().device_status().update({"status": self.status})
+        return {**super().device_status(), "status": self.status}.copy()
 
 
 class SensorHt(AqaraSubDevice):
@@ -362,7 +362,7 @@ class SensorHt(AqaraSubDevice):
         return self._data.get('humidity', '')
     
     def device_status(self):
-        return super().device_status().update({"temperature": self.temperature, "humidity": self.humidity})
+        return {**super().device_status(), "temperature": self.temperature, "humidity": self.humidity}.copy()
 
 
 class WeatherV1(SensorHt):
@@ -371,7 +371,7 @@ class WeatherV1(SensorHt):
         return self._data.get('pressure', '')
     
     def device_status(self):
-        return super().device_status().update({"pressure": self.pressure})
+        return {**super().device_status(), "pressure": self.pressure}.copy()
         
 
 
@@ -391,7 +391,7 @@ class Magnet(AqaraSubDevice):
         return self._data.get('status')
     
     def device_status(self):
-        return super().device_status().update({"status": self.status, "when": self.when})
+        return {**super().device_status(), "status": self.status, "when": self.when}.copy()
 
 
 class SensorMotionAq2(AqaraSubDevice):

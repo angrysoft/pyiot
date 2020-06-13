@@ -50,7 +50,7 @@ class Bravia:
         _status = dict()
         if self.power:
             _status['power'] = 'on'
-            _status.update(self.content_info())
+            _status.update(self.get_content_info())
         else:
             _status['power'] = 'off'
         return _status
@@ -77,7 +77,7 @@ class Bravia:
             handler(event)
     
     def refresh_status(self):
-        data = self.content_info()
+        data = self.get_content_info()
         self._data.update(data)
         Thread(target=self._handle_events,
                args=({'cmd': 'report', 'sid': self.sid, 'model': self.model, 'data': data},)).start()

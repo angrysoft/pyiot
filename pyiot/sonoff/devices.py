@@ -168,7 +168,7 @@ class BaseSONOFFDIYDevice(BaseDeviceInterface):
         return {'deviceid': self.sid, 'data':kwargs}
     
     def device_status(self):
-        return super().device_status().update({"power": self.power})
+        return {**super().device_status() ,"power": self.power}.copy()
     
         
 class Mini(BaseSONOFFDIYDevice):

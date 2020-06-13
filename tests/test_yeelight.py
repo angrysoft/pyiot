@@ -64,3 +64,6 @@ class TestColor(unittest.TestCase):
         sleep(0.8)
         self.assertEqual(self.dev.bright, 30)
     
+    def test_g_device_status(self):
+        ret = self.dev.device_status()
+        self.assertIsInstance(ret, dict)

@@ -18,5 +18,4 @@
 
 from .yeelight import *
 from .aqara import *
-# from .aqara import CtrlNeutral, CtrlNeutral2, Plug, SensorSwitchAq2, Switch, SensorHt, WeatherV1, Magnet, SensorMotionAq2
 from .philips_bulb import *

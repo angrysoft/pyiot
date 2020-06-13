@@ -12,6 +12,7 @@ class TestAqara(unittest.TestCase):
     def setUpClass(cls):
         passwd = os.environ.get('GWPASSWD')
         cls.gw = Gateway(gwpasswd=passwd)
+        cls.gw.watcher.add_report_handler(print)
     
     def test_a_gateway(self):
         token = self.gw.token

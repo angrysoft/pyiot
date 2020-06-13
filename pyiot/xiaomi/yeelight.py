@@ -171,9 +171,10 @@ class YeelightDev(BaseDeviceInterface):
         pass
     
     def device_status(self):
-        return super().device_status().update({"power": self.power,
-                                               "ct_pc": self.ct_pc,
-                                               "bright": self.bright})
+        return {**super().device_status(),
+                "power": self.power,
+                "ct_pc": self.ct_pc,
+                "bright": self.bright}.copy()
           
     @property
     def ip(self):
@@ -589,7 +590,7 @@ class Color(YeelightDev):
         self.cmd['set_color'] = self.set_color
         
     def device_status(self):
-        return super().device_status().update({"color_mode": self.color_mode, "rgb": self.rgb})
+        return {**super().device_status() ,"color_mode": self.color_mode, "rgb": self.rgb}.copy()
         
     def set_rgb(self, red=0, green=0, blue=0, efx='smooth', duration=500):
         """This method is used to change the color of a smart LED.
