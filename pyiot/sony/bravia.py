@@ -25,11 +25,13 @@ class Bravia:
         There should be a new menu entry [Pre-Shared Key]. Set it for example to 0000.
     """
 
-    def __init__(self, ip, macaddres=None, psk='0000'):
+    def __init__(self, ip, macaddres=None, psk='0000', sid=None, model='Bravia'):
         self._data = dict()
         self.host = f'http://{ip}'
         self.ip = ip
         self.psk = psk
+        self._data['cid'] = sid
+        self._data['model'] = model
         self.commands = {}
         self.mac = macaddres
         self._report_handelers = set()
