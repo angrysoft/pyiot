@@ -12,19 +12,6 @@ class BaseDeviceInterface:
         self._data.update(_data.pop('data', {}))
         self._data.update(_data)
     
-    def write(self, data):
-        _data = data.get('data', {}).copy()
-        if not _data:
-            # raise ValueError('data is empty')
-            return
-        c, v = _data.popitem()
-        if type(v) == dict:
-            self.cmd.get(c, self._unknown)(**v)
-        else:
-            self.cmd.get(c, self._unknown)(v)
-    
-    def _unknown(self, *args):
-        pass
     
     @property
     def sid(self):
@@ -53,11 +40,11 @@ class BaseDeviceInterface:
     def device_status(self) -> dict:
         return {"sid": self.sid, "name": self.name, "place": self.place}
     
-    def sync(self):
+    def sync(self) -> dict:
         pass
     
-    def query(self):
+    def query(self, *params) ->dict:
         pass
     
-    def execute(self, cmd):
+    def execute(self, command: dict) -> None:
         pass
