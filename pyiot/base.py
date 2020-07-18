@@ -1,3 +1,50 @@
+from typing import Set, Any, Dict
+from pyiot.traits import Trait
+
+class DeviceStatus:
+    def __init__(self) -> None:
+        self._data:Dict[str, Any]
+    
+    
+
+class BaseDevice:
+    def __new__(cls):
+        cls._traits:Set[str] = set()
+        cls._cmds:Set[str] = set()
+        for _base_class in cls.__bases__:
+            _name: str = _base_class.__name__
+            if issubclass(_base_class, Trait):
+                cls.traits.add(_name)
+                cls._cmds.update(_base_class._commands)
+        
+        return super(BaseDevice, cls).__new__(cls)
+    
+    def __init__(self, sid:str) -> None:
+        self._data:DeviceStatus = DeviceStatus()
+    
+        print('init Basedev')
+    
+    @property
+    def commands(self) -> Set[str]:
+        return self._cmds
+    
+    @property
+    def traits(self) -> Set[str]:
+        return self._traits
+          
+    def execute(self, cmd: str, **kwargs:Any):
+        if cmd in self.commands:
+            _cmd = getattr(self, cmd)
+            _cmd(**kwargs)
+                
+    def query(self, name:str) -> Any:
+        self._data.get(name, '')
+    
+    
+    @classmethod    
+    def get_bases(cls):
+        return cls.__bases__
+
 class BaseDeviceInterface:
     def __init__(self, sid):
         self._data = dict()

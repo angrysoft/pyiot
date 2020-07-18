@@ -6,7 +6,7 @@ from pyiot.sony import Bravia, BraviaError
 class BraviaTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.tv = Bravia('192.168.10.5', macaddres='FC:F1:52:2A:9B:1E')
+        cls.tv = Bravia('192.168.10.5') # , macaddres='FC:F1:52:2A:9B:1E')
     
     def test_a_power(self):
         self.power = self.tv.power
@@ -15,9 +15,13 @@ class BraviaTest(unittest.TestCase):
         sleep(2)
         self.assertTrue(self.tv.power)
     
-    def _cmd(self, cmd):
+    def _cmd(self, cmd, *args):
         try:
-            ret = cmd()
+            if args:
+                ret = cmd(*args)
+            else:
+                ret = cmd()
+                
         except BraviaError as err:
             if err.code_no == 12:
                 self.skipTest(str(err))
@@ -54,7 +58,7 @@ class BraviaTest(unittest.TestCase):
         self.assertIsInstance(ret, list, msg=ret)
     
     def test_a_volume_set(self):
-        ret = self.tv.set_volume('+50', target='speaker')
+        ret = self._cmd(self.tv.set_volume, '+50', 'speaker')
         print(ret, type(ret))
         self.assertIsInstance(ret, dict, msg=ret)
     
@@ -70,11 +74,11 @@ class BraviaTest(unittest.TestCase):
     # def test_system_info(self):
     #     print(self.tv.system_info())
     
-    # def test_send_ircc(self):
-    #     self.tv.send_ircc('VolumeUp')
+    def test_send_ircc(self):
+        self.tv.send_ircc('VolumeUp')
     
-    # def test_write(self):
-    #     self.tv.write({'data':{'button': 'VolumeDown'}})
+    def test_write(self):
+        self.tv.write({'data':{'button': 'VolumeDown'}})
     
     # def test_all_cmds(self):
     #     print(self.tv.get_all_commands())

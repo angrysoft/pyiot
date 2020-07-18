@@ -19,13 +19,120 @@ import struct
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+###########################################################
+#
+#	DISCOVER IP VIA SSDP PROTOCOL (UDP 1900 PORT)
+#
+###########################################################
+# def DISCOVER_via_SSDP (service = "urn:schemas-sony-com:service:ScalarWebAPI:1"):
+# 	import select, re
+# 	SSDP_ADDR = "239.255.255.250";
+# 	SSDP_PORT = 1900;
+# 	SSDP_MX = 1;
+# 	SSDP_ST = service;
+
+# 	ssdpRequest = "M-SEARCH * HTTP/1.1\r\n" + \
+# 		"HOST: %s:%d\r\n" % (SSDP_ADDR, SSDP_PORT) + \
+# 		"MAN: \"ssdp:discover\"\r\n" + \
+# 		"MX: %d\r\n" % (SSDP_MX, ) + \
+# 		"ST: %s\r\n" % (SSDP_ST, ) + "\r\n";
+
+# 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+# 	#select.select([sock], [], [], 10)
+# 	sock.settimeout(5.0)
+# 	dest = socket.gethostbyname(SSDP_ADDR)
+# 	sock.sendto(ssdpRequest, (dest, SSDP_PORT))
+# 	sock.settimeout(5.0)
+# 	try: 
+# 		data = sock.recv(1000)
+# 	except socket.timeout:
+# 		print "No Bravia found (timed out)!"
+# 		sys.exit(1)
+# 	response = data.decode('utf-8')
+# 	match = re.search(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b", response)
+# 	if match:                      
+# 		return match.group()
+# 	else:
+# 		return SONYIP
+from enum import Enum
+class BraviaConst(Enum):
+    MULTICAST = '239.255.255.250'
+    PORT = 1900
+    MX = 1
+    ST = 'urn:schemas-sony-com:service:ScalarWebAPI:1'
+    SEARCH_REQUEST = 'M-SEARCH * HTTP/1.1\r\n' \
+                     'HOST: 239.255.255.250:1900\r\n' \
+                     'MAN: "ssdp:discover"\r\n' \
+                     'MX: 1\r\n' \
+                     'ST: urn:schemas-sony-com:service:ScalarWebAPI:1\r\n'.encode()
+
+class Discover:
+    """Class to dicover yeelight devices connectetd to local network
+    
+    Examples:
+        >>> y = Yeelight()
+        >>> y.discover()
+    """
+
+    def search(self, timeout=10, sid=None):
+        """Discover devices
+        
+        Args:
+            timeout (int): socket timeout"""
+        devices = dict()
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 32)
+        sock.settimeout(timeout)
+        sock.sendto(BraviaConst.SEARCH_REQUEST.value, (BraviaConst.MULTICAST.value, BraviaConst.PORT.value))
+        while True:
+            try:
+                data, addr = sock.recvfrom(1024)
+            except OSError:
+                break
+            if data:
+                dev = self._parse_devices(data.decode(), addr)
+                if dev:
+                    if sid is None:
+                        devices[dev['id']] = dev
+                    elif sid == dev['id']:
+                        devices = dev
+                        break
+                    
+        sock.close()
+        return devices
+
+    def _parse_devices(self, data_in, addr):
+        dev = {}
+        print(data_in)
+        for d in data_in.split('\r\n'):
+            if d == 'HTTP/1.1 200 OK':
+                if dev:
+                    self.devices[dev['id']] = dev
+                    dev = {}
+            d = d.lower()
+            if d.startswith('cache-control') or d.startswith('date') or d.startswith('ext'):
+                continue
+            if d.find(':') > 0:
+                key, val = d.split(':', 1)
+                val = val.strip()
+                if key == 'support':
+                    val = val.split(' ')
+                elif key == 'location':
+                    url = urlparse(val)
+                    dev['ip'] = url.hostname
+                    dev['port'] = url.port
+                dev[key] = val
+        if dev:
+            return dev
+
 class Bravia:
     """Navigate to: [Settings] → [Network] → [Home Network Setup] → [IP Control]
         Set [Authentication] to [Normal and Pre-Shared Key]
         There should be a new menu entry [Pre-Shared Key]. Set it for example to 0000.
     """
 
-    def __init__(self, ip, macaddres=None, psk='0000', sid=None, model='Bravia'):
+    def __init__(self, ip, macaddres=None, psk='0000', sid=None, model='Unknown'):
         self._data = dict()
         self.host = f'http://{ip}'
         self.ip = ip
@@ -33,7 +140,8 @@ class Bravia:
         self._data['cid'] = sid
         self._data['model'] = model
         self.commands = {}
-        self.mac = macaddres
+        if macaddres is not None:
+            self.mac = macaddres
         self._report_handelers = set()
         self.session = Session(f'http://{ip}/sony')
         self.session.add_header('X-Auth-PSK', self.psk)
@@ -44,6 +152,7 @@ class Bravia:
         self._dev_init()
     
     def _dev_init(self):
+        print(self.get_system_info())
         if self.power:
             self.ircc_code = self.get_all_commands()
             self._data.update(self.get_system_info())
@@ -80,11 +189,11 @@ class Bravia:
     
     def refresh_status(self):
         data = self.get_content_info()
-        self._data.update(data)
-        Thread(target=self._handle_events,
-               args=({'cmd': 'report', 'sid': self.sid, 'model': self.model, 'data': data},)).start()
+        if data:
+            self._data.update(data)
+            Thread(target=self._handle_events,
+                   args=({'cmd': 'report', 'sid': self.sid, 'model': self.model, 'data': data},)).start()
         
-    
     @property
     def power(self):
         """This API provides the current power status of the device."""
@@ -128,7 +237,7 @@ class Bravia:
     def get_supported_api(self):
         """This API provides the supported services and their information"""
         
-        return self._get('guide', 'getSupportedApiInfo')
+        return self._get('guide', 'getSupportedApiInfo', [{"services": []}])
     
     def get_interface_information(self):
         """This API provides information of the REST API interface provided by the server. This API must not include private information."""
@@ -281,9 +390,9 @@ class Bravia:
     def _cmd(cmd, params=[], pid=10, version='1.0'):
         return {'method': cmd, 'params': params, 'id': pid, 'version': version}
 
-    def _get(self, path, cmd):
+    def _get(self, path, cmd, params=[]):
         ret = self.session.post(path=path,
-                                data=self._cmd(cmd))
+                                data=self._cmd(cmd, params))
         if ret.code == 200:
             return self._parse_result(ret.json)
         
@@ -327,12 +436,12 @@ class Bravia:
 
     @property
     def mac(self):
-        return self._data.get('mac', '')
+        return self._data.get('macAddr', '')
 
     @mac.setter
     def mac(self, val):
         if len(val) == 17:
-            self._data['mac'] = val
+            self._data['macAddr'] = val
         else:
             raise ValueError('Incorrect MAC address format')
 
