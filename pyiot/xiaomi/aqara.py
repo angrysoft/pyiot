@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__all__ = ['GatewayWatcher', 'Gateway', 'CtrlNeutral', 'CtrlNeutral2', 'Plug', 'SensorSwitchAq2', 
+__all__ = ['GatewayWatcher', 'GatewayInterface', 'Gateway', 'CtrlNeutral', 'CtrlNeutral2', 'Plug', 'SensorSwitchAq2', 
            'Switch', 'SensorHt', 'WeatherV1', 'Magnet', 'SensorMotionAq2']
 
 
@@ -25,6 +25,7 @@ from datetime import datetime
 from pyiot.watcher import Watcher, WatcherBaseDriver
 from pyiot.base import BaseDeviceInterface
 from pyiot.devicesexceptinos import DeviceIsOffline
+from typing import Dict, Any
 
 
 class GatewayWatcher(WatcherBaseDriver):
@@ -55,24 +56,23 @@ class GatewayWatcher(WatcherBaseDriver):
         self._loop = False
         self.sock.close()
 
- 
-class Gateway(BaseDeviceInterface):
+
+class GatewayInterface:
     def __init__(self, ip='auto', port=9898, sid='', gwpasswd=''):
-        super().__init__(sid)
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
         self.sock.settimeout(10)
         self.aes_key_iv = bytes([0x17, 0x99, 0x6d, 0x09, 0x3d, 0x28, 0xdd, 0xb3, 0xba, 0x69, 0x5a, 0x2e, 0x6f, 0x58, 0x56, 0x2e])
         self.multicast = ('224.0.0.50', 4321)
         if ip == 'auto':
-            gateway = self.whois()
-            self.unicast = (gateway.get('ip'), int(gateway.get('port')))
-            self._data['sid'] = gateway.get('sid')
+            gateway: Dict[str, str] = self.whois()
+            self.unicast = (gateway.get('ip'), int(gateway.get('port',0)))
+            self.sid: str = gateway.get('sid','') 
         else:
             self.unicast = (ip, port)
             self.sid = sid
         self.gwpasswd = gwpasswd
         self._token = None
-        self._subdevices = dict()
+        self._subdevices:Dict[str, AqaraSubDevice] = dict()
         self._init_device()
         self.watcher = Watcher(GatewayWatcher())
         self.watcher.add_report_handler(self._handle_events)
@@ -80,21 +80,12 @@ class Gateway(BaseDeviceInterface):
     def _init_device(self):
         data = self.read_device(self.sid)
         self.report(data)
-        self.register_sub_device(self)
     
-    def heartbeat(self, data:dict) -> None:
+    def heartbeat(self, data:Dict[str,str]) -> None:
         if 'token' in data:
             self.token = data['token']
     
-    def write(self, data:dict) -> None:
-        if type(data) is not dict:
-            raise ValueError('Data argument is not dict')
-        self.write_device(self.model,
-                          self.sid,
-                          self.short_id,
-                          data.get('data', {}).copy())
-    
-    def register_sub_device(self, dev):
+    def register_sub_device(self, dev:AqaraSubDevice):
         self._subdevices[dev.sid] = dev
     
     def unregister_sub_device(self, sid):
@@ -148,10 +139,8 @@ class Gateway(BaseDeviceInterface):
             msg['short_id'] = short_id
         if data:
             msg['data'] = _data
-        # self.sock.sendto(self._cmd(msg).encode(), self.unicast)
         return self._send_unicast(cmd='write', model=model, sid=sid, key=self.get_key(), data=data)
         
-
     def read_all_devices(self):
         id_list = self.get_id_list()
         ret = []
@@ -187,28 +176,6 @@ class Gateway(BaseDeviceInterface):
         encrypted = cipher.encrypt(self.token.encode('utf8'))
         return binascii.hexlify(encrypted).decode()
 
-    def play_sound(self, sound_id, volume=20):
-        """
-        Play one of standard ringtones or user-defined sound.
-        Args:
-            sound_id (int): 0-8, 10, 13, 20-29 - standard ringtones; >= 10001 - user-defined ringtones uploaded to your gateway via MiHome app
-            volume (int): level from 1 to 100
-        
-        Check the reference to get more about sound_id value: https://github.com/louisZL/lumi-gateway-local-api/blob/master/%E7%BD%91%E5%85%B3.md
-        """
-        return self.write_device('gateway', self.sid, 0, {'mid': sound_id, 'vol': volume})
-
-    def stop_sound(self):
-        """Stop playing any sound from speaker"""
-        return self.write_device('gateway', self.sid, 0, {'mid': 10000})
-    
-        
-    def set_rgb(self, red=0, green=0, blue=0, dimmer=255):
-        color = (dimmer << 24) + (red << 16) + (green << 8) + blue
-        return self.write_device('gateway', self.sid, 0, {'rgb': color})
-
-    def off_led(self):
-        return self.write_device('gateway', self.sid, 0, {'rgb': 0})
 
     def _cmd(self, args):
         return json.dumps(args)
@@ -238,38 +205,12 @@ class Gateway(BaseDeviceInterface):
         else:
             return {}
     
-    def device_status(self):
-        return {**super().device_status(), 'illumination': self.illumination, 'rgb': self.rgb}.copy()
-    
-    @property
-    def illumination(self):
-        return self._data.get('illumination', '')
-    
-    @property
-    def proto_version(self):
-        return self._data.get('proto_version', '')
-
-    @property
-    def rgb(self):
-        return int(self._data.get('rgb', -1))
-    
-    @rgb.setter
-    def rgb(self, value):
-        self.write_device('gateway', self.sid, 0, {'rgb': value})
-        
-    @property
-    def model(self):
-        return self._data.get('model')
-    
-    @property
-    def short_id(self):
-        return self._data.get('short_id')
-    
     
 class AqaraSubDevice(BaseDeviceInterface):
-    def __init__(self, sid:str, gateway:Gateway):
+    def __init__(self, sid:str, gateway:GatewayInterface):
         super().__init__(sid)
         self.gateway = gateway
+        self._data:Dict[str,Any]
         self._data["voltage"] = 3300
         self._data["low_voltage"] = 2800
         self._init_device()
@@ -297,10 +238,63 @@ class AqaraSubDevice(BaseDeviceInterface):
     def short_id(self):
         return self._data.get('short_id')
 
+                        
+class Gateway(AqaraSubDevice):    
+    def __init__(self, sid:str, gateway:GatewayInterface):
+        super().__init__(sid, gateway)
+        self.writable = True
             
-            
+    def set_rgb(self, red=0, green=0, blue=0, dimmer=255):
+        color = (dimmer << 24) + (red << 16) + (green << 8) + blue
+        return self.write_device('gateway', self.sid, 0, {'rgb': color})
+
+    def off_led(self):
+        return self.write_device('gateway', self.sid, 0, {'rgb': 0})
+    
+    def play_sound(self, sound_id, volume=20):
+        """
+        Play one of standard ringtones or user-defined sound.
+        Args:
+            sound_id (int): 0-8, 10, 13, 20-29 - standard ringtones; >= 10001 - user-defined ringtones uploaded to your gateway via MiHome app
+            volume (int): level from 1 to 100
+        
+        Check the reference to get more about sound_id value: https://github.com/louisZL/lumi-gateway-local-api/blob/master/%E7%BD%91%E5%85%B3.md
+        """
+        return self.write_device('gateway', self.sid, 0, {'mid': sound_id, 'vol': volume})
+
+    def stop_sound(self):
+        """Stop playing any sound from speaker"""
+        return self.write_device('gateway', self.sid, 0, {'mid': 10000})
+    
+    def device_status(self):
+        return {**super().device_status(), 'illumination': self.illumination, 'rgb': self.rgb}.copy()
+    
+    @property
+    def illumination(self):
+        return self._data.get('illumination', '')
+    
+    @property
+    def proto_version(self):
+        return self._data.get('proto_version', '')
+
+    @property
+    def rgb(self):
+        return int(self._data.get('rgb', -1))
+    
+    @rgb.setter
+    def rgb(self, value):
+        self.write_device('gateway', self.sid, 0, {'rgb': value})
+        
+    @property
+    def model(self):
+        return self._data.get('model')
+    
+    @property
+    def short_id(self):
+        return self._data.get('short_id')
+    
 class CtrlNeutral(AqaraSubDevice):
-    def __init__(self, sid:str, gateway:Gateway):
+    def __init__(self, sid:str, gateway:GatewayInterface):
         super().__init__(sid, gateway)
         self.writable = True
         self.channel_0 = Button('channel_0', self)
@@ -316,7 +310,7 @@ class CtrlNeutral(AqaraSubDevice):
         
 
 class CtrlNeutral2(CtrlNeutral):
-    def __init__(self, sid:str, gateway:Gateway):
+    def __init__(self, sid:str, gateway:GatewayInterface):
         super().__init__(sid, gateway)
         self.channel_1 = Button('channel_1', self)
     
@@ -331,7 +325,7 @@ class CtrlNeutral2(CtrlNeutral):
 
 
 class Plug(AqaraSubDevice):
-    def __init__(self, sid:str, gateway:Gateway):
+    def __init__(self, sid:str, gateway:GatewayInterface):
         super(Plug, self).__init__(sid, gateway)
         self.power = Button('status', self)
         self.writable = True
