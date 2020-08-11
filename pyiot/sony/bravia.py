@@ -152,7 +152,6 @@ class Bravia:
         self._dev_init()
     
     def _dev_init(self):
-        print(self.get_system_info())
         if self.power:
             self.ircc_code = self.get_all_commands()
             self._data.update(self.get_system_info())

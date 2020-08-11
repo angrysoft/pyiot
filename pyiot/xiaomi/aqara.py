@@ -24,6 +24,7 @@ import threading
 from datetime import datetime
 from pyiot.watcher import Watcher, WatcherBaseDriver
 from pyiot.base import BaseDeviceInterface
+from pyiot.devicesexceptinos import DeviceIsOffline
 
 
 class GatewayWatcher(WatcherBaseDriver):
@@ -53,12 +54,13 @@ class GatewayWatcher(WatcherBaseDriver):
     def stop(self):
         self._loop = False
         self.sock.close()
-        
 
+ 
 class Gateway(BaseDeviceInterface):
     def __init__(self, ip='auto', port=9898, sid='', gwpasswd=''):
         super().__init__(sid)
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
+        self.sock.settimeout(10)
         self.aes_key_iv = bytes([0x17, 0x99, 0x6d, 0x09, 0x3d, 0x28, 0xdd, 0xb3, 0xba, 0x69, 0x5a, 0x2e, 0x6f, 0x58, 0x56, 0x2e])
         self.multicast = ('224.0.0.50', 4321)
         if ip == 'auto':
@@ -157,7 +159,7 @@ class Gateway(BaseDeviceInterface):
             ret.append(self.read_device(_id))
         return ret
     
-    def accept_join(self, status=True):
+    def accept_join(self, status: bool = True):
         """Allow adding sub-devices
         
         Args:
@@ -212,8 +214,11 @@ class Gateway(BaseDeviceInterface):
         return json.dumps(args)
 
     def _send_multicast(self, **kwargs):
-        return self._send(kwargs, self.multicast)
-
+        try:
+            return self._send(kwargs, self.multicast)
+        except socket.timeout:
+            raise DeviceIsOffline
+        
     def _send_unicast(self, **kwargs):
         return self._send(kwargs, self.unicast)
 
