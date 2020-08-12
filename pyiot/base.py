@@ -6,7 +6,7 @@ class DeviceStatus:
     def __init__(self) -> None:
         self._data:Dict[str, Any]
     
-    gupdef register_property(self, property_name:str, property_name_setter:str):
+    def register_property(self, property_name:str, property_name_setter:str):
         pass
     
     def update(self, value:Dict[str,Any]):
