@@ -20,7 +20,6 @@ import socket
 import json
 import binascii
 from Cryptodome.Cipher import AES
-import threading
 from datetime import datetime
 from pyiot.watcher import Watcher, WatcherBaseDriver
 from pyiot.base import BaseDeviceInterface
@@ -72,17 +71,8 @@ class GatewayInterface:
         self.gwpasswd = gwpasswd
         self._token: str = ''
         self._subdevices:Dict[str, AqaraSubDevice] = dict()
-        self._init_device()
         self.watcher: Watcher = Watcher(GatewayWatcher())
         self.watcher.add_report_handler(self._handle_events)
-           
-    def _init_device(self):
-        data = self.read_device(self.sid)
-        self.report(data)
-    
-    def heartbeat(self, data:Dict[str,str]) -> None:
-        if 'token' in data:
-            self.token = data['token']
     
     def register_sub_device(self, dev:AqaraSubDevice):
         self._subdevices[dev.sid] = dev
@@ -91,7 +81,11 @@ class GatewayInterface:
         del self._subdevices[sid]
         
     def _handle_events(self, event:Dict[str,Any]):
-        dev = self._subdevices.get(event.get('sid', ''))
+        _sid :str = event.get('sid', '')
+        if _sid == self.sid and 'token' in event:
+            self.token = event['token']
+            
+        dev = self._subdevices.get(_sid)
         if dev:
             if event.get('cmd') == 'report':
                 dev.report(event)
@@ -159,7 +153,7 @@ class GatewayInterface:
         permission = {True: 'yes', False: 'no'}.get(status)
         return self.write_device('gateway', self.sid, 0, {"join_permission": f"{permission}"})
     
-    def remove_device(self, sid):
+    def remove_device(self, sid: str):
         """Delete a sub-device"""
         return self.write_device('gateway', self.sid, 0, {'remove_device': sid})
         
