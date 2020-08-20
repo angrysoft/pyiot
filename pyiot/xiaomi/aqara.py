@@ -25,7 +25,8 @@ from datetime import datetime
 from pyiot.watcher import Watcher, WatcherBaseDriver
 from pyiot.base import BaseDeviceInterface
 from pyiot.devicesexceptinos import DeviceIsOffline
-from typing import Dict, Any
+from typing import Callable, Dict, Any, List, Optional, Tuple
+from __future__ import annotations
 
 
 class GatewayWatcher(WatcherBaseDriver):
@@ -41,14 +42,12 @@ class GatewayWatcher(WatcherBaseDriver):
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
         self.sock.bind((self.muliticast, self.port))
 
-    def watch(self, handler):
+    def watch(self, handler:Callable[[Optional[Dict[str,Any]]], None]) -> None:
         while self._loop:
             data, addr = self.sock.recvfrom(1024)
-            msg = json.loads(data)
-            dev_data = msg.get('data')
-            if type(dev_data) == str:
-                dev_data = json.loads(dev_data)
-                msg['data'] = dev_data
+            msg:Dict[str,Any] = json.loads(data)
+            if isinstance(msg.get('data', {}), str):
+                msg['data'] = json.loads(msg['data']) 
                 msg['from'] = addr
             handler(msg)
     
@@ -58,11 +57,11 @@ class GatewayWatcher(WatcherBaseDriver):
 
 
 class GatewayInterface:
-    def __init__(self, ip='auto', port=9898, sid='', gwpasswd=''):
+    def __init__(self, ip:str = 'auto', port:int = 9898, sid:str = '', gwpasswd:str = ''):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
         self.sock.settimeout(10)
         self.aes_key_iv = bytes([0x17, 0x99, 0x6d, 0x09, 0x3d, 0x28, 0xdd, 0xb3, 0xba, 0x69, 0x5a, 0x2e, 0x6f, 0x58, 0x56, 0x2e])
-        self.multicast = ('224.0.0.50', 4321)
+        self.multicast: Tuple[str,int] = ('224.0.0.50', 4321)
         if ip == 'auto':
             gateway: Dict[str, str] = self.whois()
             self.unicast = (gateway.get('ip'), int(gateway.get('port',0)))
@@ -71,10 +70,10 @@ class GatewayInterface:
             self.unicast = (ip, port)
             self.sid = sid
         self.gwpasswd = gwpasswd
-        self._token = None
+        self._token: str = ''
         self._subdevices:Dict[str, AqaraSubDevice] = dict()
         self._init_device()
-        self.watcher = Watcher(GatewayWatcher())
+        self.watcher: Watcher = Watcher(GatewayWatcher())
         self.watcher.add_report_handler(self._handle_events)
            
     def _init_device(self):
@@ -91,8 +90,8 @@ class GatewayInterface:
     def unregister_sub_device(self, sid):
         del self._subdevices[sid]
         
-    def _handle_events(self, event):
-        dev = self._subdevices.get(event.get('sid'))
+    def _handle_events(self, event:Dict[str,Any]):
+        dev = self._subdevices.get(event.get('sid', ''))
         if dev:
             if event.get('cmd') == 'report':
                 dev.report(event)
@@ -100,28 +99,28 @@ class GatewayInterface:
                 dev.heartbeat(event)
 
     @property
-    def token(self):
+    def token(self) -> str:
         return self._token
 
     @token.setter
-    def token(self, value):
+    def token(self, value:str):
         self._token = value
 
     def whois(self):
         """Discover the gateway device send multicast msg (IP: 224.0.0.50 peer_port: 4321 protocal: UDP)"""
         return self._send_multicast(cmd='whois')
 
-    def get_device_list(self):
+    def get_device_list(self) -> List[Dict[str,Any]]:
         """The command is sent via unicast to the UDP 9898 port of the gateway,
         which is used to obtain the sub-devices in the gateway."""
 
         return self._send_unicast(cmd='discovery')
 
-    def get_id_list(self):
+    def get_id_list(self) -> List[str]:
         ret = self._send_unicast(cmd='get_id_list')
-        return ret.get('data')
+        return ret.get('data', [])
 
-    def read_device(self, sid):
+    def read_device(self, sid:str):
         """Reading devices
         Send the "read" command via unicast to the gateway's UDP 9898 port.
         Users can take the initiative to read the attribute status of each device,
@@ -129,12 +128,12 @@ class GatewayInterface:
 
         return self._send_unicast(cmd='read', sid=sid)
 
-    def write_device(self, model, sid, short_id=None, data={}):
+    def write_device(self, model:str, sid:str, short_id:Optional[str]=None, data:Dict[str,Any]={}):
         """Send the "write" command via unicast to the gateway's UDP 9898 port.
         When users need to control the device, the user can use the "write" command."""
         _data = data
         _data['key'] = self.get_key()
-        msg = dict(cmd='write', model=model, sid=sid)
+        msg:Dict[str,Any] = dict(cmd='write', model=model, sid=sid)
         if short_id is not None:
             msg['short_id'] = short_id
         if data:
@@ -164,9 +163,9 @@ class GatewayInterface:
         """Delete a sub-device"""
         return self.write_device('gateway', self.sid, 0, {'remove_device': sid})
         
-    def refresh_token(self):
+    def refresh_token(self) -> None:
         ret = self._send_unicast(cmd='get_id_list')
-        self._token = ret.get('token')
+        self._token = ret.get('token', '')
 
     def get_key(self):
         """Get current gateway key"""
@@ -176,24 +175,20 @@ class GatewayInterface:
         encrypted = cipher.encrypt(self.token.encode('utf8'))
         return binascii.hexlify(encrypted).decode()
 
-
-    def _cmd(self, args):
-        return json.dumps(args)
-
-    def _send_multicast(self, **kwargs):
+    def _send_multicast(self, **kwargs:Any) -> Dict[str,Any]:
         try:
             return self._send(kwargs, self.multicast)
         except socket.timeout:
             raise DeviceIsOffline
         
-    def _send_unicast(self, **kwargs):
+    def _send_unicast(self, **kwargs) -> Dict[str,Any]:
         return self._send(kwargs, self.unicast)
 
-    def _send(self, msg, addr):
-        self.sock.sendto(self._cmd(msg).encode(), addr)
+    def _send(self, msg:Dict[str,Any], addr:str) -> Dict[str,Any]:
+        self.sock.sendto(json.dumps(msg).encode(), addr)
         return self._answer()
 
-    def _answer(self):
+    def _answer(self) -> Dict[str,Any]:
         data_bytes, addr = self.sock.recvfrom(1024)
         if data_bytes:
             msg = json.loads(data_bytes.decode('utf-8'))

@@ -6,14 +6,14 @@ class DeviceStatus:
     def __init__(self) -> None:
         self._data:Dict[str, Any]
     
-    def register_property(self, property_name:str, property_name_setter:str):
+    def register_property(self, property_name:str) -> None: # , property_name_setter:str) -> None:
         pass
     
     def update(self, value:Dict[str,Any]):
         pass
     
     def get(self, name:str) -> str:
-        return getattr(self, name, default="")
+        return getattr(self, name, "")
     
     def set(self, name:str, value:str):
         if hasattr(self, name):
@@ -48,10 +48,11 @@ class DeviceStatus:
     
     
 class BaseDevice:
-    def __new__(cls):
+    def __new__(cls, sid:str):
         cls._traits:Set[str] = set()
         cls._cmds:Set[str] = set()
         cls.status:DeviceStatus = DeviceStatus()
+        cls.status.set('sid', sid)
         for _base_class in cls.__bases__:
             _name: str = _base_class.__name__
             if issubclass(_base_class, Trait):
@@ -62,9 +63,9 @@ class BaseDevice:
         
         return super(BaseDevice, cls).__new__(cls)
     
-    def __init__(self, sid:str) -> None:
+    # def __init__(self, sid:str) -> None:
     
-        print('init Basedev')
+    #     print('init Basedev')
     
     @property
     def commands(self) -> Set[str]:
@@ -81,7 +82,6 @@ class BaseDevice:
                 
     def query(self, name:str) -> Any:
         return self.status.get(name)
-    
     
     @classmethod    
     def get_bases(cls):
