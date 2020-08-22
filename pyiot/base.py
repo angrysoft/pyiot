@@ -1,14 +1,19 @@
 from typing import Set, Any, Dict
 from pyiot.traits import Trait
 
+class Attributes:
+    def __init__(self, name:str, attr_type:Any) -> None:
+        self.name = name
+        self.value = attr_type()
 
 class DeviceStatus:
     def __init__(self) -> None:
         self._data:Dict[str, Any]
+        self._attributes: Set[str] = set()
     
-    def register_property(self, property_name:str) -> None: # , property_name_setter:str) -> None:
-        pass
-    
+    def register_property(self, property_name:str, property_type:Any) -> None:
+        self._data[property_name] = property_type()
+        
     def update(self, value:Dict[str,Any]):
         pass
     
@@ -20,11 +25,11 @@ class DeviceStatus:
             setattr(self, name, value)    
     
     @property
-    def sid(self):
+    def sid(self) -> str:
         return self.get("sid")
     
     @property
-    def name(self):
+    def name(self) -> str:
         return self.get('name')
     
     @name.setter
@@ -32,7 +37,7 @@ class DeviceStatus:
         self.set('name', value)
     
     @property
-    def place(self):
+    def place(self) -> str:
         return self.get('place')
     
     @place.setter
@@ -46,13 +51,17 @@ class DeviceStatus:
     def device_status(self) -> Dict[str, str]:
         return {"sid": self.sid, "name": self.name, "place": self.place}
     
+    def __getattribute__(self, name: str) -> Any:
+        if name in self._data:
+            return self._data['name']
+    def __setattribute__(self)
+    
     
 class BaseDevice:
     def __new__(cls, sid:str):
         cls._traits:Set[str] = set()
         cls._cmds:Set[str] = set()
         cls.status:DeviceStatus = DeviceStatus()
-        cls.status.set('sid', sid)
         for _base_class in cls.__bases__:
             _name: str = _base_class.__name__
             if issubclass(_base_class, Trait):
@@ -63,9 +72,8 @@ class BaseDevice:
         
         return super(BaseDevice, cls).__new__(cls)
     
-    # def __init__(self, sid:str) -> None:
-    
-    #     print('init Basedev')
+    def __init__(self, sid:str) -> None:
+        self.status.set('sid', sid)
     
     @property
     def commands(self) -> Set[str]:

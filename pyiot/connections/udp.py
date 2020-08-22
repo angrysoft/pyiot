@@ -60,20 +60,20 @@ class UdpConnection:
             raise ValueError('port is not set')
         return (self.unicast_ip, self.unicast_port)
     
-    def _send_multicast(self, **kwargs:Any) -> Dict[str,Any]:
+    def send_multicast(self, **kwargs:Any) -> Dict[str,Any]:
         try:
-            return self._send(kwargs, self.multicast_addr)
+            return self.send(kwargs, self.multicast_addr)
         except socket.timeout:
             raise DeviceIsOffline
         
-    def _send_unicast(self, **kwargs:Any) -> Dict[str,Any]:
-        return self._send(kwargs, self.unicast_addr)
+    def send_unicast(self, **kwargs:Any) -> Dict[str,Any]:
+        return self.send(kwargs, self.unicast_addr)
 
-    def _send(self, msg:Dict[str,Any], addr:Tuple[str,int]) -> Dict[str,Any]:
+    def send(self, msg:Dict[str,Any], addr:Tuple[str,int]) -> Dict[str,Any]:
         self.sock.sendto(json.dumps(msg).encode(), addr)
-        return self._answer()
+        return self.get_answer()
 
-    def _answer(self) -> Dict[str,Any]:
+    def get_answer(self) -> Dict[str,Any]:
         data_bytes, addr = self.sock.recvfrom(1024)
         if data_bytes:
             msg = json.loads(data_bytes.decode('utf-8'))

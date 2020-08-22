@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+
 __all__ = ['GatewayWatcher', 'GatewayInterface', 'Gateway', 'CtrlNeutral', 'CtrlNeutral2', 'Plug', 'SensorSwitchAq2', 
            'Switch', 'SensorHt', 'WeatherV1', 'Magnet', 'SensorMotionAq2']
 
@@ -23,10 +25,8 @@ import binascii
 from Cryptodome.Cipher import AES
 from datetime import datetime
 from pyiot.watcher import Watcher, WatcherBaseDriver
-from pyiot.base import BaseDeviceInterface
-from pyiot.devicesexceptinos import DeviceIsOffline
-from typing import Callable, Dict, Any, List, Optional, Tuple
-from __future__ import annotations
+from pyiot.base import BaseDevice
+from typing import Callable, Dict, Any, List, Optional
 
 
 class GatewayWatcher(WatcherBaseDriver):
@@ -60,14 +60,16 @@ class GatewayInterface:
     def __init__(self, ip:str = 'auto', port:int = 9898, sid:str = '', gwpasswd:str = ''):
         self.conn = UdpConnection()
         self.aes_key_iv = bytes([0x17, 0x99, 0x6d, 0x09, 0x3d, 0x28, 0xdd, 0xb3, 0xba, 0x69, 0x5a, 0x2e, 0x6f, 0x58, 0x56, 0x2e])
-        self.multicast: Tuple[str,int] = ('224.0.0.50', 4321)
+        self.conn.multicast_ip = '224.0.0.50'
+        self.conn.multicast_port = 4321
         if ip == 'auto':
             gateway: Dict[str, str] = self.whois()
             self.conn.unicast_ip = gateway.get('ip', '')
             self.conn.unicast_port = int(gateway.get('port',0))
             self.sid: str = gateway.get('sid','') 
         else:
-            self.unicast = (ip, port)
+            self.conn.unicast_ip = ip
+            self.conn.unicast_port = port
             self.sid = sid
         self.gwpasswd = gwpasswd
         self._token: str = ''
@@ -76,9 +78,9 @@ class GatewayInterface:
         self.watcher.add_report_handler(self._handle_events)
     
     def register_sub_device(self, dev:AqaraSubDevice):
-        self._subdevices[dev.sid] = dev
+        self._subdevices[dev.status.sid] = dev
     
-    def unregister_sub_device(self, sid):
+    def unregister_sub_device(self, sid:str):
         del self._subdevices[sid]
         
     def _handle_events(self, event:Dict[str,Any]):
@@ -88,10 +90,7 @@ class GatewayInterface:
             
         dev = self._subdevices.get(_sid)
         if dev:
-            if event.get('cmd') == 'report':
-                dev.report(event)
-            elif event.get('cmd') == 'heartbeat':
-                dev.heartbeat(event)
+            dev.status.update(event)
 
     @property
     def token(self) -> str:
@@ -103,27 +102,28 @@ class GatewayInterface:
 
     def whois(self):
         """Discover the gateway device send multicast msg (IP: 224.0.0.50 peer_port: 4321 protocal: UDP)"""
-        return self._send_multicast(cmd='whois')
+        return self.conn.send_multicast(cmd='whois')
 
     def get_device_list(self) -> List[Dict[str,Any]]:
         """The command is sent via unicast to the UDP 9898 port of the gateway,
         which is used to obtain the sub-devices in the gateway."""
 
-        return self._send_unicast(cmd='discovery')
-
-    def get_id_list(self) -> List[str]:
-        ret = self._send_unicast(cmd='get_id_list')
+        ret = self.conn.send_unicast(cmd='discovery')
         return ret.get('data', [])
 
-    def read_device(self, sid:str):
+    def get_id_list(self) -> List[str]:
+        ret = self.conn.send_unicast(cmd='get_id_list')
+        return ret.get('data', [])
+
+    def read_device(self, sid:str) -> Dict[str, Any]:
         """Reading devices
         Send the "read" command via unicast to the gateway's UDP 9898 port.
         Users can take the initiative to read the attribute status of each device,
         and the gateway returns all the attribute information associated with the device."""
 
-        return self._send_unicast(cmd='read', sid=sid)
+        return self.conn.send_unicast(cmd='read', sid=sid)
 
-    def write_device(self, model:str, sid:str, short_id:Optional[str]=None, data:Dict[str,Any]={}):
+    def write_device(self, model:str, sid:str, short_id:Optional[str]=None, data:Dict[str,Any]={}) -> Dict[str, Any]:
         """Send the "write" command via unicast to the gateway's UDP 9898 port.
         When users need to control the device, the user can use the "write" command."""
         _data = data
@@ -133,7 +133,7 @@ class GatewayInterface:
             msg['short_id'] = short_id
         if data:
             msg['data'] = _data
-        return self._send_unicast(cmd='write', model=model, sid=sid, key=self.get_key(), data=data)
+        return self.conn.send_unicast(cmd='write', model=model, sid=sid, key=self.get_key(), data=data)
         
     def read_all_devices(self):
         id_list = self.get_id_list()
@@ -159,7 +159,7 @@ class GatewayInterface:
         return self.write_device('gateway', self.sid, 0, {'remove_device': sid})
         
     def refresh_token(self) -> None:
-        ret = self._send_unicast(cmd='get_id_list')
+        ret = self.conn.send_unicast(cmd='get_id_list')
         self._token = ret.get('token', '')
 
     def get_key(self):
@@ -169,65 +169,31 @@ class GatewayInterface:
         cipher = AES.new(self.gwpasswd.encode('utf8'), AES.MODE_CBC, iv=self.aes_key_iv)
         encrypted = cipher.encrypt(self.token.encode('utf8'))
         return binascii.hexlify(encrypted).decode()
-
-    def _send_multicast(self, **kwargs:Any) -> Dict[str,Any]:
-        try:
-            return self._send(kwargs, self.multicast)
-        except socket.timeout:
-            raise DeviceIsOffline
-        
-    def _send_unicast(self, **kwargs) -> Dict[str,Any]:
-        return self._send(kwargs, self.unicast)
-
-    def _send(self, msg:Dict[str,Any], addr:str) -> Dict[str,Any]:
-        self.sock.sendto(json.dumps(msg).encode(), addr)
-        return self._answer()
-
-    def _answer(self) -> Dict[str,Any]:
-        data_bytes, addr = self.sock.recvfrom(1024)
-        if data_bytes:
-            msg = json.loads(data_bytes.decode('utf-8'))
-            dev_data = msg.get('data')
-            if type(dev_data) == str:
-                dev_data = json.loads(dev_data)
-                msg['data'] = dev_data
-            return msg
-        else:
-            return {}
     
-    
-class AqaraSubDevice(BaseDeviceInterface):
+
+class AqaraSubDevice(BaseDevice):
     def __init__(self, sid:str, gateway:GatewayInterface):
         super().__init__(sid)
         self.gateway = gateway
+        self.status.register_property('voltage')
+        self.status.register_property('short_id')
         self._data:Dict[str,Any]
-        self._data["voltage"] = 3300
-        self._data["low_voltage"] = 2800
-        self._init_device()
+        self.status.set("voltage", 3300)
+        self.status.set("low_voltage", 2800)
         self.writable =False
-    
-    def _init_device(self):
-        self.report(self.gateway.read_device(self.sid))
+        self.status.update(self.gateway.read_device(self.status.sid))
         self.gateway.register_sub_device(self)
 
-    def write(self, data):
+    def write(self, data:Dict[str, Any]):
         if type(data) is not dict:
             raise ValueError('Data argument is not dict')
         if not self.writable:
             raise PermissionError('Device is not writable')
-        self.gateway.write_device(self.model,
-                                  self.sid,
-                                  self.short_id,
-                                  data.get('data'))
+        self.gateway.write_device(self.status.model,
+                                  self.status.sid,
+                                  self.status.short_id,
+                                  data.get('data', {}))
     
-    @property
-    def voltage(self):
-        return self._data.get('voltage', -1)
-        
-    @property
-    def short_id(self):
-        return self._data.get('short_id')
-
                         
 class Gateway(AqaraSubDevice):    
     def __init__(self, sid:str, gateway:GatewayInterface):
