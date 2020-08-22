@@ -1,2 +1,0 @@
-class DeviceIsOffline(Exception):
-    pass

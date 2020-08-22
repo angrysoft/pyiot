@@ -1,8 +1,7 @@
-from typing import Any, Dict, Union
+from typing import Any, Dict
 from urllib.parse import quote
 from urllib.request import urlopen, Request
 import urllib.error
-import http.client
 from base64 import b64encode
 import json
 from __future__ import annotations
@@ -43,16 +42,16 @@ class HttpConnection:
     def get(self, path:str='', query: Dict[str,str]={}) -> Response:
         return self.request(method='GET', path=path, query=query)
 
-    def post(self, path='', data=None, raw=None, headers={}, query={}):
+    def post(self, path:str='', data:Dict[str,Any]={}, raw:str='', headers:Dict[str,str]={}, query:Dict[str,str]={}) -> Response:
         return self.request(path, method='POST', data=data, raw=raw, headers=headers, query=query)
 
-    def put(self, path='', data=None, headers={}, query={}):
+    def put(self, path:str='', data:Dict[str,Any]={}, raw:str='', headers:Dict[str,str]={}, query:Dict[str,str]={}) -> Response:
         return self.request(path, method='PUT', data=data, headers=headers, query=query)
 
-    def delete(self, path, query={}):
+    def delete(self, path:str='', query:Dict[str,str]={}) -> Response:
         return self.request(path, method='DELETE', query=query)
 
-    def head(self, path, query={}):
+    def head(self, path:str='', query:Dict[str,str]={}) -> Response:
         return self.request(path, method='HEAD', query=query)
 
     def request(self, path:str, method:str='GET', data:Dict[str,Any]={}, raw:str='', headers:Dict[str,str]={}, query:Dict[str,str]={}) -> Response:
@@ -65,6 +64,9 @@ class HttpConnection:
                 _data:str = json.dumps(data)
             except json.JSONDecodeError:
                 raise ValueError(f'params parsing error {data}')
+        else:
+            _data:str = ''
+                
         if query:
             _query = f'?{_query}'
         
@@ -74,10 +76,11 @@ class HttpConnection:
         except urllib.error.HTTPError as err:
             return Response(err)
         except urllib.error.URLError as err:
-            return TimeoutError(err)
+            # return TimeoutError(err)
+            return Response(err)
 
 class Response:
-    def __init__(self, resp:http.client.HTTPResponse):
+    def __init__(self, resp:Any):
         self.resp = resp
         self._headers = {}
         if resp.readable:

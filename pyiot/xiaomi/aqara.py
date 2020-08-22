@@ -16,6 +16,7 @@ __all__ = ['GatewayWatcher', 'GatewayInterface', 'Gateway', 'CtrlNeutral', 'Ctrl
            'Switch', 'SensorHt', 'WeatherV1', 'Magnet', 'SensorMotionAq2']
 
 
+from pyiot.connections.udp import UdpConnection
 import socket
 import json
 import binascii
@@ -57,13 +58,13 @@ class GatewayWatcher(WatcherBaseDriver):
 
 class GatewayInterface:
     def __init__(self, ip:str = 'auto', port:int = 9898, sid:str = '', gwpasswd:str = ''):
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
-        self.sock.settimeout(10)
+        self.conn = UdpConnection()
         self.aes_key_iv = bytes([0x17, 0x99, 0x6d, 0x09, 0x3d, 0x28, 0xdd, 0xb3, 0xba, 0x69, 0x5a, 0x2e, 0x6f, 0x58, 0x56, 0x2e])
         self.multicast: Tuple[str,int] = ('224.0.0.50', 4321)
         if ip == 'auto':
             gateway: Dict[str, str] = self.whois()
-            self.unicast = (gateway.get('ip'), int(gateway.get('port',0)))
+            self.conn.unicast_ip = gateway.get('ip', '')
+            self.conn.unicast_port = int(gateway.get('port',0))
             self.sid: str = gateway.get('sid','') 
         else:
             self.unicast = (ip, port)
