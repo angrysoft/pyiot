@@ -123,7 +123,7 @@ class GatewayInterface:
 
         return self.conn.send_unicast(cmd='read', sid=sid)
 
-    def write_device(self, model:str, sid:str, short_id:Optional[str]=None, data:Dict[str,Any]={}) -> Dict[str, Any]:
+    def write_device(self, model:str, sid:str, short_id:Optional[int]=None, data:Dict[str,Any]={}) -> Dict[str, Any]:
         """Send the "write" command via unicast to the gateway's UDP 9898 port.
         When users need to control the device, the user can use the "write" command."""
         _data = data
@@ -146,7 +146,7 @@ class GatewayInterface:
         """Allow adding sub-devices
         
         Args:
-            status (bool): True to allow adding sub-device False dissalow
+            status (bool): True to allow adding sub-device False disallow
         
         Note: The operation to add a sub-device needs to be completed within 30s.
         """

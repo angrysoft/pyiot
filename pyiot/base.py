@@ -9,13 +9,25 @@ class Attributes:
 class DeviceStatus:
     def __init__(self) -> None:
         self._data:Dict[str, Any]
-        self._attributes: Set[str] = set()
+        self._setters: Set[str] = set()
     
-    def register_property(self, property_name:str, property_type:Any) -> None:
+    def register_property(self, property_name:str, property_type:Any, property_has_setter:bool = False) -> None:
         self._data[property_name] = property_type()
+        if property_has_setter:
+            self._setters.add(property_name)
+    
+    def unregister_property(self, property_name:str) -> None:
+        if property_name in self._data:
+            del self._data[property_name]
+        if property_name in self._setters:
+            self._setters.remove(property_name)
         
     def update(self, value:Dict[str,Any]):
-        pass
+        for _name in value:
+            if _name in self._setters:
+            self._data[_name] = value[_name]
+        else:
+            raise AttributeError('Property readonly')
     
     def get(self, name:str) -> str:
         return getattr(self, name, "")
@@ -54,7 +66,12 @@ class DeviceStatus:
     def __getattribute__(self, name: str) -> Any:
         if name in self._data:
             return self._data['name']
-    def __setattribute__(self)
+        
+    def __setattribute__(self, name:str , value:Any):
+        if name in self._setters:
+            self._data[name] = value
+        else:
+            raise AttributeError('Property readonly')
     
     
 class BaseDevice:
