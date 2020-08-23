@@ -9,7 +9,7 @@ class Trait(ABC):
 
 class OnOff(Trait):
     _commands:Set[str] = {'on', 'off'}
-    _propertyies: Dict[str, str] = {'power':'power'}
+    _properties: Dict[str, Any] = {'power': bool}
     
     @abstractmethod
     def on(self, **kwargs:Any) -> None:
@@ -30,7 +30,7 @@ class OnOff(Trait):
     
 class Dimmer(Trait):
     _commands:Set[str] = {'set_bright'}
-    _property: Dict[str, str] = {'bright':'bright'}
+    _properties: Dict[str, Any] = {'bright': int}
     
     @abstractmethod
     def set_bright(self):
@@ -38,7 +38,11 @@ class Dimmer(Trait):
     
 
 class Toggle(Trait):
+    _commands:Set[str] = {'set_bright'}
+    _properties: Dict[str, Any] = {}
+    
+    @abstractmethod
     def toggle(self) -> None:
-        print("toogle")
+        pass
 
  

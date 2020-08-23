@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from __future__ import annotations
+from pyiot.traits import OnOff
 
 __all__ = ['GatewayWatcher', 'GatewayInterface', 'Gateway', 'CtrlNeutral', 'CtrlNeutral2', 'Plug', 'SensorSwitchAq2', 
            'Switch', 'SensorHt', 'WeatherV1', 'Magnet', 'SensorMotionAq2']
@@ -134,15 +135,8 @@ class GatewayInterface:
         if data:
             msg['data'] = _data
         return self.conn.send_unicast(cmd='write', model=model, sid=sid, key=self.get_key(), data=data)
-        
-    def read_all_devices(self):
-        id_list = self.get_id_list()
-        ret = []
-        for _id in id_list:
-            ret.append(self.read_device(_id))
-        return ret
     
-    def accept_join(self, status: bool = True):
+    def accept_join(self, status: bool = True) -> Dict[str, Any]:
         """Allow adding sub-devices
         
         Args:
@@ -154,7 +148,7 @@ class GatewayInterface:
         permission = {True: 'yes', False: 'no'}.get(status)
         return self.write_device('gateway', self.sid, 0, {"join_permission": f"{permission}"})
     
-    def remove_device(self, sid: str):
+    def remove_device(self, sid: str) -> Dict[str, Any]:
         """Delete a sub-device"""
         return self.write_device('gateway', self.sid, 0, {'remove_device': sid})
         
@@ -175,8 +169,8 @@ class AqaraSubDevice(BaseDevice):
     def __init__(self, sid:str, gateway:GatewayInterface):
         super().__init__(sid)
         self.gateway = gateway
-        self.status.register_property('voltage')
-        self.status.register_property('short_id')
+        self.status.register_property('voltage', int, True)
+        self.status.register_property('short_id', int)
         self._data:Dict[str,Any]
         self.status.set("voltage", 3300)
         self.status.set("low_voltage", 2800)
@@ -249,17 +243,16 @@ class Gateway(AqaraSubDevice):
     def short_id(self):
         return self._data.get('short_id')
     
-class CtrlNeutral(AqaraSubDevice):
+class CtrlNeutral(AqaraSubDevice, OnOff):
     def __init__(self, sid:str, gateway:GatewayInterface):
         super().__init__(sid, gateway)
         self.writable = True
-        self.channel_0 = Button('channel_0', self)
     
-    def on(self):
-        self.channel_0.on()
+    def on(self, **kwargs: Any):
+        self.write({'data': {'channel_0': 'on'}})
         
-    def off(self):
-        self.channel_0.off()
+    def off(self, **kwargs:Any):
+        self.write({'data': {'channel_0': 'off'}})
     
     def device_status(self):
         return {**super().device_status(), "channel_0": self._data.get("channel_0")}.copy()
@@ -270,10 +263,14 @@ class CtrlNeutral2(CtrlNeutral):
         super().__init__(sid, gateway)
         self.channel_1 = Button('channel_1', self)
     
-    def on(self):
-        self.write({'data': {'channel_0': 'on', 'channel_1': 'on'}})
+    def on(self, **kwargs:Any):
+        channel:Dict[str,str] = {0: {'channel_0': 'on'},
+                                 1: {'channel_1': 'on'},
+                                 "all": {'channel_0': 'on', 'channel_1': 'on'}
+                                 }.get(kwargs.get('channel', 'all'), {})
+            self.write({'data': channel})
         
-    def off(self):
+    def off(self,  **kwargs:Any):
         self.write({'data': {'channel_0': 'off', 'channel_1': 'off'}})
     
     def device_status(self):

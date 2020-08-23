@@ -1,10 +1,16 @@
 from typing import Set, Any, Dict
 from pyiot.traits import Trait
 
-class Attributes:
-    def __init__(self, name:str, attr_type:Any) -> None:
-        self.name = name
-        self.value = attr_type()
+# class Attribute:
+#     def __init__(self, name:str, attr_type:Any, readonly:bool = True) -> None:
+#         self.name = name
+#         self.value = attr_type()
+#         self._readonly = readonly
+    
+#     @property
+#     def readonly(self) -> bool:
+#         return self._readonly
+        
 
 class DeviceStatus:
     def __init__(self) -> None:
@@ -22,23 +28,32 @@ class DeviceStatus:
         if property_name in self._setters:
             self._setters.remove(property_name)
         
-    def update(self, value:Dict[str,Any]):
+    def update(self, value:Dict[str,Any]) -> None:
         for _name in value:
             if _name in self._setters:
-            self._data[_name] = value[_name]
-        else:
-            raise AttributeError('Property readonly')
+                self._data[_name] = value[_name]
+            else:
+                raise AttributeError('Property readonly')
     
     def get(self, name:str) -> str:
         return getattr(self, name, "")
     
-    def set(self, name:str, value:str):
+    def set(self, name:str, value:Any):
         if hasattr(self, name):
             setattr(self, name, value)    
     
     @property
     def sid(self) -> str:
         return self.get("sid")
+    
+    @sid.setter
+    def sid(self, value:str) -> None:
+        _sid:str = self.get('sid')
+        if not _sid:
+            self._data['sid'] = value
+        else:
+            raise ValueError('Sid alraady set')
+        
     
     @property
     def name(self) -> str:
@@ -59,6 +74,14 @@ class DeviceStatus:
     @property
     def model(self):
         return self.get('model')
+    
+    @model.setter
+    def model(self, value:str) -> None:
+        _model:str = self.get('model')
+        if not _model:
+            self._data['model'] = value
+        else:
+            raise ValueError('Model alraady set')
     
     def device_status(self) -> Dict[str, str]:
         return {"sid": self.sid, "name": self.name, "place": self.place}
@@ -84,13 +107,13 @@ class BaseDevice:
             if issubclass(_base_class, Trait):
                 cls.traits.add(_name)
                 cls._cmds.update(_base_class._commands)
-                for _prop in _base_class.properyties:
-                    cls.status.register_property(_prop)
+                for _prop in _base_class._properties:
+                    cls.status.register_property(_prop, _base_class._properties[_prop])
         
         return super(BaseDevice, cls).__new__(cls)
     
     def __init__(self, sid:str) -> None:
-        self.status.set('sid', sid)
+        self.status.sid = sid
     
     @property
     def commands(self) -> Set[str]:
@@ -111,54 +134,3 @@ class BaseDevice:
     @classmethod    
     def get_bases(cls):
         return cls.__bases__
-
-class BaseDeviceInterface:
-    def __init__(self, sid):
-        self._data = dict()
-        self._data["sid"] = sid
-        self.cmd = dict()
-    
-    def heartbeat(self, data):
-        self.report(data)
-    
-    def report(self, data:dict) -> None:
-        _data = data.copy()
-        self._data.update(_data.pop('data', {}))
-        self._data.update(_data)
-    
-    
-    @property
-    def sid(self):
-        return self._data.get("sid")
-    
-    @property
-    def name(self):
-        return self._data.get('name', "")
-    
-    @name.setter
-    def name(self, value):
-        self._data['name'] = value
-    
-    @property
-    def place(self):
-        return self._data.get('place', "")
-    
-    @place.setter
-    def place(self, value):
-        self._data['place'] = value
-    
-    @property
-    def model(self):
-        return self._data.get('model', 'unknown')
-    
-    def device_status(self) -> dict:
-        return {"sid": self.sid, "name": self.name, "place": self.place}
-    
-    def sync(self) -> dict:
-        pass
-    
-    def query(self, *params) ->dict:
-        pass
-    
-    def execute(self, command: dict) -> None:
-        pass
