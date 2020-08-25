@@ -20,6 +20,11 @@ bravia_test() {
     python -m unittest -v tests/test_sony_bravia.py
 }
 
+base_test() {
+    echo ">>> Run Base Test"
+    python -m unittest -v tests/test_base.py
+}
+
 
 while [ "$1" != "" ]; do
     arg=$1;shift
@@ -29,6 +34,7 @@ while [ "$1" != "" ]; do
         "yeelight") yeelight_test;;
         "aqara")aqara_test;;
         "bravia")bravia_test;;
+        "base")base_test;;
         "all")
         sonoff_test &&
         yeelight_test &&

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from __future__ import annotations
-from pyiot.traits import OnOff
+from pyiot.traits import MutliSwitch, OnOff
 
 __all__ = ['GatewayWatcher', 'GatewayInterface', 'Gateway', 'CtrlNeutral', 'CtrlNeutral2', 'Plug', 'SensorSwitchAq2', 
            'Switch', 'SensorHt', 'WeatherV1', 'Magnet', 'SensorMotionAq2']
@@ -186,7 +186,7 @@ class AqaraSubDevice(BaseDevice):
         self.gateway.write_device(self.status.model,
                                   self.status.sid,
                                   self.status.short_id,
-                                  data.get('data', {}))
+                                  {'data': data})
     
                         
 class Gateway(AqaraSubDevice):    
@@ -247,45 +247,45 @@ class CtrlNeutral(AqaraSubDevice, OnOff):
     def __init__(self, sid:str, gateway:GatewayInterface):
         super().__init__(sid, gateway)
         self.writable = True
+        self.status.register_property('channel_0', str)
     
-    def on(self, **kwargs: Any):
+    def on(self):
         self.write({'data': {'channel_0': 'on'}})
         
-    def off(self, **kwargs:Any):
+    def off(self):
         self.write({'data': {'channel_0': 'off'}})
     
     def device_status(self):
         return {**super().device_status(), "channel_0": self._data.get("channel_0")}.copy()
         
 
-class CtrlNeutral2(CtrlNeutral):
+class CtrlNeutral2(AqaraSubDevice, MutliSwitch):
     def __init__(self, sid:str, gateway:GatewayInterface):
         super().__init__(sid, gateway)
-        self.channel_1 = Button('channel_1', self)
+        self.status.register_property('channel_0', str)
+        self.status.register_property('channel_1', str)
     
-    def on(self, **kwargs:Any):
-        channel:Dict[str,str] = {0: {'channel_0': 'on'},
-                                 1: {'channel_1': 'on'},
-                                 "all": {'channel_0': 'on', 'channel_1': 'on'}
-                                 }.get(kwargs.get('channel', 'all'), {})
-            self.write({'data': channel})
+    def on(self, switch_no:int):
+        self.write({f'channel_{switch_no}': 'on'})
         
-    def off(self,  **kwargs:Any):
-        self.write({'data': {'channel_0': 'off', 'channel_1': 'off'}})
+    def off(self,  switch_no:int):
+        self.write({f'channel_{switch_no}': 'off'})
+        
+    def is_on(self, switch_no:int) -> bool:
+        return self.status.get(f'channel_{switch_no}') == "on"
     
-    def device_status(self):
-        return {**super().device_status(), "channel_1": self._data.get("channel_1")}.copy()
+    def is_off(self, switch_no:int) -> bool:
+        return self.status.get(f'channel_{switch_no}') == "off"
 
 
-class Plug(AqaraSubDevice):
+class Plug(AqaraSubDevice, OnOff):
     def __init__(self, sid:str, gateway:GatewayInterface):
         super(Plug, self).__init__(sid, gateway)
-        self.power = Button('status', self)
+        self.status.register_property('status', str)
         self.writable = True
     
-    @property
-    def status(self):
-        return self._data.get("status")
+    def on(self) -> None:
+        self.write({'status': 'on'})
     
     def device_status(self):
         return {**super().device_status(), "status": self.status}.copy()

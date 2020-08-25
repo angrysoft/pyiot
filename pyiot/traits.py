@@ -7,17 +7,43 @@ class Trait(ABC):
     def query(self):
         pass
 
+  
+class MutliSwitch(Trait):
+    _commands:Set[str] = {'on', 'off'}
+    _properties: Dict[str, Any] = {}
+    
+    @abstractmethod
+    def on(self, switch_no:int):
+        pass
+    
+    @abstractmethod
+    def off(self, switch_no:int):
+        pass
+    
+    @abstractmethod
+    def is_on(self, switch_no:int) -> bool:
+        pass
+    
+    @abstractmethod
+    def is_off(self, switch_no:int) -> bool:
+        pass
+    
+    @abstractmethod
+    def switch_no(self) -> int:
+        pass
+    
+
 class OnOff(Trait):
     _commands:Set[str] = {'on', 'off'}
     _properties: Dict[str, Any] = {'power': bool}
     
     @abstractmethod
-    def on(self, **kwargs:Any) -> None:
+    def on(self) -> None:
         """ Device power on """
         pass
     
     @abstractmethod
-    def off(self, **kwargs:Any) -> None:
+    def off(self) -> None:
         pass
     
     @abstractmethod

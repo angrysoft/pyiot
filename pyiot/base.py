@@ -12,7 +12,7 @@ from pyiot.traits import Trait
 #         return self._readonly
         
 
-class DeviceStatus:
+class DeviceStatus(object):
     def __init__(self) -> None:
         self._data:Dict[str, Any]
         self._setters: Set[str] = set()
@@ -42,53 +42,55 @@ class DeviceStatus:
         if hasattr(self, name):
             setattr(self, name, value)    
     
-    @property
-    def sid(self) -> str:
-        return self.get("sid")
+    # @property
+    # def sid(self) -> str:
+    #     return self.get("sid")
     
-    @sid.setter
-    def sid(self, value:str) -> None:
-        _sid:str = self.get('sid')
-        if not _sid:
-            self._data['sid'] = value
-        else:
-            raise ValueError('Sid alraady set')
+    # @sid.setter
+    # def sid(self, value:str) -> None:
+    #     _sid:str = self.get('sid')
+    #     if not _sid:
+    #         self._data['sid'] = value
+    #     else:
+    #         raise ValueError('Sid alraady set')
         
     
-    @property
-    def name(self) -> str:
-        return self.get('name')
+    # @property
+    # def name(self) -> str:
+    #     return self.get('name')
     
-    @name.setter
-    def name(self, value:str):
-        self.set('name', value)
+    # @name.setter
+    # def name(self, value:str):
+    #     self.set('name', value)
     
-    @property
-    def place(self) -> str:
-        return self.get('place')
+    # @property
+    # def place(self) -> str:
+    #     return self.get('place')
     
-    @place.setter
-    def place(self, value:str):
-        self.set('place', value)
+    # @place.setter
+    # def place(self, value:str):
+    #     self.set('place', value)
     
-    @property
-    def model(self):
-        return self.get('model')
+    # @property
+    # def model(self):
+    #     return self.get('model')
     
-    @model.setter
-    def model(self, value:str) -> None:
-        _model:str = self.get('model')
-        if not _model:
-            self._data['model'] = value
-        else:
-            raise ValueError('Model alraady set')
+    # @model.setter
+    # def model(self, value:str) -> None:
+    #     _model:str = self.get('model')
+    #     if not _model:
+    #         self._data['model'] = value
+    #     else:
+    #         raise ValueError('Model alraady set')
     
     def device_status(self) -> Dict[str, str]:
         return {"sid": self.sid, "name": self.name, "place": self.place}
     
     def __getattribute__(self, name: str) -> Any:
+        return super().__getattribute__(name)
         if name in self._data:
-            return self._data['name']
+            print('dupa')
+        #     return self._data['name']
         
     def __setattribute__(self, name:str , value:Any):
         if name in self._setters:

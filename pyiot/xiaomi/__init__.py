@@ -16,6 +16,6 @@
 #            'GatewayWatcher', 'Gateway',
 #            'PhilipsBulb']
 
-from .yeelight import *
-from .aqara import *
-from .philips_bulb import *
+# from .yeelight import *
+# from .aqara import *
+# from .philips_bulb import *
