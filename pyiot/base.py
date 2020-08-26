@@ -1,32 +1,41 @@
 from typing import Set, Any, Dict
 from pyiot.traits import Trait
 
-# class Attribute:
-#     def __init__(self, name:str, attr_type:Any, readonly:bool = True) -> None:
-#         self.name = name
-#         self.value = attr_type()
-#         self._readonly = readonly
+class Attribute:
+    def __init__(self, name:str, attr_type:Any, readonly:bool = True, updateable: bool = False) -> None:
+        self._name = name
+        self._type = attr_type
+        self._value = attr_type()
+        self._readonly = readonly
+        self._updateable = updateable
     
-#     @property
-#     def readonly(self) -> bool:
-#         return self._readonly
+    @property
+    def readonly(self) -> bool:
+        return self._readonly
+    
+    @property
+    def name(self) -> str:
+        return self._name
+    
+    @property
+    def value(self) -> Any:
+        return self._value
+    
+    @value.setter
+    def value(self, _value:Any):
+        pass
+        
         
 
 class DeviceStatus(object):
     def __init__(self) -> None:
-        self._data:Dict[str, Any]
-        self._setters: Set[str] = set()
+        self._attributes: Dict[str, Any] = {}
     
-    def register_property(self, property_name:str, property_type:Any, property_has_setter:bool = False) -> None:
-        self._data[property_name] = property_type()
-        if property_has_setter:
-            self._setters.add(property_name)
+    def register_attribute(self, attr: Attribute):
+        self._attributes[attr.name] = attr
     
-    def unregister_property(self, property_name:str) -> None:
-        if property_name in self._data:
-            del self._data[property_name]
-        if property_name in self._setters:
-            self._setters.remove(property_name)
+    def unregister_attribute(self, attr_name: str):
+        del self._attributes[attr_name]
         
     def update(self, value:Dict[str,Any]) -> None:
         for _name in value:
