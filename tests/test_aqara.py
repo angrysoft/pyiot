@@ -1,7 +1,8 @@
 from time import sleep
 import unittest
 import os
-from pyiot.xiaomi import GatewayInterface, Gateway, CtrlNeutral, CtrlNeutral2
+from pyiot.xiaomi import GatewayInterface, CtrlNeutral, CtrlNeutral2 
+# , Gateway
 
 # sid = '0x000000000545b741'
 ctrlNeural1 = '158d00024e2e5b'
@@ -26,28 +27,28 @@ class TestAqara(unittest.TestCase):
     def test_b_CtrlNeural1(self):
         dev = CtrlNeutral(ctrlNeural1, gateway=self.gw)
         sleep(0.5)
-        dev.channel_0.on()
+        dev.on()
         sleep(1)
-        self.assertTrue(dev.channel_0.is_on())
-        dev.channel_0.off()
+        self.assertTrue(dev.is_on())
+        dev.off()
         sleep(1)
-        self.assertTrue(dev.channel_0.is_off())
+        self.assertTrue(dev.is_off())
     
-    def test_c_CtrlNeural2(self):
-        dev = CtrlNeutral2(ctrlNeural2, gateway=self.gw)
-        sleep(0.5)
-        dev.channel_0.on()
-        sleep(1)
-        self.assertTrue(dev.channel_0.is_on())
-        dev.channel_0.off()
-        sleep(1)
-        self.assertTrue(dev.channel_0.is_off())
-        sleep(0.5)
-        dev.channel_1.on()
-        sleep(1)
-        self.assertTrue(dev.channel_1.is_on())
-        dev.channel_1.off()
-        sleep(1)
-        self.assertTrue(dev.channel_1.is_off())
+    # def test_c_CtrlNeural2(self):
+    #     dev = CtrlNeutral2(ctrlNeural2, gateway=self.gw)
+    #     sleep(0.5)
+    #     dev.on(0)
+    #     sleep(1)
+    #     self.assertTrue(dev.is_on(0))
+    #     dev.off(0)
+    #     sleep(1)
+    #     self.assertTrue(dev.is_off(0))
+    #     sleep(0.5)
+    #     dev.on(1)
+    #     sleep(1)
+    #     self.assertTrue(dev.is_on(1))
+    #     dev.off(1)
+    #     sleep(1)
+    #     self.assertTrue(dev.is_off(1))
         
         

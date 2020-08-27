@@ -17,5 +17,5 @@
 #            'PhilipsBulb']
 
 # from .yeelight import *
-# from .aqara import *
+from .aqara import *
 # from .philips_bulb import *

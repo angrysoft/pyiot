@@ -10,7 +10,7 @@ class Trait(ABC):
   
 class MutliSwitch(Trait):
     _commands:Set[str] = {'on', 'off'}
-    _properties: Dict[str, Any] = {switch_nombers}
+    _properties: Dict[str, Any] = {'switch_numbers': 1}
     
     @abstractmethod
     def on(self, switch_no:int):

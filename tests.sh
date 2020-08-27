@@ -25,6 +25,11 @@ base_test() {
     python -m unittest -v tests/test_base.py
 }
 
+gateway_test() {
+    echo ">>> Run Gateway Test"
+    python -m unittest -v tests/test_aqara_gateway.py
+}
+
 
 while [ "$1" != "" ]; do
     arg=$1;shift
@@ -33,6 +38,7 @@ while [ "$1" != "" ]; do
         "sonoff") sonoff_test;;
         "yeelight") yeelight_test;;
         "aqara")aqara_test;;
+        "gateway")gateway_test;;
         "bravia")bravia_test;;
         "base")base_test;;
         "all")

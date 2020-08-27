@@ -15,8 +15,20 @@
 from __future__ import annotations
 from pyiot.traits import MutliSwitch, OnOff
 
-__all__ = ['GatewayWatcher', 'GatewayInterface', 'Gateway', 'CtrlNeutral', 'CtrlNeutral2', 'Plug', 'SensorSwitchAq2', 
-           'Switch', 'SensorHt', 'WeatherV1', 'Magnet', 'SensorMotionAq2']
+__all__ = [
+    'GatewayWatcher',
+    'GatewayInterface',
+    #'Gateway',
+    'CtrlNeutral',
+    'CtrlNeutral2',
+    #'Plug',
+    #'SensorSwitchAq2', 
+    #'Switch',
+    #'SensorHt',
+    #'WeatherV1',
+    #'Magnet',
+    #'SensorMotionAq2'
+    ]
 
 
 from pyiot.connections.udp import UdpConnection
@@ -26,7 +38,7 @@ import binascii
 from Cryptodome.Cipher import AES
 from datetime import datetime
 from pyiot.watcher import Watcher, WatcherBaseDriver
-from pyiot.base import BaseDevice
+from pyiot.base import Attribute, BaseDevice
 from typing import Callable, Dict, Any, List, Optional
 
 
@@ -91,7 +103,7 @@ class GatewayInterface:
             
         dev = self._subdevices.get(_sid)
         if dev:
-            dev.status.update(event)
+            dev.status.update(event.get('data', {}))
 
     @property
     def token(self) -> str:
@@ -105,7 +117,7 @@ class GatewayInterface:
         """Discover the gateway device send multicast msg (IP: 224.0.0.50 peer_port: 4321 protocal: UDP)"""
         return self.conn.send_multicast(cmd='whois')
 
-    def get_device_list(self) -> List[Dict[str,Any]]:
+    def get_devices_list(self) -> List[Dict[str,Any]]:
         """The command is sent via unicast to the UDP 9898 port of the gateway,
         which is used to obtain the sub-devices in the gateway."""
 
@@ -127,14 +139,15 @@ class GatewayInterface:
     def write_device(self, model:str, sid:str, short_id:Optional[int]=None, data:Dict[str,Any]={}) -> Dict[str, Any]:
         """Send the "write" command via unicast to the gateway's UDP 9898 port.
         When users need to control the device, the user can use the "write" command."""
-        _data = data
+        _data = data.copy()
         _data['key'] = self.get_key()
         msg:Dict[str,Any] = dict(cmd='write', model=model, sid=sid)
         if short_id is not None:
             msg['short_id'] = short_id
         if data:
             msg['data'] = _data
-        return self.conn.send_unicast(cmd='write', model=model, sid=sid, key=self.get_key(), data=data)
+        return self.conn.send_unicast(**msg)
+        #(cmd='write', model=model, sid=sid, key=self.get_key(), data=data)
     
     def accept_join(self, status: bool = True) -> Dict[str, Any]:
         """Allow adding sub-devices
@@ -158,7 +171,7 @@ class GatewayInterface:
 
     def get_key(self):
         """Get current gateway key"""
-        if self.token is None:
+        if not self.token:
             self.refresh_token()
         cipher = AES.new(self.gwpasswd.encode('utf8'), AES.MODE_CBC, iv=self.aes_key_iv)
         encrypted = cipher.encrypt(self.token.encode('utf8'))
@@ -169,101 +182,105 @@ class AqaraSubDevice(BaseDevice):
     def __init__(self, sid:str, gateway:GatewayInterface):
         super().__init__(sid)
         self.gateway = gateway
-        self.status.register_property('voltage', int, True)
-        self.status.register_property('short_id', int)
-        self._data:Dict[str,Any]
-        self.status.set("voltage", 3300)
-        self.status.set("low_voltage", 2800)
-        self.writable =False
-        self.status.update(self.gateway.read_device(self.status.sid))
+        self.status.register_attribute(Attribute('voltage', int))
+        self.status.register_attribute(Attribute('short_id', int, readonly=True, oneshot=True))
+        self.status.register_attribute(Attribute("low_voltage", int, readonly=True, value=2800))
+        self.writable = False
+        data = self.gateway.read_device(self.status.sid)
+        print(data)
+        self.status.update(data)
         self.gateway.register_sub_device(self)
 
     def write(self, data:Dict[str, Any]):
-        if type(data) is not dict:
-            raise ValueError('Data argument is not dict')
         if not self.writable:
             raise PermissionError('Device is not writable')
         self.gateway.write_device(self.status.model,
                                   self.status.sid,
                                   self.status.short_id,
-                                  {'data': data})
+                                  data)
     
                         
-class Gateway(AqaraSubDevice):    
-    def __init__(self, sid:str, gateway:GatewayInterface):
-        super().__init__(sid, gateway)
-        self.writable = True
+# class Gateway(AqaraSubDevice):    
+#     def __init__(self, sid:str, gateway:GatewayInterface):
+#         super().__init__(sid, gateway)
+#         self.writable = True
             
-    def set_rgb(self, red=0, green=0, blue=0, dimmer=255):
-        color = (dimmer << 24) + (red << 16) + (green << 8) + blue
-        return self.write_device('gateway', self.sid, 0, {'rgb': color})
+#     def set_rgb(self, red=0, green=0, blue=0, dimmer=255):
+#         color = (dimmer << 24) + (red << 16) + (green << 8) + blue
+#         return self.write_device('gateway', self.sid, 0, {'rgb': color})
 
-    def off_led(self):
-        return self.write_device('gateway', self.sid, 0, {'rgb': 0})
+#     def off_led(self):
+#         return self.write_device('gateway', self.sid, 0, {'rgb': 0})
     
-    def play_sound(self, sound_id, volume=20):
-        """
-        Play one of standard ringtones or user-defined sound.
-        Args:
-            sound_id (int): 0-8, 10, 13, 20-29 - standard ringtones; >= 10001 - user-defined ringtones uploaded to your gateway via MiHome app
-            volume (int): level from 1 to 100
+#     def play_sound(self, sound_id, volume=20):
+#         """
+#         Play one of standard ringtones or user-defined sound.
+#         Args:
+#             sound_id (int): 0-8, 10, 13, 20-29 - standard ringtones; >= 10001 - user-defined ringtones uploaded to your gateway via MiHome app
+#             volume (int): level from 1 to 100
         
-        Check the reference to get more about sound_id value: https://github.com/louisZL/lumi-gateway-local-api/blob/master/%E7%BD%91%E5%85%B3.md
-        """
-        return self.write_device('gateway', self.sid, 0, {'mid': sound_id, 'vol': volume})
+#         Check the reference to get more about sound_id value: https://github.com/louisZL/lumi-gateway-local-api/blob/master/%E7%BD%91%E5%85%B3.md
+#         """
+#         return self.write_device('gateway', self.sid, 0, {'mid': sound_id, 'vol': volume})
 
-    def stop_sound(self):
-        """Stop playing any sound from speaker"""
-        return self.write_device('gateway', self.sid, 0, {'mid': 10000})
+#     def stop_sound(self):
+#         """Stop playing any sound from speaker"""
+#         return self.write_device('gateway', self.sid, 0, {'mid': 10000})
     
-    def device_status(self):
-        return {**super().device_status(), 'illumination': self.illumination, 'rgb': self.rgb}.copy()
+#     def device_status(self):
+#         return {**super().device_status(), 'illumination': self.illumination, 'rgb': self.rgb}.copy()
     
-    @property
-    def illumination(self):
-        return self._data.get('illumination', '')
+#     @property
+#     def illumination(self):
+#         return self._data.get('illumination', '')
     
-    @property
-    def proto_version(self):
-        return self._data.get('proto_version', '')
+#     @property
+#     def proto_version(self):
+#         return self._data.get('proto_version', '')
 
-    @property
-    def rgb(self):
-        return int(self._data.get('rgb', -1))
+#     @property
+#     def rgb(self):
+#         return int(self._data.get('rgb', -1))
     
-    @rgb.setter
-    def rgb(self, value):
-        self.write_device('gateway', self.sid, 0, {'rgb': value})
+#     @rgb.setter
+#     def rgb(self, value):
+#         self.write_device('gateway', self.sid, 0, {'rgb': value})
         
-    @property
-    def model(self):
-        return self._data.get('model')
+#     @property
+#     def model(self):
+#         return self._data.get('model')
     
-    @property
-    def short_id(self):
-        return self._data.get('short_id')
+#     @property
+#     def short_id(self):
+#         return self._data.get('short_id')
     
 class CtrlNeutral(AqaraSubDevice, OnOff):
     def __init__(self, sid:str, gateway:GatewayInterface):
         super().__init__(sid, gateway)
         self.writable = True
-        self.status.register_property('channel_0', str)
+        self.status.register_attribute(Attribute('channel_0', str))
     
     def on(self):
-        self.write({'data': {'channel_0': 'on'}})
+        self.write({'channel_0': 'on'})
         
     def off(self):
-        self.write({'data': {'channel_0': 'off'}})
+        self.write({'channel_0': 'off'})
     
-    def device_status(self):
-        return {**super().device_status(), "channel_0": self._data.get("channel_0")}.copy()
+    def is_on(self) -> bool:
+        return self.status.get('channel_0') == "on"
+    
+    def is_off(self) -> bool:
+        return self.status.get('channel_0') == "off"
+    
+#     def device_status(self):
+#         return {**super().device_status(), "channel_0": self._data.get("channel_0")}.copy()
         
 
 class CtrlNeutral2(AqaraSubDevice, MutliSwitch):
     def __init__(self, sid:str, gateway:GatewayInterface):
         super().__init__(sid, gateway)
-        self.status.register_property('channel_0', str)
-        self.status.register_property('channel_1', str)
+        self.status.register_attribute(Attribute('channel_0', str))
+        self.status.register_attribute(Attribute('channel_1', str))
     
     def on(self, switch_no:int):
         self.write({f'channel_{switch_no}': 'on'})
@@ -278,101 +295,101 @@ class CtrlNeutral2(AqaraSubDevice, MutliSwitch):
         return self.status.get(f'channel_{switch_no}') == "off"
 
 
-class Plug(AqaraSubDevice, OnOff):
-    def __init__(self, sid:str, gateway:GatewayInterface):
-        super(Plug, self).__init__(sid, gateway)
-        self.status.register_property('status', str)
-        self.writable = True
+# class Plug(AqaraSubDevice, OnOff):
+#     def __init__(self, sid:str, gateway:GatewayInterface):
+#         super(Plug, self).__init__(sid, gateway)
+#         self.status.register_property('status', str)
+#         self.writable = True
     
-    def on(self) -> None:
-        self.write({'status': 'on'})
+#     def on(self) -> None:
+#         self.write({'status': 'on'})
     
-    def device_status(self):
-        return {**super().device_status(), "status": self.status}.copy()
+#     def device_status(self):
+#         return {**super().device_status(), "status": self.status}.copy()
 
 
-class SensorSwitchAq2(AqaraSubDevice):
-    pass
+# class SensorSwitchAq2(AqaraSubDevice):
+#     pass
 
 
-class Switch(AqaraSubDevice):
-    @property
-    def status(self):
-        return self._data.get("status")
+# class Switch(AqaraSubDevice):
+#     @property
+#     def status(self):
+#         return self._data.get("status")
     
-    def device_status(self):
-        return {**super().device_status(), "status": self.status}.copy()
+#     def device_status(self):
+#         return {**super().device_status(), "status": self.status}.copy()
 
 
-class SensorHt(AqaraSubDevice):
-    @property
-    def temperature(self) -> str:
-        return self._data.get('temperature', '')
+# class SensorHt(AqaraSubDevice):
+#     @property
+#     def temperature(self) -> str:
+#         return self._data.get('temperature', '')
     
-    @property
-    def humidity(self) -> str:
-        return self._data.get('humidity', '')
+#     @property
+#     def humidity(self) -> str:
+#         return self._data.get('humidity', '')
     
-    def device_status(self):
-        return {**super().device_status(), "temperature": self.temperature, "humidity": self.humidity}.copy()
+#     def device_status(self):
+#         return {**super().device_status(), "temperature": self.temperature, "humidity": self.humidity}.copy()
 
 
-class WeatherV1(SensorHt):
-    @property
-    def pressure(self) -> str:
-        return self._data.get('pressure', '')
+# class WeatherV1(SensorHt):
+#     @property
+#     def pressure(self) -> str:
+#         return self._data.get('pressure', '')
     
-    def device_status(self):
-        return {**super().device_status(), "pressure": self.pressure}.copy()
+#     def device_status(self):
+#         return {**super().device_status(), "pressure": self.pressure}.copy()
         
 
 
-class Magnet(AqaraSubDevice):
+# class Magnet(AqaraSubDevice):
     
-    def report(self, data):
-        if 'status' in data.get('data', {}):
-            data['data']['when'] = datetime.now().isoformat()
-        super().report(data)
+#     def report(self, data):
+#         if 'status' in data.get('data', {}):
+#             data['data']['when'] = datetime.now().isoformat()
+#         super().report(data)
     
-    @property
-    def when(self):
-        return self._data.get('when', '')
+#     @property
+#     def when(self):
+#         return self._data.get('when', '')
     
-    @property
-    def status(self):
-        return self._data.get('status')
+#     @property
+#     def status(self):
+#         return self._data.get('status')
     
-    def device_status(self):
-        return {**super().device_status(), "status": self.status, "when": self.when}.copy()
+#     def device_status(self):
+#         return {**super().device_status(), "status": self.status, "when": self.when}.copy()
 
 
-class SensorMotionAq2(AqaraSubDevice):
+# class SensorMotionAq2(AqaraSubDevice):
     
-    def report(self, data):
-        if 'status' in data.get('data', {}):
-            data['data']['when'] = datetime.now().isoformat()
-        super().report(data)
+#     def report(self, data):
+#         if 'status' in data.get('data', {}):
+#             data['data']['when'] = datetime.now().isoformat()
+#         super().report(data)
     
-    @property
-    def lux(self):
-        return self._data.get('lux', -1)
+#     @property
+#     def lux(self):
+#         return self._data.get('lux', -1)
 
-class Button:
-    def __init__(self, name, device):
-        self.name = name
-        self.device = device
+# class Button:
+#     def __init__(self, name, device):
+#         self.name = name
+#         self.device = device
         
-    def on(self):
-        self.device.write({'data': {self.name: 'on'}})
+#     def on(self):
+#         self.device.write({'data': {self.name: 'on'}})
 
-    def off(self):
-        self.device.write({'data': {self.name: 'off'}})
+#     def off(self):
+#         self.device.write({'data': {self.name: 'off'}})
     
-    def toggle(self):
-        self.device.write({'data': {self.name: 'toggle'}})
+#     def toggle(self):
+#         self.device.write({'data': {self.name: 'toggle'}})
     
-    def is_on(self):
-        return self.device._data.get(self.name) == 'on'
+#     def is_on(self):
+#         return self.device._data.get(self.name) == 'on'
         
-    def is_off(self):
-        return self.device._data.get(self.name) == 'off'
+#     def is_off(self):
+#         return self.device._data.get(self.name) == 'off'
