@@ -75,6 +75,12 @@ class DeviceStatus(object):
         else:
             setattr(self, name, value)
     
+    def __call__(self) -> Dict[str, Any]:
+        ret = {}
+        for attr in self._attributes:
+            ret[attr] = self._attributes[attr].value
+        return ret
+        
     
     
 class BaseDevice:
@@ -87,8 +93,10 @@ class BaseDevice:
             if issubclass(_base_class, Trait):
                 cls._traits.add(_name)
                 cls._cmds.update(_base_class._commands)
-                # for _prop in _base_class._properties:
-                    # cls.status.register_property(_prop, _base_class._properties[_prop])
+                for _attr in _base_class._attributes:
+                    # cls.status.register_attribute(_attr)
+                    a = Attribute(*_attr)
+                    print(a)
         
         return super(BaseDevice, cls).__new__(cls)
     
@@ -119,5 +127,6 @@ class BaseDevice:
         return cls.__bases__
 
     def device_status(self) -> Dict[str, Any]:
-        return {"sid": self.status.sid, "name": self.status.name,
-                "place": self.status.place, 'traits': self.traits, 'commands': self.commands}
+        ret = {'traits': self.traits, 'commands': self.commands}
+        ret.update(self.status())
+        return ret

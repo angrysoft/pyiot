@@ -3,9 +3,7 @@ from typing import Any, Set, Dict, List
 
 
 class Trait(ABC):
-    @abstractmethod
-    def query(self):
-        pass
+   pass
 
   
 class MutliSwitch(Trait):
@@ -74,4 +72,39 @@ class Toggle(Trait):
     def toggle(self) -> None:
         pass
 
- 
+class OpenClose(Trait):
+    _commands:Set[str] = set()
+    _properties: Dict[str, Any] = {}
+    
+    @abstractmethod    
+    def is_open(self) -> bool:
+        pass
+    
+    @abstractmethod    
+    def is_close(self) -> bool:
+        pass
+
+class MotionStatus(Trait):
+    _commands:Set[str] = set()
+    _properties: Dict[str, Any] = {}
+
+class TemperatureStatus(Trait):
+    _commands:Set[str] = set()
+    _properties: Dict[str, Any] = {}
+    _attributes = {('temperature', str)}
+
+class HumidityStatus(Trait):
+    _commands:Set[str] = set()
+    _properties: Dict[str, Any] = {}
+
+class PressureStatus(Trait):
+    _commands:Set[str] = set()
+    _properties: Dict[str, Any] = {}
+
+class LuminosityStatus(Trait):
+    _commands:Set[str] = set()
+    _properties: Dict[str, Any] = {}
+
+
+    
+    

@@ -1,4 +1,4 @@
-from pyiot.xiaomi.aqara import SensorHt, SensorSwitchAq2, GatewayInterface, CtrlNeutral, CtrlNeutral2, Plug, Switch, WeatherV1
+from pyiot.xiaomi.aqara import SensorHt, SensorMotionAq2, SensorSwitchAq2,GatewayInterface, CtrlNeutral, CtrlNeutral2, Plug, Switch, WeatherV1, Magnet
 from time import sleep
 import unittest
 import os
@@ -11,8 +11,8 @@ switch = '158d00033ef2d8'
 sensor_switchaq2 = '158d000200a020'
 sensor_ht = '158d000208d668'
 weatherv1 = '158d0002e966b9'
-magnet = ''
-sensor_motionaq2 = ''
+magnet = '158d0002a67612'
+sensor_motionaq2 = '158d0002ec03fe'
 
 
 class TestAqara(unittest.TestCase):
@@ -82,21 +82,31 @@ class TestAqara(unittest.TestCase):
     
     def test_sensorswitch(self):
         dev = SensorSwitchAq2(sensor_switchaq2, gateway=self.gw)
-        print(dev.commands,dev.traits)
-        print(dev.device_status())
+        
+        print(dev.status())
     
     def test_switch(self):
         dev = Switch(switch, gateway=self.gw)
-        print(dev.commands,dev.traits)
+        print(self.gw.read_device(switch))
+        
         print(dev.device_status())
     
     def test_sensorht(self):
         dev = SensorHt(sensor_ht, gateway=self.gw)
-        print(dev.commands,dev.traits)
+        
         print(dev.device_status())
     
     def test_weather(self):
         dev = WeatherV1(weatherv1, gateway=self.gw)
-        print(dev.commands,dev.traits)
+       
+        print(dev.device_status())
+    
+    def test_magnet(self):
+        dev = Magnet(magnet, gateway=self.gw)
+        
+        print(dev.device_status())
+    
+    def test_senosrmotion(self):
+        dev = SensorMotionAq2(sensor_motionaq2, gateway=self.gw)
         print(dev.device_status())
         

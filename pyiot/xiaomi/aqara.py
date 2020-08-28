@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from __future__ import annotations
-from pyiot.traits import MutliSwitch, OnOff, Toggle
+from pyiot.traits import HumidityStatus, LuminosityStatus, MotionStatus, MutliSwitch, OnOff, OpenClose, PressureStatus, TemperatureStatus, Toggle
 
 __all__ = [
     'GatewayWatcher',
@@ -185,10 +185,11 @@ class AqaraSubDevice(BaseDevice):
         self.status.register_attribute(Attribute('short_id', int, readonly=True, oneshot=True))
         self.status.register_attribute(Attribute("low_voltage", int, readonly=True, value=2800))
         self.writable = False
-        data = self.gateway.read_device(self.status.sid)
-        print(data)
-        self.status.update(data)
         self.gateway.register_sub_device(self)
+    
+    def _init_device(self):
+        data = self.gateway.read_device(self.status.sid)
+        self.status.update(data.get('data', {}))
 
     def write(self, data:Dict[str, Any]):
         if not self.writable:
@@ -254,10 +255,12 @@ class AqaraSubDevice(BaseDevice):
 #         return self._data.get('short_id')
     
 class CtrlNeutral(AqaraSubDevice, OnOff):
+
     def __init__(self, sid:str, gateway:GatewayInterface):
         super().__init__(sid, gateway)
         self.writable = True
         self.status.register_attribute(Attribute('channel_0', str))
+        self._init_device()
     
     def on(self):
         self.write({'channel_0': 'on'})
@@ -270,9 +273,6 @@ class CtrlNeutral(AqaraSubDevice, OnOff):
     
     def is_off(self) -> bool:
         return self.status.get('channel_0') == "off"
-    
-    def device_status(self):
-        return {**super().device_status(), "channel_0": self.status.channel_0}.copy()
         
 
 class CtrlNeutral2(AqaraSubDevice, MutliSwitch):
@@ -281,7 +281,8 @@ class CtrlNeutral2(AqaraSubDevice, MutliSwitch):
         self.writable = True
         self.status.register_attribute(Attribute('channel_0', str))
         self.status.register_attribute(Attribute('channel_1', str))
-    
+        self._init_device()
+        
     def on(self, switch_no:int):
         self.write({f'channel_{switch_no}': 'on'})
         
@@ -299,11 +300,6 @@ class CtrlNeutral2(AqaraSubDevice, MutliSwitch):
     
     def switch_no(self) -> int:
         return len(self.switches())
-    
-    def device_status(self):
-        return {**super().device_status(),
-                "channel_0": self.status.channel_0,
-                "channel_1": self.status.channel_1}.copy()
 
 
 class Plug(AqaraSubDevice, OnOff, Toggle):
@@ -313,8 +309,8 @@ class Plug(AqaraSubDevice, OnOff, Toggle):
         self.status.register_attribute(Attribute('inuse', str))
         self.status.register_attribute(Attribute('power_consumed', str))
         self.status.register_attribute(Attribute('load_power', str))
-        
         self.writable = True
+        self._init_device()
     
     def on(self) -> None:
         self.write({'status': 'on'})
@@ -330,65 +326,52 @@ class Plug(AqaraSubDevice, OnOff, Toggle):
     
     def toggle(self) -> None:
         self.write({'status': 'toggle'})
-    
-    def device_status(self):
-        return {**super().device_status(), "status": self.status}.copy()
 
 
 class SensorSwitchAq2(AqaraSubDevice):
-    pass
+    def __init__(self, sid:str, gateway:GatewayInterface):
+        super().__init__(sid, gateway)
+        self._init_device()
 
 
 class Switch(AqaraSubDevice):
-    pass
-
-
-class SensorHt(AqaraSubDevice):
     def __init__(self, sid:str, gateway:GatewayInterface):
         super().__init__(sid, gateway)
-        self.status.register_attribute(Attribute('temperature', str))
+        self._init_device()
+
+
+class SensorHt(AqaraSubDevice, TemperatureStatus, HumidityStatus):
+    def __init__(self, sid:str, gateway:GatewayInterface):
+        super().__init__(sid, gateway)
+        # self.status.register_attribute(Attribute('temperature', str))
+        # self.status.register_attribute(Attribute('humidity', str))
+        self._init_device()
+
+
+class WeatherV1(AqaraSubDevice, TemperatureStatus, HumidityStatus, PressureStatus):
+    def __init__(self, sid:str, gateway:GatewayInterface):
+        super().__init__(sid, gateway)
+        # self.status.register_attribute(Attribute('temperature', str))
         self.status.register_attribute(Attribute('humidity', str))
-    
-    def device_status(self):
-        return {**super().device_status(), "temperature": self.status.temperature, "humidity": self.status.humidity}.copy()
+        self.status.register_attribute(Attribute('pressure', str))
+        self._init_device()
+  
 
-
-class WeatherV1(SensorHt):
+class Magnet(AqaraSubDevice, OpenClose):
     def __init__(self, sid:str, gateway:GatewayInterface):
         super().__init__(sid, gateway)
-        self.status.register_attribute(Attribute('pressure', str))
+        self.status.register_attribute(Attribute('status', str))
+        self._init_device()
     
-    def device_status(self):
-        return {**super().device_status(), "pressure": self.status.pressure}.copy()
-        
+    def is_open(self) -> bool:
+        return self.status.status == 'open'
+    
+    def is_close(self) -> bool:
+        return self.status.status == 'close'
 
 
-# class Magnet(AqaraSubDevice):
-    
-#     def report(self, data):
-#         if 'status' in data.get('data', {}):
-#             data['data']['when'] = datetime.now().isoformat()
-#         super().report(data)
-    
-#     @property
-#     def when(self):
-#         return self._data.get('when', '')
-    
-#     @property
-#     def status(self):
-#         return self._data.get('status')
-    
-#     def device_status(self):
-#         return {**super().device_status(), "status": self.status, "when": self.when}.copy()
-
-
-# class SensorMotionAq2(AqaraSubDevice):
-    
-#     def report(self, data):
-#         if 'status' in data.get('data', {}):
-#             data['data']['when'] = datetime.now().isoformat()
-#         super().report(data)
-    
-#     @property
-#     def lux(self):
-#         return self._data.get('lux', -1)
+class SensorMotionAq2(AqaraSubDevice, MotionStatus, LuminosityStatus):
+    def __init__(self, sid:str, gateway:GatewayInterface):
+        super().__init__(sid, gateway)
+        self.status.register_attribute(Attribute('lux', str))
+        self._init_device()
