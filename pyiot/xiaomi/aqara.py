@@ -353,13 +353,13 @@ class SensorHt(AqaraSubDevice):
         return {**super().device_status(), "temperature": self.status.temperature, "humidity": self.status.humidity}.copy()
 
 
-# class WeatherV1(SensorHt):
-#     @property
-#     def pressure(self) -> str:
-#         return self._data.get('pressure', '')
+class WeatherV1(SensorHt):
+    def __init__(self, sid:str, gateway:GatewayInterface):
+        super().__init__(sid, gateway)
+        self.status.register_attribute(Attribute('pressure', str))
     
-#     def device_status(self):
-#         return {**super().device_status(), "pressure": self.pressure}.copy()
+    def device_status(self):
+        return {**super().device_status(), "pressure": self.status.pressure}.copy()
         
 
 

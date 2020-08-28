@@ -1,4 +1,4 @@
-from pyiot.xiaomi.aqara import SensorHt, SensorSwitchAq2, GatewayInterface, CtrlNeutral, CtrlNeutral2, Plug, Switch
+from pyiot.xiaomi.aqara import SensorHt, SensorSwitchAq2, GatewayInterface, CtrlNeutral, CtrlNeutral2, Plug, Switch, WeatherV1
 from time import sleep
 import unittest
 import os
@@ -83,12 +83,20 @@ class TestAqara(unittest.TestCase):
     def test_sensorswitch(self):
         dev = SensorSwitchAq2(sensor_switchaq2, gateway=self.gw)
         print(dev.commands,dev.traits)
+        print(dev.device_status())
     
     def test_switch(self):
         dev = Switch(switch, gateway=self.gw)
         print(dev.commands,dev.traits)
+        print(dev.device_status())
     
     def test_sensorht(self):
         dev = SensorHt(sensor_ht, gateway=self.gw)
         print(dev.commands,dev.traits)
+        print(dev.device_status())
+    
+    def test_weather(self):
+        dev = WeatherV1(weatherv1, gateway=self.gw)
+        print(dev.commands,dev.traits)
+        print(dev.device_status())
         
