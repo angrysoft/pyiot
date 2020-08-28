@@ -1,12 +1,19 @@
+from pyiot.xiaomi.aqara import SensorHt, SensorSwitchAq2, GatewayInterface, CtrlNeutral, CtrlNeutral2, Plug, Switch
 from time import sleep
 import unittest
 import os
-from pyiot.xiaomi import GatewayInterface, CtrlNeutral, CtrlNeutral2 
-# , Gateway
 
 # sid = '0x000000000545b741'
 ctrlNeural1 = '158d00024e2e5b'
 ctrlNeural2 = '158d00029b1929'
+plug = '158d00027d0065'
+switch = '158d00033ef2d8'
+sensor_switchaq2 = '158d000200a020'
+sensor_ht = '158d000208d668'
+weatherv1 = '158d0002e966b9'
+magnet = ''
+sensor_motionaq2 = ''
+
 
 class TestAqara(unittest.TestCase):
     @classmethod
@@ -24,8 +31,10 @@ class TestAqara(unittest.TestCase):
     #     sleep(1)
     #     self.assertEqual(self.gw.rgb, 0)
         
-    def test_b_CtrlNeural1(self):
+    @unittest.skip("demonstrating skipping")
+    def test_CtrlNeural1(self):
         dev = CtrlNeutral(ctrlNeural1, gateway=self.gw)
+        print(dev.commands,dev.traits)
         sleep(0.5)
         dev.on()
         sleep(1)
@@ -33,22 +42,53 @@ class TestAqara(unittest.TestCase):
         dev.off()
         sleep(1)
         self.assertTrue(dev.is_off())
-    
-    # def test_c_CtrlNeural2(self):
-    #     dev = CtrlNeutral2(ctrlNeural2, gateway=self.gw)
-    #     sleep(0.5)
-    #     dev.on(0)
-    #     sleep(1)
-    #     self.assertTrue(dev.is_on(0))
-    #     dev.off(0)
-    #     sleep(1)
-    #     self.assertTrue(dev.is_off(0))
-    #     sleep(0.5)
-    #     dev.on(1)
-    #     sleep(1)
-    #     self.assertTrue(dev.is_on(1))
-    #     dev.off(1)
-    #     sleep(1)
-    #     self.assertTrue(dev.is_off(1))
         
+    @unittest.skip("demonstrating skipping")
+    def test_CtrlNeural2(self):
+        dev = CtrlNeutral2(ctrlNeural2, gateway=self.gw)
+        sleep(0.5)
+        print(dev.commands,dev.traits, dev.switches(), dev.switch_no())
+        dev.on(0)
+        sleep(1)
+        self.assertTrue(dev.is_on(0))
+        dev.off(0)
+        sleep(1)
+        self.assertTrue(dev.is_off(0))
+        sleep(0.5)
+        dev.on(1)
+        sleep(1)
+        self.assertTrue(dev.is_on(1))
+        dev.off(1)
+        sleep(1)
+        self.assertTrue(dev.is_off(1))
+    
+    @unittest.skip("demonstrating skipping")    
+    def test_Plug(self):
+        dev = Plug(plug, gateway=self.gw)
+        print(dev.commands,dev.traits)
+        sleep(0.5)
+        dev.on()
+        sleep(1)
+        self.assertTrue(dev.is_on())
+        dev.off()
+        sleep(1)
+        self.assertTrue(dev.is_off())
+        dev.toggle()
+        sleep(1)
+        self.assertTrue(dev.is_on())
+        dev.toggle()
+        sleep(1)
+        self.assertTrue(dev.is_off())
+    
+    def test_sensorswitch(self):
+        dev = SensorSwitchAq2(sensor_switchaq2, gateway=self.gw)
+        print(dev.commands,dev.traits)
+    
+    def test_switch(self):
+        dev = Switch(switch, gateway=self.gw)
+        print(dev.commands,dev.traits)
+    
+    def test_sensorht(self):
+        dev = SensorHt(sensor_ht, gateway=self.gw)
+        print(dev.commands,dev.traits)
         

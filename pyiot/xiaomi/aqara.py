@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from __future__ import annotations
-from pyiot.traits import MutliSwitch, OnOff
+from pyiot.traits import MutliSwitch, OnOff, Toggle
 
 __all__ = [
     'GatewayWatcher',
@@ -21,9 +21,9 @@ __all__ = [
     #'Gateway',
     'CtrlNeutral',
     'CtrlNeutral2',
-    #'Plug',
-    #'SensorSwitchAq2', 
-    #'Switch',
+    'Plug',
+    'SensorSwitchAq2', 
+    'Switch',
     #'SensorHt',
     #'WeatherV1',
     #'Magnet',
@@ -147,7 +147,6 @@ class GatewayInterface:
         if data:
             msg['data'] = _data
         return self.conn.send_unicast(**msg)
-        #(cmd='write', model=model, sid=sid, key=self.get_key(), data=data)
     
     def accept_join(self, status: bool = True) -> Dict[str, Any]:
         """Allow adding sub-devices
@@ -272,13 +271,14 @@ class CtrlNeutral(AqaraSubDevice, OnOff):
     def is_off(self) -> bool:
         return self.status.get('channel_0') == "off"
     
-#     def device_status(self):
-#         return {**super().device_status(), "channel_0": self._data.get("channel_0")}.copy()
+    def device_status(self):
+        return {**super().device_status(), "channel_0": self.status.channel_0}.copy()
         
 
 class CtrlNeutral2(AqaraSubDevice, MutliSwitch):
     def __init__(self, sid:str, gateway:GatewayInterface):
         super().__init__(sid, gateway)
+        self.writable = True
         self.status.register_attribute(Attribute('channel_0', str))
         self.status.register_attribute(Attribute('channel_1', str))
     
@@ -293,45 +293,64 @@ class CtrlNeutral2(AqaraSubDevice, MutliSwitch):
     
     def is_off(self, switch_no:int) -> bool:
         return self.status.get(f'channel_{switch_no}') == "off"
-
-
-# class Plug(AqaraSubDevice, OnOff):
-#     def __init__(self, sid:str, gateway:GatewayInterface):
-#         super(Plug, self).__init__(sid, gateway)
-#         self.status.register_property('status', str)
-#         self.writable = True
     
-#     def on(self) -> None:
-#         self.write({'status': 'on'})
+    def switches(self) -> List[str]:
+        return ['channel_0', 'channel_1']
     
-#     def device_status(self):
-#         return {**super().device_status(), "status": self.status}.copy()
-
-
-# class SensorSwitchAq2(AqaraSubDevice):
-#     pass
-
-
-# class Switch(AqaraSubDevice):
-#     @property
-#     def status(self):
-#         return self._data.get("status")
+    def switch_no(self) -> int:
+        return len(self.switches())
     
-#     def device_status(self):
-#         return {**super().device_status(), "status": self.status}.copy()
+    def device_status(self):
+        return {**super().device_status(),
+                "channel_0": self.status.channel_0,
+                "channel_1": self.status.channel_1}.copy()
 
 
-# class SensorHt(AqaraSubDevice):
-#     @property
-#     def temperature(self) -> str:
-#         return self._data.get('temperature', '')
+class Plug(AqaraSubDevice, OnOff, Toggle):
+    def __init__(self, sid:str, gateway:GatewayInterface):
+        super().__init__(sid, gateway)
+        self.status.register_attribute(Attribute('status', str))
+        self.status.register_attribute(Attribute('inuse', str))
+        self.status.register_attribute(Attribute('power_consumed', str))
+        self.status.register_attribute(Attribute('load_power', str))
+        
+        self.writable = True
     
-#     @property
-#     def humidity(self) -> str:
-#         return self._data.get('humidity', '')
+    def on(self) -> None:
+        self.write({'status': 'on'})
+        
+    def off(self) -> None:
+        self.write({'status': 'off'})
+        
+    def is_on(self) -> bool:
+        return self.status.get('status') == "on"
     
-#     def device_status(self):
-#         return {**super().device_status(), "temperature": self.temperature, "humidity": self.humidity}.copy()
+    def is_off(self) -> bool:
+        return self.status.get('status') == "off"
+    
+    def toggle(self) -> None:
+        self.write({'status': 'toggle'})
+    
+    def device_status(self):
+        return {**super().device_status(), "status": self.status}.copy()
+
+
+class SensorSwitchAq2(AqaraSubDevice):
+    pass
+
+
+class Switch(AqaraSubDevice):
+    pass
+
+
+class SensorHt(AqaraSubDevice):
+    def __init__(self, sid:str, gateway:GatewayInterface):
+        super().__init__(sid, gateway)
+        self.status.register_attribute(Attribute('temperature', str))
+        self.status.register_attribute(Attribute('humidity', str))
+    
+    def device_status(self):
+        return {**super().device_status(), "temperature": self.status.temperature, "humidity": self.status.humidity}.copy()
 
 
 # class WeatherV1(SensorHt):
@@ -373,23 +392,3 @@ class CtrlNeutral2(AqaraSubDevice, MutliSwitch):
 #     @property
 #     def lux(self):
 #         return self._data.get('lux', -1)
-
-# class Button:
-#     def __init__(self, name, device):
-#         self.name = name
-#         self.device = device
-        
-#     def on(self):
-#         self.device.write({'data': {self.name: 'on'}})
-
-#     def off(self):
-#         self.device.write({'data': {self.name: 'off'}})
-    
-#     def toggle(self):
-#         self.device.write({'data': {self.name: 'toggle'}})
-    
-#     def is_on(self):
-#         return self.device._data.get(self.name) == 'on'
-        
-#     def is_off(self):
-#         return self.device._data.get(self.name) == 'off'

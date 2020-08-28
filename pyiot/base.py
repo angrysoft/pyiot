@@ -120,4 +120,4 @@ class BaseDevice:
 
     def device_status(self) -> Dict[str, Any]:
         return {"sid": self.status.sid, "name": self.status.name,
-                "place": self.status.place, 'traits': self.traits}
+                "place": self.status.place, 'traits': self.traits, 'commands': self.commands}

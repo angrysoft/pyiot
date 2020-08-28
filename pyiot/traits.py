@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Set, Dict
+from typing import Any, Set, Dict, List
 
 
 class Trait(ABC):
@@ -29,9 +29,12 @@ class MutliSwitch(Trait):
         pass
     
     @abstractmethod
-    def switch_no(self) -> int:
+    def switches(self) -> List[str]:
         pass
     
+    @abstractmethod
+    def switch_no(self) -> int:
+        pass
 
 class OnOff(Trait):
     _commands:Set[str] = {'on', 'off'}
@@ -64,7 +67,7 @@ class Dimmer(Trait):
     
 
 class Toggle(Trait):
-    _commands:Set[str] = {'set_bright'}
+    _commands:Set[str] = {'toogle'}
     _properties: Dict[str, Any] = {}
     
     @abstractmethod

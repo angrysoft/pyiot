@@ -70,7 +70,6 @@ class UdpConnection:
         return self.send(kwargs, self.unicast_addr)
 
     def send(self, msg:Dict[str,Any], addr:Tuple[str,int]) -> Dict[str,Any]:
-        print(msg)
         self.sock.sendto(json.dumps(msg).encode(), addr)
         return self.get_answer()
 
