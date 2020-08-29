@@ -14,6 +14,9 @@
 
 __all__ = ['PhilipsBulb', 'PhilipsBulbException']
 
+from typing import Optional
+from pyiot.traits import Dimmer, OnOff, ColorTemperature
+from pyiot.base import BaseDevice
 import socket
 import json
 import datetime
@@ -39,9 +42,24 @@ class PhilipsBulbWatcher:
     
     def watch(self, handler):
         pass
-    
 
-class PhilipsBulb:
+class PhilipsBulb(BaseDevice, OnOff, Dimmer, ColorTemperature):
+    def __init__(self, sid:str, token:str, ip:Optional[str] = '', port:Optional[int] = 54321) -> None:
+        super().__init__(sid)
+        self.packet = MiioPacket(token=token)
+        self.ip = ip
+        self.port = port
+        if not self.ip:
+            self.discover()
+        
+    def add_report_handler(self, handler):
+        self._report_handelers.add(handler)
+        
+    def _handle_events(self, event):
+        for handler in self._report_handelers:
+            handler(event)
+
+class PhilipsBulb_old:
     """ Class to controling philips bulb.
     
     Args:

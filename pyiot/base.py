@@ -6,7 +6,7 @@ class Attribute:
                  value:Optional[Any] = None) -> None:
         self._name = name
         self._type = attr_type
-        # TODO : Raise erro wehn readony is true and value is not set
+        # TODO : Raise error wehn readony is true and value is not set
         self._readonly = readonly
         self._oneshot = oneshot
         if value is not None:
@@ -93,10 +93,10 @@ class BaseDevice:
             if issubclass(_base_class, Trait):
                 cls._traits.add(_name)
                 cls._cmds.update(_base_class._commands)
-                for _attr in _base_class._attributes:
+                # for _attr in _base_class._attributes:
                     # cls.status.register_attribute(_attr)
-                    a = Attribute(*_attr)
-                    print(a)
+                    # a = Attribute(*_attr)
+                    # print(a)
         
         return super(BaseDevice, cls).__new__(cls)
     

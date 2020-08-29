@@ -84,26 +84,40 @@ class OpenClose(Trait):
     def is_close(self) -> bool:
         pass
 
+
 class MotionStatus(Trait):
     _commands:Set[str] = set()
     _properties: Dict[str, Any] = {}
 
+
 class TemperatureStatus(Trait):
     _commands:Set[str] = set()
     _properties: Dict[str, Any] = {}
-    _attributes = {('temperature', str)}
+    # _attributes = {('temperature', str)}
+
 
 class HumidityStatus(Trait):
     _commands:Set[str] = set()
     _properties: Dict[str, Any] = {}
 
+
 class PressureStatus(Trait):
     _commands:Set[str] = set()
     _properties: Dict[str, Any] = {}
 
+
 class LuminosityStatus(Trait):
     _commands:Set[str] = set()
     _properties: Dict[str, Any] = {}
+
+
+class ColorTemperature(Trait):
+    _commands:Set[str] = set()
+    _properties: Dict[str, Any] = {}
+    
+    def set_ct_pc(self):
+        pass
+    
 
 
     

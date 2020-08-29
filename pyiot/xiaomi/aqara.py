@@ -24,10 +24,10 @@ __all__ = [
     'Plug',
     'SensorSwitchAq2', 
     'Switch',
-    #'SensorHt',
-    #'WeatherV1',
-    #'Magnet',
-    #'SensorMotionAq2'
+    'SensorHt',
+    'WeatherV1',
+    'Magnet',
+    'SensorMotionAq2'
     ]
 
 
@@ -36,7 +36,6 @@ import socket
 import json
 import binascii
 from Cryptodome.Cipher import AES
-from datetime import datetime
 from pyiot.watcher import Watcher, WatcherBaseDriver
 from pyiot.base import Attribute, BaseDevice
 from typing import Callable, Dict, Any, List, Optional
@@ -73,16 +72,13 @@ class GatewayInterface:
     def __init__(self, ip:str = 'auto', port:int = 9898, sid:str = '', gwpasswd:str = ''):
         self.conn = UdpConnection()
         self.aes_key_iv = bytes([0x17, 0x99, 0x6d, 0x09, 0x3d, 0x28, 0xdd, 0xb3, 0xba, 0x69, 0x5a, 0x2e, 0x6f, 0x58, 0x56, 0x2e])
-        self.conn.multicast_ip = '224.0.0.50'
-        self.conn.multicast_port = 4321
+        self.multicast_addr = ('224.0.0.50', 4321)
         if ip == 'auto':
             gateway: Dict[str, str] = self.whois()
-            self.conn.unicast_ip = gateway.get('ip', '')
-            self.conn.unicast_port = int(gateway.get('port',0))
+            self.unicast_addr = ( gateway.get('ip', ''), int(gateway.get('port',0)))
             self.sid: str = gateway.get('sid','') 
         else:
-            self.conn.unicast_ip = ip
-            self.conn.unicast_port = port
+            self.unicast_addr = (ip, port)
             self.sid = sid
         self.gwpasswd = gwpasswd
         self._token: str = ''
@@ -115,17 +111,17 @@ class GatewayInterface:
 
     def whois(self):
         """Discover the gateway device send multicast msg (IP: 224.0.0.50 peer_port: 4321 protocal: UDP)"""
-        return self.conn.send_multicast(cmd='whois')
+        return self.conn.send(msg={'cmd': 'whois'}, addr=self.multicast_addr)
 
     def get_devices_list(self) -> List[Dict[str,Any]]:
         """The command is sent via unicast to the UDP 9898 port of the gateway,
         which is used to obtain the sub-devices in the gateway."""
 
-        ret = self.conn.send_unicast(cmd='discovery')
+        ret = self.conn.send(msg={'cmd': 'discovery'}, addr=self.unicast_addr)
         return ret.get('data', [])
 
     def get_id_list(self) -> List[str]:
-        ret = self.conn.send_unicast(cmd='get_id_list')
+        ret = self.conn.send({'cmd':'get_id_list'}, self.unicast_addr)
         return ret.get('data', [])
 
     def read_device(self, sid:str) -> Dict[str, Any]:
@@ -134,7 +130,7 @@ class GatewayInterface:
         Users can take the initiative to read the attribute status of each device,
         and the gateway returns all the attribute information associated with the device."""
 
-        return self.conn.send_unicast(cmd='read', sid=sid)
+        return self.conn.send({'cmd': 'read', 'sid': sid}, self.unicast_addr)
 
     def write_device(self, model:str, sid:str, short_id:Optional[int]=None, data:Dict[str,Any]={}) -> Dict[str, Any]:
         """Send the "write" command via unicast to the gateway's UDP 9898 port.
@@ -146,7 +142,7 @@ class GatewayInterface:
             msg['short_id'] = short_id
         if data:
             msg['data'] = _data
-        return self.conn.send_unicast(**msg)
+        return self.conn.send(msg, self.unicast_addr)
     
     def accept_join(self, status: bool = True) -> Dict[str, Any]:
         """Allow adding sub-devices
@@ -165,7 +161,7 @@ class GatewayInterface:
         return self.write_device('gateway', self.sid, 0, {'remove_device': sid})
         
     def refresh_token(self) -> None:
-        ret = self.conn.send_unicast(cmd='get_id_list')
+        ret = self.conn.send({'cmd': 'get_id_list'}, self.unicast_addr)
         self._token = ret.get('token', '')
 
     def get_key(self):
@@ -343,15 +339,15 @@ class Switch(AqaraSubDevice):
 class SensorHt(AqaraSubDevice, TemperatureStatus, HumidityStatus):
     def __init__(self, sid:str, gateway:GatewayInterface):
         super().__init__(sid, gateway)
-        # self.status.register_attribute(Attribute('temperature', str))
-        # self.status.register_attribute(Attribute('humidity', str))
+        self.status.register_attribute(Attribute('temperature', str))
+        self.status.register_attribute(Attribute('humidity', str))
         self._init_device()
 
 
 class WeatherV1(AqaraSubDevice, TemperatureStatus, HumidityStatus, PressureStatus):
     def __init__(self, sid:str, gateway:GatewayInterface):
         super().__init__(sid, gateway)
-        # self.status.register_attribute(Attribute('temperature', str))
+        self.status.register_attribute(Attribute('temperature', str))
         self.status.register_attribute(Attribute('humidity', str))
         self.status.register_attribute(Attribute('pressure', str))
         self._init_device()
