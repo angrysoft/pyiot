@@ -109,19 +109,22 @@ class GatewayInterface:
     def token(self, value:str):
         self._token = value
 
-    def whois(self):
+    def whois(self) -> Dict[str, Any]:
         """Discover the gateway device send multicast msg (IP: 224.0.0.50 peer_port: 4321 protocal: UDP)"""
-        return self.conn.send(msg={'cmd': 'whois'}, addr=self.multicast_addr)
+        self.conn.send_json({'cmd': 'whois'}, self.multicast_addr)
+        return self.conn.recv_json()
 
     def get_devices_list(self) -> List[Dict[str,Any]]:
         """The command is sent via unicast to the UDP 9898 port of the gateway,
         which is used to obtain the sub-devices in the gateway."""
 
-        ret = self.conn.send(msg={'cmd': 'discovery'}, addr=self.unicast_addr)
+        self.conn.send_json({'cmd': 'discovery'}, self.unicast_addr)
+        ret = self.conn.recv_json()
         return ret.get('data', [])
 
     def get_id_list(self) -> List[str]:
-        ret = self.conn.send({'cmd':'get_id_list'}, self.unicast_addr)
+        self.conn.send_json({'cmd':'get_id_list'}, self.unicast_addr)
+        ret = self.conn.recv_json()
         return ret.get('data', [])
 
     def read_device(self, sid:str) -> Dict[str, Any]:
@@ -130,7 +133,8 @@ class GatewayInterface:
         Users can take the initiative to read the attribute status of each device,
         and the gateway returns all the attribute information associated with the device."""
 
-        return self.conn.send({'cmd': 'read', 'sid': sid}, self.unicast_addr)
+        self.conn.send_json({'cmd': 'read', 'sid': sid}, self.unicast_addr)
+        return self.conn.recv_json()
 
     def write_device(self, model:str, sid:str, short_id:Optional[int]=None, data:Dict[str,Any]={}) -> Dict[str, Any]:
         """Send the "write" command via unicast to the gateway's UDP 9898 port.
@@ -142,7 +146,8 @@ class GatewayInterface:
             msg['short_id'] = short_id
         if data:
             msg['data'] = _data
-        return self.conn.send(msg, self.unicast_addr)
+        self.conn.send_json(msg, self.unicast_addr)
+        return self.conn.recv_json()
     
     def accept_join(self, status: bool = True) -> Dict[str, Any]:
         """Allow adding sub-devices
@@ -161,7 +166,8 @@ class GatewayInterface:
         return self.write_device('gateway', self.sid, 0, {'remove_device': sid})
         
     def refresh_token(self) -> None:
-        ret = self.conn.send({'cmd': 'get_id_list'}, self.unicast_addr)
+        self.conn.send_json({'cmd': 'get_id_list'}, self.unicast_addr)
+        ret = self.conn.recv_json()
         self._token = ret.get('token', '')
 
     def get_key(self):

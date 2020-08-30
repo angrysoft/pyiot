@@ -1,26 +1,37 @@
 import socket
 from typing import Tuple, Any, Dict
 import json
-from pyiot.exceptions import DeviceIsOffline
+from pyiot.exceptions import DeviceTimeout
 
 class UdpConnection:
     def __init__(self) -> None:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
         self.sock.settimeout(10)
+        
+    def send_json(self, msg:Dict[str,Any], addr:Tuple[str,int], retry:int=3) -> None:
+        self.send(json.dumps(msg).encode(), addr, retry=3)
 
-    def send(self, msg:Dict[str,Any], addr:Tuple[str,int], retry:int=3) -> Dict[str,Any]:
-        ret = {}
+    def send(self, msg:bytes, addr:Tuple[str,int], retry:int=3) -> None:
         try:
-            self.sock.sendto(json.dumps(msg).encode(), addr)
-            ret = self.get_answer()
+            self.sock.sendto(msg, addr)
         except socket.timeout:
             if retry:
-                ret = self.send(msg, addr, (retry-1))
+                self.send(msg, addr, (retry-1))
             else:
-                raise DeviceIsOffline
+                raise DeviceTimeout
+    
+    def recv(self, bufsize:int = 1024, retry:int=3) -> Tuple[bytes, Any]:
+        ret = tuple() 
+        try:
+            ret = self.sock.recvfrom(bufsize)
+        except socket.timeout:
+            if retry:
+                ret = self.recv(bufsize, (retry-1))
+            else:
+                raise DeviceTimeout
         return ret
 
-    def get_answer(self) -> Dict[str,Any]:
+    def recv_json(self) -> Dict[str,Any]:
         data_bytes, addr = self.sock.recvfrom(1024)
         if data_bytes:
             msg = json.loads(data_bytes.decode('utf-8'))
@@ -32,6 +43,7 @@ class UdpConnection:
 
 class UdpBroadcastConnection(UdpConnection):
     def __init__(self) -> None:
+        super().__init__()
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         
 

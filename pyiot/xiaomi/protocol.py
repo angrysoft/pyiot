@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from pyiot.connections.udp import UdpBroadcastConnection
 from Cryptodome.Cipher import AES
 from Cryptodome.Util.Padding import pad, unpad
 from  hashlib import md5
 import struct
 import socket
-from threading import Thread
 
 
 class MiioPacket():
@@ -101,37 +101,64 @@ class MiioPacket():
         m.update(inp)
         return m.digest()
 
-   
-class Discover:
+class MiioConnection:
+    def __init__(self) -> None:
+        self.conn = UdpBroadcastConnection()
     
-    @staticmethod
-    def discover():
-        """Scan for devices in the network.
-        This method is used to discover supported devices by sending a
-        handshake message to the broadcast address on port 54321.
-        """
-        timeout = 10        
-        addr = "<broadcast>"
+    def send_handshake(self, retry=3):
+        timeout = 5
         helobytes = bytes.fromhex(
             "21310020ffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
         )
-
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        sock.settimeout(timeout)
+        try:
+            sock.sendto(helobytes, (self.ip, 54321))
+            data, addr = sock.recvfrom(1024)
+        except socket.timeout:
+            if retry:
+                print(f'debug retry handshake {retry}')
+                data = self.send_handshake((retry-1))
+        return data
+        
+    def _send(self, method, params=[], retry=2):
+        time_now = datetime.datetime.now()
+        if not self._handshaked or (time_now - self._handshaked).seconds > 10:
+            data = self.send_handshake()
+            self.packet.parse(data)
+            self._handshaked = time_now
+        
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        s.settimeout(timeout)
-        s.sendto(helobytes, (addr, 54321))
-        devs = {}
-        while True:
+        s.settimeout(5)
+        _id = self.id
+        if _id > 1000:
+            _id = 1
+        self.id += 1
+        _msg = json.dumps({'id': _id,
+                           'method': method,
+                           'params': params})
+        _msg+='\r\n'
+        try:
+            s.sendto(self.packet.generate(_msg.encode()), (self.ip, self.port))
+            ret = self._get_result(s, _id)
+        except socket.timeout:
+            if retry:
+                ret = self._send(method, params, (retry-1))
+        return ret
+        
+    def _get_result(self, sock, _id):
+        data_bytes, addr = sock.recvfrom(1024)
+        if data_bytes:
             try:
-                data, addr = s.recvfrom(1024)
-                head = MiioPacket.parse_head(data)
-                devs[head['device_id']] = dict(ip=addr[0], port=addr[1])
-                devs[head['device_id']].update(head)
-            except socket.timeout:
-                break  # ignore timeouts on discover
-            except Exception as ex:
-                break
-        return devs
-
+                data = self.packet.parse(data_bytes)
+                if not data:
+                    return ''
+                ret = json.loads(data)
+                if ret.get('id') == _id:
+                    return ret
+            except json.decoder.JSONDecodeError as err:
+                print(err)
+        return ''
                 
             

@@ -31,7 +31,7 @@ class TestAqara(unittest.TestCase):
     #     sleep(1)
     #     self.assertEqual(self.gw.rgb, 0)
         
-    @unittest.skip("demonstrating skipping")
+    # @unittest.skip("demonstrating skipping")
     def test_CtrlNeural1(self):
         dev = CtrlNeutral(ctrlNeural1, gateway=self.gw)
         print(dev.commands,dev.traits)
@@ -43,7 +43,7 @@ class TestAqara(unittest.TestCase):
         sleep(1)
         self.assertTrue(dev.is_off())
         
-    @unittest.skip("demonstrating skipping")
+    # @unittest.skip("demonstrating skipping")
     def test_CtrlNeural2(self):
         dev = CtrlNeutral2(ctrlNeural2, gateway=self.gw)
         sleep(0.5)
@@ -62,7 +62,7 @@ class TestAqara(unittest.TestCase):
         sleep(1)
         self.assertTrue(dev.is_off(1))
     
-    @unittest.skip("demonstrating skipping")    
+    # @unittest.skip("demonstrating skipping")    
     def test_Plug(self):
         dev = Plug(plug, gateway=self.gw)
         print(dev.commands,dev.traits)

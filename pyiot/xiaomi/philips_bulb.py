@@ -17,6 +17,7 @@ __all__ = ['PhilipsBulb', 'PhilipsBulbException']
 from typing import Optional
 from pyiot.traits import Dimmer, OnOff, ColorTemperature
 from pyiot.base import BaseDevice
+from pyiot.discover import DiscoveryMiio
 import socket
 import json
 import datetime
@@ -43,23 +44,52 @@ class PhilipsBulbWatcher:
     def watch(self, handler):
         pass
 
-class PhilipsBulb(BaseDevice, OnOff, Dimmer, ColorTemperature):
-    def __init__(self, sid:str, token:str, ip:Optional[str] = '', port:Optional[int] = 54321) -> None:
+class PhilipsBulb_new(BaseDevice, OnOff, Dimmer, ColorTemperature):
+    def __init__(self, sid:str, token:str, ip:str = '', port:int = 54321) -> None:
         super().__init__(sid)
         self.packet = MiioPacket(token=token)
-        self.ip = ip
-        self.port = port
+        self.ip:str = ip
+        self.port:int = port
         if not self.ip:
-            self.discover()
+            discover = DiscoveryMiio()
+            dev = discover.find_by_sid(sid)
+            self.ip = dev.get(ip,'')
+            self.port = dev.get('port', 0)
         
-    def add_report_handler(self, handler):
-        self._report_handelers.add(handler)
+    # def add_report_handler(self, handler):
+    #     self._report_handelers.add(handler)
         
-    def _handle_events(self, event):
-        for handler in self._report_handelers:
-            handler(event)
+    # def _handle_events(self, event):
+    #     for handler in self._report_handelers:
+    #         handler(event)
+    
+    def _init_device(self):
+        data = self.get_prop('power', 'bright', 'cct', 'snm', 'dv')
+    
+    def get_prop(self, *props):
+        """
+        This method is used to retrieve current property of smart LED.
+        
+        Args:
+            *props (str): Variable length argument name of property to retrive
+            
+                * `power on` - smart LED is turned on / off: smart LED is turned off
+                * `bright` - Brightness percentage. Range 1 ~ 100
+                * `cct` - Color temperature. Range 1 ~ 100
+                * `snm`
+        """
+        ret = dict()
+        for prop in set(props):
+            ret_props = self._send('get_prop', [prop])
+            try:
+                ret[prop] = ret_props['result'][0]
+            except KeyError:
+                pass
+            except IndexError:
+                pass
+        return ret
 
-class PhilipsBulb_old:
+class PhilipsBulb:
     """ Class to controling philips bulb.
     
     Args:
@@ -318,11 +348,9 @@ class PhilipsBulb_old:
         elif value < begin or value > end:
             raise ValueError(msg)
 
-    @property
     def is_on(self):
         return self._data.get('power') == 'on'
     
-    @property
     def is_off(self):
         return self._data.get('power') == 'off'
      
