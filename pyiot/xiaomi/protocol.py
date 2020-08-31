@@ -18,6 +18,7 @@ from Cryptodome.Util.Padding import pad, unpad
 from  hashlib import md5
 import struct
 import socket
+from datetime import datetime
 
 
 class MiioPacket():
@@ -102,28 +103,30 @@ class MiioPacket():
         return m.digest()
 
 class MiioConnection:
-    def __init__(self) -> None:
+    def __init__(self, token:str, ip:str, port:int = 54321) -> None:
         self.conn = UdpBroadcastConnection()
+        self._handshaked: datetime
+        self.ip = ip
+        self.port = port
+        self.packet = MiioPacket(token)
     
-    def send_handshake(self, retry=3):
-        timeout = 5
+    def check_handshake(self):
+        time_now = datetime.now()
         helobytes = bytes.fromhex(
             "21310020ffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
         )
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        sock.settimeout(timeout)
-        try:
-            sock.sendto(helobytes, (self.ip, 54321))
-            data, addr = sock.recvfrom(1024)
-        except socket.timeout:
-            if retry:
-                print(f'debug retry handshake {retry}')
-                data = self.send_handshake((retry-1))
-        return data
+        if not self._handshaked or (time_now - self._handshaked).seconds > 10:
+            self.conn.send(helobytes, (self.ip, self.port))
+            data, addr = self.conn.recv()
+            
+        #     data, addr = sock.recvfrom(1024)
+        # except socket.timeout:
+        #     if retry:
+        #         print(f'debug retry handshake {retry}')
+        #         data = self.send_handshake((retry-1))
+        # return data
         
-    def _send(self, method, params=[], retry=2):
-        time_now = datetime.datetime.now()
+    def send(self, method, params=[]):
         if not self._handshaked or (time_now - self._handshaked).seconds > 10:
             data = self.send_handshake()
             self.packet.parse(data)
