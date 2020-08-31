@@ -17,12 +17,13 @@ from Cryptodome.Cipher import AES
 from Cryptodome.Util.Padding import pad, unpad
 from  hashlib import md5
 import struct
-import socket
+import json
 from datetime import datetime
+from typing import List, Any, Dict, Optional
 
 
 class MiioPacket():
-    def __init__(self, token:str, packet=None):
+    def __init__(self, token:str, packet: bytes= b''):
         self.token = bytes.fromhex(token)
         self.key = self.md5sum(self.token)
         self.iv = self.md5sum(self.key + self.token)
@@ -92,76 +93,68 @@ class MiioPacket():
 
         
         packet = bytearray(head + encrypted)
-        checksum = self.md5sum(packet)
+        checksum = self.md5sum(bytes(packet))
         for i in range(0, 16):
             packet[i+16] = checksum[i]
-        return packet
+        return bytes(packet)
+    
     
     def md5sum(self, inp: bytes) -> bytes:
         m = md5()
         m.update(inp)
         return m.digest()
 
+
 class MiioConnection:
     def __init__(self, token:str, ip:str, port:int = 54321) -> None:
         self.conn = UdpBroadcastConnection()
-        self._handshaked: datetime
+        self._handshaked: Optional[datetime] = None
         self.ip = ip
         self.port = port
         self.packet = MiioPacket(token)
+        self.id:int = 0
+        self.check_handshake()
     
-    def check_handshake(self):
+    def check_handshake(self) -> None:
         time_now = datetime.now()
         helobytes = bytes.fromhex(
             "21310020ffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
         )
+        # hello: bytes = b'!1\x00 \xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff'
+
         if not self._handshaked or (time_now - self._handshaked).seconds > 10:
+            print('hand', self.ip, self.port)
             self.conn.send(helobytes, (self.ip, self.port))
             data, addr = self.conn.recv()
-            
-        #     data, addr = sock.recvfrom(1024)
-        # except socket.timeout:
-        #     if retry:
-        #         print(f'debug retry handshake {retry}')
-        #         data = self.send_handshake((retry-1))
-        # return data
-        
-    def send(self, method, params=[]):
-        if not self._handshaked or (time_now - self._handshaked).seconds > 10:
-            data = self.send_handshake()
-            self.packet.parse(data)
+            print(self.packet.parse(data))
             self._handshaked = time_now
         
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.settimeout(5)
-        _id = self.id
+    def send(self, method:str, params:List[Any]=[]) -> Dict[str,Any]:
+        _id: int = self.id
         if _id > 1000:
             _id = 1
         self.id += 1
-        _msg = json.dumps({'id': _id,
-                           'method': method,
-                           'params': params})
-        _msg+='\r\n'
-        try:
-            s.sendto(self.packet.generate(_msg.encode()), (self.ip, self.port))
-            ret = self._get_result(s, _id)
-        except socket.timeout:
-            if retry:
-                ret = self._send(method, params, (retry-1))
-        return ret
-        
-    def _get_result(self, sock, _id):
-        data_bytes, addr = sock.recvfrom(1024)
+        _msg: str = json.dumps({'id': _id,
+                                'method': method,
+                                'params': params})
+        _msg += '\r\n'
+        self.check_handshake()
+        self.conn.send(self.packet.generate(_msg.encode()), (self.ip, self.port))
+        return self._get_result(_id)
+      
+    def _get_result(self, _id:int) -> Dict[str,Any]:
+        ret = {}
+        data_bytes, addr = self.conn.recv()
         if data_bytes:
             try:
                 data = self.packet.parse(data_bytes)
-                if not data:
-                    return ''
-                ret = json.loads(data)
-                if ret.get('id') == _id:
-                    return ret
+                if data:
+                    ret: Dict[str,Any] = json.loads(data)
+                    if ret.get('id') != _id:
+                        ret.clear()
+                    
             except json.decoder.JSONDecodeError as err:
                 print(err)
-        return ''
+        return ret
                 
             

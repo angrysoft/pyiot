@@ -14,14 +14,14 @@
 
 __all__ = ['PhilipsBulb', 'PhilipsBulbException']
 
-from typing import Optional
+from typing import List
 from pyiot.traits import Dimmer, OnOff, ColorTemperature
 from pyiot.base import BaseDevice
 from pyiot.discover import DiscoveryMiio
 import socket
 import json
 import datetime
-from .protocol import MiioPacket
+from .protocol import MiioConnection, MiioPacket
 from enum import IntEnum
 from threading import Thread
 
@@ -44,17 +44,17 @@ class PhilipsBulbWatcher:
     def watch(self, handler):
         pass
 
-class PhilipsBulb_new(BaseDevice, OnOff, Dimmer, ColorTemperature):
+class PhilipsBulb(BaseDevice): # OnOff, Dimmer, ColorTemperature):
     def __init__(self, sid:str, token:str, ip:str = '', port:int = 54321) -> None:
         super().__init__(sid)
-        self.packet = MiioPacket(token=token)
         self.ip:str = ip
         self.port:int = port
         if not self.ip:
             discover = DiscoveryMiio()
             dev = discover.find_by_sid(sid)
-            self.ip = dev.get(ip,'')
+            self.ip = dev.get('ip','')
             self.port = dev.get('port', 0)
+        self.conn = MiioConnection(token=token, ip=self.ip, port=self.port)
         
     # def add_report_handler(self, handler):
     #     self._report_handelers.add(handler)
@@ -64,9 +64,10 @@ class PhilipsBulb_new(BaseDevice, OnOff, Dimmer, ColorTemperature):
     #         handler(event)
     
     def _init_device(self):
-        data = self.get_prop('power', 'bright', 'cct', 'snm', 'dv')
+        data = self.get_prop(['power', 'bright', 'cct', 'snm', 'dv'])
+        print(data)
     
-    def get_prop(self, *props):
+    def get_prop(self, props: List[str]):
         """
         This method is used to retrieve current property of smart LED.
         
@@ -80,7 +81,8 @@ class PhilipsBulb_new(BaseDevice, OnOff, Dimmer, ColorTemperature):
         """
         ret = dict()
         for prop in set(props):
-            ret_props = self._send('get_prop', [prop])
+            ret_props = self.conn.send('get_prop', [prop])
+            print(ret_props)
             try:
                 ret[prop] = ret_props['result'][0]
             except KeyError:
@@ -88,8 +90,13 @@ class PhilipsBulb_new(BaseDevice, OnOff, Dimmer, ColorTemperature):
             except IndexError:
                 pass
         return ret
+    
+    def info(self):
+        ret = self.conn.send("miIO.info")
+        if 'result' in ret:
+            return ret['result']
 
-class PhilipsBulb:
+class PhilipsBulb_old:
     """ Class to controling philips bulb.
     
     Args:

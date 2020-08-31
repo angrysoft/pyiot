@@ -40,6 +40,9 @@ class UdpConnection:
             return msg
         else:
             return {}
+    
+    def __del__(self):
+        self.sock.close()
 
 class UdpBroadcastConnection(UdpConnection):
     def __init__(self) -> None:

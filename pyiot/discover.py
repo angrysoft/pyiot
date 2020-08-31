@@ -39,6 +39,7 @@ class DiscoveryMiio(BaseDiscovery):
         self.hellobytes = bytes.fromhex(
             "21310020ffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
         )
+        
     def find_all(self) -> List[Dict[str, Any]]:
         """Scan for devices in the network.
         This method is used to discover supported devices by sending a
