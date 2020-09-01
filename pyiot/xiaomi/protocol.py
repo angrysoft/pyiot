@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from pyiot.connections.udp import UdpBroadcastConnection
+from pyiot.connections.udp import UdpBroadcastConnection, UdpConnection
 from Cryptodome.Cipher import AES
 from Cryptodome.Util.Padding import pad, unpad
 from  hashlib import md5
@@ -20,6 +20,7 @@ import struct
 import json
 from datetime import datetime
 from typing import List, Any, Dict, Optional
+import socket
 
 
 class MiioPacket():
@@ -52,10 +53,11 @@ class MiioPacket():
                 "stamp": stamp,
                 "checksum": md5.hex()}
 
-    def parse(self, raw_packet: bytes):
+    def parse(self, raw_packet: bytes) -> bytes:
         """Parse the payload of a UDP packet.
             Args:
                 raw_packet (bytes): raw packet data to parse"""
+        decrypted = b''
         head = raw_packet[:32]
         self.magic, self.length, self.unknown1, self.device_id, self.stamp, self.md5 = \
             struct.unpack('!2sHIII16s', head)
@@ -65,7 +67,7 @@ class MiioPacket():
             cipher = AES.new(self.key, AES.MODE_CBC, iv=self.iv)
             decrypted = cipher.decrypt(data)
             decrypted = unpad(decrypted, 32, style='pkcs7')
-            return decrypted
+        return decrypted
         
     @property
     def header(self):
@@ -103,32 +105,39 @@ class MiioPacket():
         m = md5()
         m.update(inp)
         return m.digest()
+    
+    def __str__(self) -> str:
+        return f'{self.token},' \
+            f'{self.key},' \
+            f'{self.iv},' \
+            f'{self.length},' \
+            f'{self.unknown1},' \
+            f'{self.device_id},' \
+            f'{self.stamp},' \
+            f'{self.md5}'
 
 
 class MiioConnection:
     def __init__(self, token:str, ip:str, port:int = 54321) -> None:
-        self.conn = UdpBroadcastConnection()
+        self.broad_cast_conn = UdpBroadcastConnection()
+        self.conn = UdpConnection()
         self._handshaked: Optional[datetime] = None
         self.ip = ip
         self.port = port
         self.packet = MiioPacket(token)
-        self.id:int = 0
-        self.check_handshake()
+        # Remember id > 0
+        self.id:int = 1
     
     def check_handshake(self) -> None:
         time_now = datetime.now()
-        helobytes = bytes.fromhex(
-            "21310020ffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-        )
-        # hello: bytes = b'!1\x00 \xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff'
+        hello: bytes = b'!1\x00 \xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff'
 
-        if not self._handshaked or (time_now - self._handshaked).seconds > 10:
-            print('hand', self.ip, self.port)
-            self.conn.send(helobytes, (self.ip, self.port))
-            data, addr = self.conn.recv()
-            print(self.packet.parse(data))
+        if self._handshaked is None or (time_now - self._handshaked).seconds > 10:
+            self.broad_cast_conn.send(hello, (self.ip, self.port))
+            data, addr = self.broad_cast_conn.recv()
+            self.packet.parse(data)
             self._handshaked = time_now
-        
+                
     def send(self, method:str, params:List[Any]=[]) -> Dict[str,Any]:
         _id: int = self.id
         if _id > 1000:
@@ -140,6 +149,7 @@ class MiioConnection:
         _msg += '\r\n'
         self.check_handshake()
         self.conn.send(self.packet.generate(_msg.encode()), (self.ip, self.port))
+        self.conn.send('\r\n'.encode(), (self.ip, self.port))
         return self._get_result(_id)
       
     def _get_result(self, _id:int) -> Dict[str,Any]:
@@ -156,5 +166,3 @@ class MiioConnection:
             except json.decoder.JSONDecodeError as err:
                 print(err)
         return ret
-                
-            

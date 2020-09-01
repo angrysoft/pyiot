@@ -14,9 +14,9 @@
 
 __all__ = ['PhilipsBulb', 'PhilipsBulbException']
 
-from typing import List
+from typing import List, Dict, Any
 from pyiot.traits import Dimmer, OnOff, ColorTemperature
-from pyiot.base import BaseDevice
+from pyiot.base import Attribute, BaseDevice
 from pyiot.discover import DiscoveryMiio
 import socket
 import json
@@ -44,9 +44,10 @@ class PhilipsBulbWatcher:
     def watch(self, handler):
         pass
 
-class PhilipsBulb(BaseDevice): # OnOff, Dimmer, ColorTemperature):
+class PhilipsBulb(BaseDevice, OnOff): #, Dimmer, ColorTemperature):
     def __init__(self, sid:str, token:str, ip:str = '', port:int = 54321) -> None:
         super().__init__(sid)
+        self.status.register_attribute(Attribute('power', str))
         self.ip:str = ip
         self.port:int = port
         if not self.ip:
@@ -55,19 +56,20 @@ class PhilipsBulb(BaseDevice): # OnOff, Dimmer, ColorTemperature):
             self.ip = dev.get('ip','')
             self.port = dev.get('port', 0)
         self.conn = MiioConnection(token=token, ip=self.ip, port=self.port)
+        self._init_device()
+        self._report_handelers = set()
         
-    # def add_report_handler(self, handler):
-    #     self._report_handelers.add(handler)
+    def add_report_handler(self, handler):
+        self._report_handelers.add(handler)
         
-    # def _handle_events(self, event):
-    #     for handler in self._report_handelers:
-    #         handler(event)
+    def _handle_events(self, event):
+        for handler in self._report_handelers:
+            handler(event)
     
     def _init_device(self):
-        data = self.get_prop(['power', 'bright', 'cct', 'snm', 'dv'])
-        print(data)
+        self.status.update(self.get_prop(['power', 'bright', 'cct', 'snm', 'dv']))
     
-    def get_prop(self, props: List[str]):
+    def get_prop(self, props: List[str]) -> Dict[str, Any]:
         """
         This method is used to retrieve current property of smart LED.
         
@@ -79,10 +81,9 @@ class PhilipsBulb(BaseDevice): # OnOff, Dimmer, ColorTemperature):
                 * `cct` - Color temperature. Range 1 ~ 100
                 * `snm`
         """
-        ret = dict()
+        ret: Dict[str, Any] = {}
         for prop in set(props):
             ret_props = self.conn.send('get_prop', [prop])
-            print(ret_props)
             try:
                 ret[prop] = ret_props['result'][0]
             except KeyError:
@@ -95,6 +96,27 @@ class PhilipsBulb(BaseDevice): # OnOff, Dimmer, ColorTemperature):
         ret = self.conn.send("miIO.info")
         if 'result' in ret:
             return ret['result']
+    
+    def refresh(self, attrs: List[str]):
+        data = self.get_prop(attrs)
+        self.status.update(data)
+        Thread(target=self._handle_events,
+               args=({'cmd': 'report', 'sid': self.status.sid, 'model': self.status.model, 'data': data},)).start()
+    
+    def on(self):
+        self.conn.send('set_power', ['on'])
+        self.refresh(['power'])
+    
+    def off(self):
+        self.conn.send('set_power', ['off'])
+        self.refresh(['power'])
+    
+    def is_on(self):
+        return self.status.power == 'on'
+    
+    def is_off(self):
+        return self.status.power == 'off'
+
 
 class PhilipsBulb_old:
     """ Class to controling philips bulb.
@@ -303,6 +325,7 @@ class PhilipsBulb_old:
             sock.sendto(helobytes, (self.ip, 54321))
             data, addr = sock.recvfrom(1024)
         except socket.timeout:
+            sock.close()
             if retry:
                 print(f'debug retry handshake {retry}')
                 data = self.send_handshake((retry-1))
@@ -311,7 +334,8 @@ class PhilipsBulb_old:
     def _send(self, method, params=[], retry=2):
         time_now = datetime.datetime.now()
         if not self._handshaked or (time_now - self._handshaked).seconds > 10:
-            data = self.send_handshake()
+            data = self.send_handshake() 
+            print('after handshake ', data)
             self.packet.parse(data)
             self._handshaked = time_now
         
@@ -331,6 +355,7 @@ class PhilipsBulb_old:
         except socket.timeout:
             if retry:
                 ret = self._send(method, params, (retry-1))
+        s.close()
         return ret
         
     def _get_result(self, sock, _id):

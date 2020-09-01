@@ -6,7 +6,7 @@ from pyiot.exceptions import DeviceTimeout
 class UdpConnection:
     def __init__(self) -> None:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
-        self.sock.settimeout(10)
+        self.sock.settimeout(5)
         
     def send_json(self, msg:Dict[str,Any], addr:Tuple[str,int], retry:int=3) -> None:
         self.send(json.dumps(msg).encode(), addr, retry=3)
@@ -15,6 +15,7 @@ class UdpConnection:
         try:
             self.sock.sendto(msg, addr)
         except socket.timeout:
+            print(f'send retry {retry}')
             if retry:
                 self.send(msg, addr, (retry-1))
             else:
@@ -25,6 +26,7 @@ class UdpConnection:
         try:
             ret = self.sock.recvfrom(bufsize)
         except socket.timeout:
+            print(f'recv retry {retry}')
             if retry:
                 ret = self.recv(bufsize, (retry-1))
             else:
