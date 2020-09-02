@@ -13,7 +13,6 @@
 # limitations under the License.
 
 from __future__ import annotations
-from pyiot.traits import HumidityStatus, LuminosityStatus, MotionStatus, MutliSwitch, OnOff, OpenClose, PressureStatus, TemperatureStatus, Toggle
 
 __all__ = [
     'GatewayWatcher',
@@ -31,13 +30,15 @@ __all__ = [
     ]
 
 
-from pyiot.connections.udp import UdpConnection
-import socket
 import json
+import socket
 import binascii
 from Cryptodome.Cipher import AES
+from pyiot.traits import HumidityStatus, LuminosityStatus, MotionStatus, MutliSwitch, OnOff, OpenClose, PressureStatus, TemperatureStatus, Toggle
+from pyiot.connections.udp import UdpConnection
 from pyiot.watcher import Watcher, WatcherBaseDriver
-from pyiot.base import Attribute, BaseDevice
+from pyiot import BaseDevice
+from pyiot.status import Attribute
 from typing import Callable, Dict, Any, List, Optional
 
 

@@ -16,7 +16,8 @@ __all__ = ['PhilipsBulb', 'PhilipsBulbException']
 
 from typing import List, Dict, Any
 from pyiot.traits import Dimmer, OnOff, ColorTemperature
-from pyiot.base import Attribute, BaseDevice
+from pyiot import BaseDevice
+from pyiot.status import Attribute
 from pyiot.discover import DiscoveryMiio
 import socket
 import json
@@ -44,10 +45,9 @@ class PhilipsBulbWatcher:
     def watch(self, handler):
         pass
 
-class PhilipsBulb(BaseDevice, OnOff): #, Dimmer, ColorTemperature):
+class PhilipsBulb(BaseDevice, OnOff, Dimmer): #, ColorTemperature):
     def __init__(self, sid:str, token:str, ip:str = '', port:int = 54321) -> None:
         super().__init__(sid)
-        self.status.register_attribute(Attribute('power', str))
         self.ip:str = ip
         self.port:int = port
         if not self.ip:
@@ -116,6 +116,9 @@ class PhilipsBulb(BaseDevice, OnOff): #, Dimmer, ColorTemperature):
     
     def is_off(self):
         return self.status.power == 'off'
+    
+    def set_bright(self, value:int) -> None:
+        self.conn.send('set_bright', [value])
 
 
 class PhilipsBulb_old:

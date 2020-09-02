@@ -14,10 +14,11 @@ class TestPhilipsBulb(unittest.TestCase):
         # cls.dev.watcher.add_report_handler(print)
     
     def test_info(self):
-        self.dev._init_device()
+        print(self.dev.status.power)
         info = self.dev.info()
         print(info)
         
+    @unittest.skip('temp')
     def test_a_onoff(self):
         self.dev.on()
         sleep(1)

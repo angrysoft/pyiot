@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Any, Set, Dict, List
+from typing import Any, Set, Dict, List, Tuple
+from pyiot.status import Attribute
 
 
 class Trait(ABC):
@@ -35,8 +36,8 @@ class MutliSwitch(Trait):
         pass
 
 class OnOff(Trait):
-    _commands:Set[str] = {'on', 'off'}
-    _properties: Dict[str, Any] = {'power': bool}
+    _commands:Tuple[str, str] = ('on', 'off')
+    _attributes: Tuple[Attribute] = (Attribute('power', str),)
     
     @abstractmethod
     def on(self) -> None:
@@ -57,16 +58,16 @@ class OnOff(Trait):
     
 class Dimmer(Trait):
     _commands:Set[str] = {'set_bright'}
-    _properties: Dict[str, Any] = {'bright': int}
+    _attributes: List[Attribute] = [Attribute('bright', int)]
     
     @abstractmethod
-    def set_bright(self):
+    def set_bright(self, value:int):
         pass
     
 
 class Toggle(Trait):
     _commands:Set[str] = {'toogle'}
-    _properties: Dict[str, Any] = {}
+    _attributes: Dict[str, Any] = {}
     
     @abstractmethod
     def toggle(self) -> None:
@@ -74,7 +75,7 @@ class Toggle(Trait):
 
 class OpenClose(Trait):
     _commands:Set[str] = set()
-    _properties: Dict[str, Any] = {}
+    _attributes: Dict[str, Any] = {}
     
     @abstractmethod    
     def is_open(self) -> bool:
@@ -87,33 +88,33 @@ class OpenClose(Trait):
 
 class MotionStatus(Trait):
     _commands:Set[str] = set()
-    _properties: Dict[str, Any] = {}
+    _attributes: Dict[str, Any] = {}
 
 
 class TemperatureStatus(Trait):
     _commands:Set[str] = set()
-    _properties: Dict[str, Any] = {}
+    _attributes: Dict[str, Any] = {}
     # _attributes = {('temperature', str)}
 
 
 class HumidityStatus(Trait):
     _commands:Set[str] = set()
-    _properties: Dict[str, Any] = {}
+    _attributes: Dict[str, Any] = {}
 
 
 class PressureStatus(Trait):
     _commands:Set[str] = set()
-    _properties: Dict[str, Any] = {}
+    _attributes: Dict[str, Any] = {}
 
 
 class LuminosityStatus(Trait):
     _commands:Set[str] = set()
-    _properties: Dict[str, Any] = {}
+    _attributes: Dict[str, Any] = {}
 
 
 class ColorTemperature(Trait):
     _commands:Set[str] = set()
-    _properties: Dict[str, Any] = {}
+    _attributes: Dict[str, Any] = {}
     
     def set_ct_pc(self):
         pass
