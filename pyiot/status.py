@@ -2,17 +2,21 @@ from typing import Set, Any, Dict, Optional
 
 class Attribute:
     def __init__(self, name:str, attr_type:Any, readonly:bool = False, oneshot: bool = False,
-                 value:Optional[Any] = None) -> None:
+                 value:Optional[Any] = None, alias:str = '') -> None:
         # TODO : name alias for updateing
+        self._alias = alias
         self._name = name
         self._type = attr_type
-        # TODO : Raise error wehn readony is true and value is not set
+        # TODO : Raise error when readonly is true and value is not set
         self._readonly = readonly
         self._oneshot = oneshot
         if value is not None:
             self._value = value
         else:
             self._value = attr_type()
+    @property
+    def alias(self) -> str:
+        return self._alias
     
     @property
     def readonly(self) -> bool:
@@ -47,6 +51,12 @@ class DeviceStatus(object):
     
     def unregister_attribute(self, attr_name: str):
         del self._attributes[attr_name]
+        
+    def add_alias(self, alias_name:str, attribute_name:str) ->None:
+        if attribute_name in self._attributes:
+            self._attributes[alias_name] = self._attributes[attribute_name]
+        else:
+            raise ValueError(f'No registered attribute named {attribute_name}')
         
     def update(self, value:Dict[str,Any]) -> None:
         for _name in value:

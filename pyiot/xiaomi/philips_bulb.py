@@ -45,7 +45,7 @@ class PhilipsBulbWatcher:
     def watch(self, handler):
         pass
 
-class PhilipsBulb(BaseDevice, OnOff, Dimmer): #, ColorTemperature):
+class PhilipsBulb(BaseDevice, OnOff, Dimmer, ColorTemperature):
     def __init__(self, sid:str, token:str, ip:str = '', port:int = 54321) -> None:
         super().__init__(sid)
         self.ip:str = ip
@@ -56,8 +56,10 @@ class PhilipsBulb(BaseDevice, OnOff, Dimmer): #, ColorTemperature):
             self.ip = dev.get('ip','')
             self.port = dev.get('port', 0)
         self.conn = MiioConnection(token=token, ip=self.ip, port=self.port)
-        self._init_device()
         self._report_handelers = set()
+        
+        self.status.add_alias('cct', 'ct_pc')
+        self._init_device()
         
     def add_report_handler(self, handler):
         self._report_handelers.add(handler)
@@ -118,7 +120,34 @@ class PhilipsBulb(BaseDevice, OnOff, Dimmer): #, ColorTemperature):
         return self.status.power == 'off'
     
     def set_bright(self, value:int) -> None:
+        """This method is used to change the brightness of a smart LED.
+        
+        Args:
+            value (int): The target brightness. The type is integer and ranges from 1 to 100. 
+                The brightness is a percentage instead of a absolute value.
+                100 means maximum brightness while 1 means the minimum brightness. 
+        """
         self.conn.send('set_bright', [value])
+        self.refresh(['bright', 'power'])
+    
+    def set_ct_pc(self, pc:int) -> None:
+        f"""This method is used to change the color temperature of a smart LED.
+        
+        Args:
+            pc (int): The target color temperature. 
+                The type is integer and range is 1 ~ 100.
+        """
+        if pc == 0:
+            pc = 1
+        # cct = int(cct)
+        # self._check_range(cct, 1, 100, msg=f'ct value range 1 - 100')
+        self.conn.send('set_cct', [int(pc)])
+        self.refresh(['cct'])
+    
+    def set_scene(self, scene: Any) -> None:
+        """Set scene number."""
+        self.conn.send("apply_fixed_scene", [scene.value])
+        self.refresh(['snm', 'power'])
 
 
 class PhilipsBulb_old:

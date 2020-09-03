@@ -262,7 +262,7 @@ class CtrlNeutral(AqaraSubDevice, OnOff):
     def __init__(self, sid:str, gateway:GatewayInterface):
         super().__init__(sid, gateway)
         self.writable = True
-        self.status.register_attribute(Attribute('channel_0', str))
+        self.status.add_alias('channel_0', 'power')
         self._init_device()
     
     def on(self):
@@ -308,7 +308,7 @@ class CtrlNeutral2(AqaraSubDevice, MutliSwitch):
 class Plug(AqaraSubDevice, OnOff, Toggle):
     def __init__(self, sid:str, gateway:GatewayInterface):
         super().__init__(sid, gateway)
-        self.status.register_attribute(Attribute('status', str))
+        self.status.add_alias('status', 'power')
         self.status.register_attribute(Attribute('inuse', str))
         self.status.register_attribute(Attribute('power_consumed', str))
         self.status.register_attribute(Attribute('load_power', str))
@@ -346,17 +346,12 @@ class Switch(AqaraSubDevice):
 class SensorHt(AqaraSubDevice, TemperatureStatus, HumidityStatus):
     def __init__(self, sid:str, gateway:GatewayInterface):
         super().__init__(sid, gateway)
-        self.status.register_attribute(Attribute('temperature', str))
-        self.status.register_attribute(Attribute('humidity', str))
         self._init_device()
 
 
 class WeatherV1(AqaraSubDevice, TemperatureStatus, HumidityStatus, PressureStatus):
     def __init__(self, sid:str, gateway:GatewayInterface):
         super().__init__(sid, gateway)
-        self.status.register_attribute(Attribute('temperature', str))
-        self.status.register_attribute(Attribute('humidity', str))
-        self.status.register_attribute(Attribute('pressure', str))
         self._init_device()
   
 
@@ -376,5 +371,5 @@ class Magnet(AqaraSubDevice, OpenClose):
 class SensorMotionAq2(AqaraSubDevice, MotionStatus, LuminosityStatus):
     def __init__(self, sid:str, gateway:GatewayInterface):
         super().__init__(sid, gateway)
-        self.status.register_attribute(Attribute('lux', str))
+        self.status.add_alias('lux', 'luminosity')
         self._init_device()

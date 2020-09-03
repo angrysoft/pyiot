@@ -8,8 +8,8 @@ class Trait(ABC):
 
   
 class MutliSwitch(Trait):
-    _commands:Set[str] = {'on', 'off'}
-    _properties: Dict[str, Any] = {'switch_numbers': 1}
+    _commands:Tuple[str,str] = ('on', 'off')
+    _attributes: Tuple[Attribute] = tuple()
     
     @abstractmethod
     def on(self, switch_no:int):
@@ -57,7 +57,7 @@ class OnOff(Trait):
         pass
     
 class Dimmer(Trait):
-    _commands:Set[str] = {'set_bright'}
+    _commands:Tuple[str] = ('set_bright',)
     _attributes: List[Attribute] = [Attribute('bright', int)]
     
     @abstractmethod
@@ -66,7 +66,7 @@ class Dimmer(Trait):
     
 
 class Toggle(Trait):
-    _commands:Set[str] = {'toogle'}
+    _commands:Tuple[str] = ('toggle',)
     _attributes: Dict[str, Any] = {}
     
     @abstractmethod
@@ -75,7 +75,7 @@ class Toggle(Trait):
 
 class OpenClose(Trait):
     _commands:Set[str] = set()
-    _attributes: Dict[str, Any] = {}
+    _attributes: Tuple[Attribute] = (Attribute('status', str),)
     
     @abstractmethod    
     def is_open(self) -> bool:
@@ -87,36 +87,43 @@ class OpenClose(Trait):
 
 
 class MotionStatus(Trait):
-    _commands:Set[str] = set()
-    _attributes: Dict[str, Any] = {}
+    _commands:Tuple = tuple()
+    _attributes: Tuple = tuple()
 
 
 class TemperatureStatus(Trait):
-    _commands:Set[str] = set()
-    _attributes: Dict[str, Any] = {}
-    # _attributes = {('temperature', str)}
+    _commands:Tuple = tuple()
+    _attributes:Tuple[Attribute] = (Attribute('temperature', str),)
 
 
 class HumidityStatus(Trait):
-    _commands:Set[str] = set()
-    _attributes: Dict[str, Any] = {}
-
+    _commands:Tuple = tuple()
+    _attributes:Tuple[Attribute] = (Attribute('humidity', str),)
 
 class PressureStatus(Trait):
-    _commands:Set[str] = set()
-    _attributes: Dict[str, Any] = {}
+    _commands:Tuple = tuple()
+    _attributes:Tuple[Attribute] = (Attribute('pressure', str),)
 
 
 class LuminosityStatus(Trait):
-    _commands:Set[str] = set()
-    _attributes: Dict[str, Any] = {}
+    _commands:Tuple = tuple()
+    _attributes: Tuple = (Attribute('luminosity', str),)
 
 
 class ColorTemperature(Trait):
-    _commands:Set[str] = set()
-    _attributes: Dict[str, Any] = {}
+    _commands:Tuple[str] = ('set_ct_pc',)
+    _attributes: Tuple = (Attribute('ct_pc', str),)
     
-    def set_ct_pc(self):
+    @abstractmethod
+    def set_ct_pc(self, pc:int):
+        pass
+
+class Scene(Trait):
+    _commands:Tuple[str] = ('set_scene',)
+    _attributes: Tuple = (Attribute('scene', str),)
+    
+    @abstractmethod
+    def set_scene(self, scene:Any):
         pass
     
 
