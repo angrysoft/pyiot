@@ -87,32 +87,32 @@ class OpenClose(Trait):
 
 
 class MotionStatus(Trait):
-    _commands:Tuple = tuple()
-    _attributes: Tuple = tuple()
+    _commands:Tuple[str] = tuple()
+    _attributes: Tuple[Attribute] = tuple()
 
 
 class TemperatureStatus(Trait):
-    _commands:Tuple = tuple()
+    _commands:Tuple[str] = tuple()
     _attributes:Tuple[Attribute] = (Attribute('temperature', str),)
 
 
 class HumidityStatus(Trait):
-    _commands:Tuple = tuple()
+    _commands:Tuple[str] = tuple()
     _attributes:Tuple[Attribute] = (Attribute('humidity', str),)
 
 class PressureStatus(Trait):
-    _commands:Tuple = tuple()
+    _commands:Tuple[str] = tuple()
     _attributes:Tuple[Attribute] = (Attribute('pressure', str),)
 
 
 class LuminosityStatus(Trait):
-    _commands:Tuple = tuple()
-    _attributes: Tuple = (Attribute('luminosity', str),)
+    _commands:Tuple[str] = tuple()
+    _attributes: Tuple[Attribute] = (Attribute('luminosity', str),)
 
 
 class ColorTemperature(Trait):
     _commands:Tuple[str] = ('set_ct_pc',)
-    _attributes: Tuple = (Attribute('ct_pc', str),)
+    _attributes: Tuple[Attribute] = (Attribute('ct_pc', str),)
     
     @abstractmethod
     def set_ct_pc(self, pc:int):
@@ -120,7 +120,7 @@ class ColorTemperature(Trait):
 
 class Scene(Trait):
     _commands:Tuple[str] = ('set_scene',)
-    _attributes: Tuple = (Attribute('scene', str),)
+    _attributes: Tuple[Attribute] = (Attribute('scene', str),)
     
     @abstractmethod
     def set_scene(self, scene:Any):

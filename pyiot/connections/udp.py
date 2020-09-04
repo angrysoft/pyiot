@@ -5,7 +5,7 @@ from pyiot.exceptions import DeviceTimeout
 
 class UdpConnection:
     def __init__(self) -> None:
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.sock.settimeout(5)
         
     def send_json(self, msg:Dict[str,Any], addr:Tuple[str,int], retry:int=3) -> None:
@@ -50,7 +50,11 @@ class UdpBroadcastConnection(UdpConnection):
     def __init__(self) -> None:
         super().__init__()
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        
+
+class UdpMulticastConnection(UdpConnection):
+    def __init__(self) -> None:
+        super().__init__()
+        self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 32)
 
 class UdpListener:
     def __init__(self, ip:str, port:int) -> None:
