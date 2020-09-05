@@ -42,8 +42,7 @@ class DiscoveryYeelight(BaseDiscovery):
         
         Args:
             timeout (int): socket timeout"""
-        devices = dict()
-        sid = None
+        ret: List[Dict[str, Any]] = []
         
         conn = UdpMulticastConnection()
         conn.sock.settimeout(10)
@@ -57,32 +56,25 @@ class DiscoveryYeelight(BaseDiscovery):
             except DeviceTimeout:
                 break
             if data:
-                dev = self._parse_devices(data.decode(), addr)
+                dev = self._parse_devices(data.decode())
                 if dev:
-                    if sid is None:
-                        devices[dev['id']] = dev
-                    elif sid == dev['id']:
-                        devices = dev
-                        break
+                    ret.append(dev)
                     
-        # sock.close()
-        return devices
+        return ret
     
     def find_by_sid(self, sid: str) -> Dict[str, Any]:
         return {}
     
-    def _parse_devices(self, data_in, addr):
-        dev = {}
-        for d in data_in.split('\r\n'):
-            if d == 'HTTP/1.1 200 OK':
-                if dev:
-                    self.devices[dev['id']] = dev
-                    dev = {}
-            d = d.lower()
-            if d.startswith('cache-control') or d.startswith('date') or d.startswith('ext'):
-                continue
-            if d.find(':') > 0:
-                key, val = d.split(':', 1)
+    def _parse_devices(self, data_in:str) -> Dict[str, Any]:
+        dev: Dict[str, Any] = {}
+        for line in data_in.split('\r\n'):
+            tmp = line.split(':', 1)
+            print(tmp)
+            if len(tmp) > 1:
+                key, val = tmp
+                key = key.lower()
+                if key.startswith('cache-control') or key.startswith('date') or key.startswith('ext'):
+                    continue
                 val = val.strip()
                 if key == 'support':
                     val = val.split(' ')
@@ -90,9 +82,9 @@ class DiscoveryYeelight(BaseDiscovery):
                     url = urlparse(val)
                     dev['ip'] = url.hostname
                     dev['port'] = url.port
+                    continue
                 dev[key] = val
-        if dev:
-            return dev
+        return dev
 
 class DiscoveryAqara(BaseDiscovery):
     pass
@@ -115,7 +107,7 @@ class DiscoveryMiio(BaseDiscovery):
         self.conn.send(self.hellobytes, (self.addr, self.port))
         while True:
             try:
-                data, addr  = self.conn.recv()
+                data, addr  = self.conn.recv(retry=0)
                 head = MiioPacket.parse_head(data)
                 ip, port = addr
                 ret.append(dict(ip=ip, port=port, header=head))
