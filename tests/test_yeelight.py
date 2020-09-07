@@ -1,6 +1,6 @@
 from time import sleep
 import unittest
-from pyiot.xiaomi import Color
+from pyiot.xiaomi.yeelight import Color
 
 
 sid = '0x0000000007e7bae0'

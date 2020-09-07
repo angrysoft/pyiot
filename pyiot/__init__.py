@@ -15,8 +15,6 @@ class BaseDevice:
                 cls._cmds.update(_base_class._commands)
                 for _attr in _base_class._attributes:
                     cls.status.register_attribute(_attr)
-                    # a = Attribute(*_attr)
-                    # print(a)
         
         return super(BaseDevice, cls).__new__(cls)
     

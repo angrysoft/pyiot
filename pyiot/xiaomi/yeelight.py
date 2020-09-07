@@ -16,6 +16,9 @@
 __all__ = ['Yeelight', 'YeelightWatcher', 'Color', 'Bslamp1', 'DeskLamp']
 
 
+from pyiot.status import Attribute
+from pyiot.traits import ColorTemperature, Dimmer, OnOff
+from pyiot.discover import DiscoveryYeelight
 import socket
 import asyncio
 import json
@@ -24,75 +27,8 @@ from time import sleep
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from pyiot.watcher import Watcher, WatcherBaseDriver
-from pyiot.base import BaseDeviceInterface
+from pyiot import BaseDevice
 
-
-class YeelightConst(Enum):
-    MULTICAST = '239.255.255.250'
-    PORT = 1982
-    SEARCH_REQUEST = 'M-SEARCH * HTTP/1.1\r\n' \
-                     'HOST: 239.255.255.250:1982\r\n' \
-                     'MAN: "ssdp:discover"\r\n' \
-                     'ST: wifi_bulb\r\n'.encode()
-
-
-class Yeelight:
-    """Class to dicover yeelight devices connectetd to local network
-    
-    Examples:
-        >>> y = Yeelight()
-        >>> y.discover()
-    """
-
-    def discover(self, timeout=10, sid=None):
-        """Discover devices
-        
-        Args:
-            timeout (int): socket timeout"""
-        devices = dict()
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-        sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 32)
-        sock.settimeout(timeout)
-        sock.sendto(YeelightConst.SEARCH_REQUEST.value, (YeelightConst.MULTICAST.value, YeelightConst.PORT.value))
-        while True:
-            try:
-                data, addr = sock.recvfrom(1024)
-            except OSError:
-                break
-            if data:
-                dev = self._parse_devices(data.decode(), addr)
-                if dev:
-                    if sid is None:
-                        devices[dev['id']] = dev
-                    elif sid == dev['id']:
-                        devices = dev
-                        break
-                    
-        sock.close()
-        return devices
-
-    def _parse_devices(self, data_in, addr):
-        dev = {}
-        for d in data_in.split('\r\n'):
-            if d == 'HTTP/1.1 200 OK':
-                if dev:
-                    self.devices[dev['id']] = dev
-                    dev = {}
-            d = d.lower()
-            if d.startswith('cache-control') or d.startswith('date') or d.startswith('ext'):
-                continue
-            if d.find(':') > 0:
-                key, val = d.split(':', 1)
-                val = val.strip()
-                if key == 'support':
-                    val = val.split(' ')
-                elif key == 'location':
-                    url = urlparse(val)
-                    dev['ip'] = url.hostname
-                    dev['port'] = url.port
-                dev[key] = val
-        if dev:
-            return dev
 
 
 class YeelightError(Exception):
@@ -141,62 +77,38 @@ class ColorMode(Enum):
     COLOR_FLOW = 4
     NIGHT = 5
         
-class YeelightDev(BaseDeviceInterface):
+class YeelightDev(BaseDevice, OnOff, Dimmer, ColorTemperature):
     """ Class to controling yeelight devices color bulb BedSide lamp etc.
     
     Args:
         ip (str): ipv4 address to device
         port (:obj:`int`, optional): Port number. Defaults is 55443."""
         
-    def __init__(self, sid):
+    def __init__(self, sid:str):
         super().__init__(sid)
-        self._find_device()
         self.answers = dict()
         self.answer_id = 1
         self.min_ct = 1700
         self.max_ct = 6500
-        self.cmd = {'set_power': self.set_power,
-                    'set_ct_abx': self.set_ct_abx,
-                    'set_bright': self.set_bright,
-                    'set_ct_pc': self.set_ct_pc}
+        self.status.register_attribute(Attribute('ip', str))
+        self.status.register_attribute(Attribute('port', int))
+        self._init_device()
+        
         self.watcher = Watcher(YeelightWatcher(self))
-        self.watcher.add_report_handler(self.report)
+        self.watcher.add_report_handler(self.status.update)
     
-    def _find_device(self):
-        y = Yeelight()
-        dev = y.discover(sid=self.sid)
+    def _init_device(self):
+        dev = DiscoveryYeelight()
+        dev = dev.find_by_sid(self.sid)
         if not dev:
             raise YeelightError(f'Device is offline {self.sid}')
-        self._data.update(dev)
-        pass
-    
-    def device_status(self):
-        return {**super().device_status(),
-                "power": self.power,
-                "ct_pc": self.ct_pc,
-                "bright": self.bright}.copy()
-          
-    @property
-    def ip(self):
-        return self._data.get('ip', '')
-    
-    @property
-    def port(self):
-        return self._data.get('port', 55443)
-    
-    @property
-    def model(self):
-        return self._data.get('model', '')
-    
-    @property
-    def power(self):
-        return self._data.get('power', 'unknown')
+        self.status.update(dev)
     
     def is_on(self):
-        return self._data.get('power') == 'on'
+        return self.status.power == 'on'
     
     def is_off(self):
-        return self._data.get('power') == 'off'
+        return self.status.power == 'off'
     
     @property
     def color_mode(self):
@@ -218,9 +130,6 @@ class YeelightDev(BaseDeviceInterface):
             self._data['ct_pc'] = ret
         return ret
     
-    @property
-    def bright(self):
-        return self._data.get('bright')
     
     def get_prop(self, *prop):
         """
@@ -265,7 +174,7 @@ class YeelightDev(BaseDeviceInterface):
                 ret[p] = ret_props[i]
         return ret
 
-    def on(self, efx='smooth', duration=500):
+    def on(self) -> None:
         """This method is used to switch on the smart LED
         
         Args:
@@ -278,9 +187,9 @@ class YeelightDev(BaseDeviceInterface):
                 The unit is milliseconds. The minimum support duration is 30 milliseconds.
                 Default is `500`"""
 
-        return self.set_power('on', efx, duration)
+        self.set_power('on', efx, duration)
 
-    def off(self, efx='smooth', duration=500):
+    def off(self) -> None:
         """This method is used to switch off the smart LED
         
         Args:
@@ -293,7 +202,7 @@ class YeelightDev(BaseDeviceInterface):
                 The unit is milliseconds. The minimum support duration is 30 milliseconds.
                 Default is `500`"""
 
-        return self.set_power('off', efx, duration)
+        self.set_power('off', efx, duration)
 
     def set_power(self, state, efx='smooth', duration=500, mode=0):
         """This method is used to switch on or off the smart LED (software managed on/off).

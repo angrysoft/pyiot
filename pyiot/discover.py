@@ -37,6 +37,9 @@ class DiscoveryYeelight(BaseDiscovery):
                                      'MAN: "ssdp:discover"\r\n' \
                                      'ST: wifi_bulb\r\n'.encode()
                                      
+        self.conn = UdpMulticastConnection()
+        self.conn.sock.settimeout(10)
+        
     def find_all(self) -> List[Dict[str, Any]]:
         """Discover devices
         
@@ -44,13 +47,11 @@ class DiscoveryYeelight(BaseDiscovery):
             timeout (int): socket timeout"""
         ret: List[Dict[str, Any]] = []
         
-        conn = UdpMulticastConnection()
-        conn.sock.settimeout(10)
-        conn.send(self.search_request, (self.ip, self.port))
+        self.conn.send(self.search_request, (self.ip, self.port))
         
         while True:
             try:
-                data, addr = conn.recv(retry=0)
+                data, addr = self.conn.recv(retry=0)
             except OSError:
                 break
             except DeviceTimeout:
@@ -63,13 +64,25 @@ class DiscoveryYeelight(BaseDiscovery):
         return ret
     
     def find_by_sid(self, sid: str) -> Dict[str, Any]:
+                
+        self.conn.send(self.search_request, (self.ip, self.port))
+        while True:
+            try:
+                data, addr = self.conn.recv(retry=0)
+            except OSError:
+                break
+            except DeviceTimeout:
+                break
+            if data:
+                dev = self._parse_devices(data.decode())
+                if dev and sid == dev['id']:
+                    return dev
         return {}
     
     def _parse_devices(self, data_in:str) -> Dict[str, Any]:
         dev: Dict[str, Any] = {}
         for line in data_in.split('\r\n'):
             tmp = line.split(':', 1)
-            print(tmp)
             if len(tmp) > 1:
                 key, val = tmp
                 key = key.lower()
@@ -113,7 +126,7 @@ class DiscoveryMiio(BaseDiscovery):
                 ret.append(dict(ip=ip, port=port, header=head))
             except socket.timeout:
                 break
-            except Exception as ex:
+            except Exception:
                 break
         return ret
     
@@ -136,7 +149,7 @@ class DiscoveryMiio(BaseDiscovery):
                     break
             except socket.timeout:
                 break
-            except Exception as ex:
+            except Exception:
                 break
         return ret
 
