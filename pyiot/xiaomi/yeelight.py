@@ -175,34 +175,14 @@ class YeelightDev(BaseDevice, OnOff, Dimmer, ColorTemperature):
         return ret
 
     def on(self) -> None:
-        """This method is used to switch on the smart LED
-        
-        Args:
-            efx (:obj:`str`, optional): support two values: `sudden` and `smooth`. 
-                If effect is `sudden`, then change will be directly , under this case, parameter `duration` is ignored. 
-                If effect is `smooth`, then the total time of gradual change is specified in parameter `duration`.
-                Default is `smooth`
-            
-            duration (:obj:`int`, optional): Specifies the total time of the gradual changing.
-                The unit is milliseconds. The minimum support duration is 30 milliseconds.
-                Default is `500`"""
+        """This method is used to switch on the smart LED"""
 
-        self.set_power('on', efx, duration)
+        self.set_power('on')
 
     def off(self) -> None:
-        """This method is used to switch off the smart LED
-        
-        Args:
-            efx (:obj:`str`, optional): support two values: `sudden` and `smooth`. 
-                If effect is `sudden`, then change will be directly , under this case, parameter `duration` is ignored. 
-                If effect is `smooth`, then the total time of gradual change is specified in parameter `duration`.
-                Default is `smooth`
-            
-            duration (:obj:`int`, optional): Specifies the total time of the gradual changing.
-                The unit is milliseconds. The minimum support duration is 30 milliseconds.
-                Default is `500`"""
+        """This method is used to switch off the smart LED"""
 
-        self.set_power('off', efx, duration)
+        self.set_power('off')
 
     def set_power(self, state, efx='smooth', duration=500, mode=0):
         """This method is used to switch on or off the smart LED (software managed on/off).

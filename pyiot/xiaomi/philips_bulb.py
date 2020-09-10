@@ -18,9 +18,6 @@ from typing import List, Dict, Any
 from pyiot.traits import Dimmer, OnOff, ColorTemperature
 from pyiot import BaseDevice
 from pyiot.discover import DiscoveryMiio
-import socket
-import json
-import datetime
 from .protocol import MiioConnection, MiioPacket
 from threading import Thread
 
