@@ -10,11 +10,16 @@ class BaseDevice:
         cls.status:DeviceStatus = DeviceStatus()
         for _base_class in cls.__bases__:
             _name: str = _base_class.__name__
-            if issubclass(_base_class, Trait):
+            trait_list = Trait.__subclasses__()
+            if _base_class in trait_list:
                 cls._traits.add(_name)
                 cls._cmds.update(_base_class._commands)
                 for _attr in _base_class._attributes:
                     cls.status.register_attribute(_attr)
+            
+            for bs in _base_class.__bases__:
+                print('bs', bs.__name__, bs)
+                    
         
         return super(BaseDevice, cls).__new__(cls)
     

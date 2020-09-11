@@ -28,6 +28,7 @@ from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from pyiot.watcher import Watcher, WatcherBaseDriver
 from pyiot import BaseDevice
+from typing import Dict, List, Any
 
 
 
@@ -37,7 +38,7 @@ class YeelightError(Exception):
 
 class YeelightWatcher(WatcherBaseDriver):
     def __init__(self, dev):
-        self.connection = socket.create_connection((dev.ip, dev.port))
+        self.connection = socket.create_connection((dev.status.ip, dev.status.port))
         self.reader = self.connection.makefile()
         self._loop = True
         self.dev = dev
@@ -92,6 +93,7 @@ class YeelightDev(BaseDevice, OnOff, Dimmer, ColorTemperature):
         self.max_ct = 6500
         self.status.register_attribute(Attribute('ip', str))
         self.status.register_attribute(Attribute('port', int))
+        self.status.register_attribute(Attribute('color_mode', int))
         self._init_device()
         
         self.watcher = Watcher(YeelightWatcher(self))
@@ -99,9 +101,9 @@ class YeelightDev(BaseDevice, OnOff, Dimmer, ColorTemperature):
     
     def _init_device(self):
         dev = DiscoveryYeelight()
-        dev = dev.find_by_sid(self.sid)
+        dev = dev.find_by_sid(self.status.sid)
         if not dev:
-            raise YeelightError(f'Device is offline {self.sid}')
+            raise YeelightError(f'Device is offline {self.status.sid}')
         self.status.update(dev)
     
     def is_on(self):
@@ -110,28 +112,23 @@ class YeelightDev(BaseDevice, OnOff, Dimmer, ColorTemperature):
     def is_off(self):
         return self.status.power == 'off'
     
-    @property
-    def color_mode(self):
-        return ColorMode(int(self._data.get('color_mode'))).name
+    # @property
+    # def rgb(self):
+    #     return int(self._data.get('rgb', -1))
     
-    @property
-    def rgb(self):
-        return int(self._data.get('rgb', -1))
+    # @property
+    # def ct(self):
+    #     return self._data.get('ct')
     
-    @property
-    def ct(self):
-        return self._data.get('ct')
+    # @property
+    # def ct_pc(self):
+    #     ret =  self._data.get('ct_pc')
+    #     if ret is None:
+    #         ret = int(100 - (self.max_ct - int(self.ct)) / (self.max_ct-self.min_ct) * 100)
+    #         self._data['ct_pc'] = ret
+    #     return ret
     
-    @property
-    def ct_pc(self):
-        ret =  self._data.get('ct_pc')
-        if ret is None:
-            ret = int(100 - (self.max_ct - int(self.ct)) / (self.max_ct-self.min_ct) * 100)
-            self._data['ct_pc'] = ret
-        return ret
-    
-    
-    def get_prop(self, *prop):
+    def get_prop(self, props: List[str]) -> Dict[str, Any]:
         """
         This method is used to retrieve current property of smart LED.
         
@@ -163,6 +160,8 @@ class YeelightDev(BaseDevice, OnOff, Dimmer, ColorTemperature):
                 * `active_mode` - ...
         """
         # TODO add zip and list[:18] increment
+        ret: Dict[str, Any] = {}
+        
         if len(prop) > 18:
             raise ValueError('Max 18 props at once')
         ret_props = self._send('get_prop', prop)
@@ -426,7 +425,7 @@ class YeelightDev(BaseDevice, OnOff, Dimmer, ColorTemperature):
         ret = ''
         # socket.setdefaulttimeout(10)
         try:
-            sock = socket.create_connection((self.ip, self.port))
+            sock = socket.create_connection((self.status.ip, self.status.port))
             sock.settimeout(5)
             _id = self.answer_id
             if _id > 1000:
@@ -475,11 +474,6 @@ class DeskLamp(YeelightDev):
 class Color(YeelightDev):
     def __init__(self, sid):
         super().__init__(sid=sid)
-        self.cmd['set_rgb'] = self.set_rgb
-        self.cmd['set_color'] = self.set_color
-        
-    def device_status(self):
-        return {**super().device_status() ,"color_mode": self.color_mode, "rgb": self.rgb}.copy()
         
     def set_rgb(self, red=0, green=0, blue=0, efx='smooth', duration=500):
         """This method is used to change the color of a smart LED.

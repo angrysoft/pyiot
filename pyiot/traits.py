@@ -4,7 +4,13 @@ from pyiot.status import Attribute
 
 
 class Trait(ABC):
-   pass
+    # @classmethod
+    # def __subclasshook__(cls, C):
+    #     if C is Trait:
+    #         return True
+    #     else:
+    #         return False
+    pass
 
   
 class MutliSwitch(Trait):

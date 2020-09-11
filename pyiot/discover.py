@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from pyiot.exceptions import DeviceTimeout
 from typing import Any, Dict, List
-from pyiot.connections.udp import UdpBroadcastConnection, UdpMulticastConnection
+from pyiot.connections.udp import UdpBroadcastConnection, UdpMulticastConnection, UdpConnection
 from pyiot.xiaomi.protocol import MiioPacket
 from urllib.parse import urlparse
 import socket
@@ -33,10 +33,10 @@ class DiscoverySony(BaseDiscovery):
                                      'HOST: 239.255.255.250:1900\r\n' \
                                      'MAN: "ssdp:discover"\r\n' \
                                      'MX: 1\r\n' \
-                                     'ST: service\r\n' \
+                                     'ST: urn:schemas-sony-com:service:ScalarWebAPI:1\r\n' \
                                      '\r\n'.encode()
                                      
-        self.conn = UdpMulticastConnection()
+        self.conn = UdpConnection()
         self.conn.sock.settimeout(10)
         
     def find_all(self) -> List[Dict[str, Any]]:
@@ -56,7 +56,7 @@ class DiscoverySony(BaseDiscovery):
             except DeviceTimeout:
                 break
             if data:
-                dev = data.decode()
+                dev = self._parse_devices(data.decode())
                 if dev:
                     ret.append(dev)
                     
@@ -77,6 +77,26 @@ class DiscoverySony(BaseDiscovery):
                 if dev and sid == dev['id']:
                     return dev
         return {}
+    
+    def _parse_devices(self, data_in:str) -> Dict[str, Any]:
+        dev: Dict[str, Any] = {}
+        for line in data_in.split('\r\n'):
+            tmp = line.split(':', 1)
+            if len(tmp) > 1:
+                key, val = tmp
+                key = key.lower()
+                if key.startswith('cache-control') or key.startswith('date') or key.startswith('ext'):
+                    continue
+                val = val.strip()
+                if key == 'support':
+                    val = val.split(' ')
+                elif key == 'location':
+                    url = urlparse(val)
+                    dev['ip'] = url.hostname
+                    dev['port'] = url.port
+                    continue
+                dev[key] = val
+        return dev
 
 class DiscoveryYeelight(BaseDiscovery):
     def __init__(self) -> None:
