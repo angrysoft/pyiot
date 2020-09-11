@@ -26,7 +26,57 @@ class DiscoverySonoff(BaseDiscovery):
     pass
 
 class DiscoverySony(BaseDiscovery):
-    pass
+    def __init__(self) -> None:
+        self.ip: str = '239.255.255.250'
+        self.port: int = 1900
+        self.search_request: bytes = 'M-SEARCH * HTTP/1.1\r\n' \
+                                     'HOST: 239.255.255.250:1900\r\n' \
+                                     'MAN: "ssdp:discover"\r\n' \
+                                     'MX: 1\r\n' \
+                                     'ST: service\r\n' \
+                                     '\r\n'.encode()
+                                     
+        self.conn = UdpMulticastConnection()
+        self.conn.sock.settimeout(10)
+        
+    def find_all(self) -> List[Dict[str, Any]]:
+        """Discover devices
+        
+        Args:
+            timeout (int): socket timeout"""
+        ret: List[Dict[str, Any]] = []
+        
+        self.conn.send(self.search_request, (self.ip, self.port))
+        
+        while True:
+            try:
+                data, addr = self.conn.recv(retry=0)
+            except OSError:
+                break
+            except DeviceTimeout:
+                break
+            if data:
+                dev = data.decode()
+                if dev:
+                    ret.append(dev)
+                    
+        return ret
+    
+    def find_by_sid(self, sid: str) -> Dict[str, Any]:
+                
+        self.conn.send(self.search_request, (self.ip, self.port))
+        while True:
+            try:
+                data, addr = self.conn.recv(retry=0)
+            except OSError:
+                break
+            except DeviceTimeout:
+                break
+            if data:
+                dev = self._parse_devices(data.decode())
+                if dev and sid == dev['id']:
+                    return dev
+        return {}
 
 class DiscoveryYeelight(BaseDiscovery):
     def __init__(self) -> None:
