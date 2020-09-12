@@ -1,5 +1,5 @@
 __version__ = '0.1'
-from typing import Any, Set, Dict
+from typing import Any, Set, Dict, Tuple
 from pyiot.status import DeviceStatus, Attribute
 from pyiot.traits import Trait
 
@@ -8,20 +8,24 @@ class BaseDevice:
         cls._traits:Set[str] = set()
         cls._cmds:Set[str] = set()
         cls.status:DeviceStatus = DeviceStatus()
-        for _base_class in cls.__bases__:
-            _name: str = _base_class.__name__
-            trait_list = Trait.__subclasses__()
-            if _base_class in trait_list:
-                cls._traits.add(_name)
+        cls._trait_sublases = Trait.__subclasses__()
+        print('type', type(cls.__bases__))
+        cls._get_trait_list(cls.__bases__)
+        return super(BaseDevice, cls).__new__(cls)
+    
+    @classmethod
+    def _get_trait_list(cls, classes:Tuple[object]) -> None:
+        print('clases', classes)
+        for _base_class in classes:
+            if _base_class in cls._trait_sublases:
+                cls._traits.add(_base_class.__name__)
                 cls._cmds.update(_base_class._commands)
                 for _attr in _base_class._attributes:
                     cls.status.register_attribute(_attr)
-            
-            for bs in _base_class.__bases__:
-                print('bs', bs.__name__, bs)
-                    
-        
-        return super(BaseDevice, cls).__new__(cls)
+            else:    
+                for _base_class_bases in _base_class.__bases__:
+                    print('else', _base_class_bases, _base_class_bases.__bases__)
+                    cls._get_trait_list(_base_class_bases.__bases__)
     
     def __init__(self, sid:str) -> None:
         self.status.register_attribute(Attribute('sid', str, value=sid, readonly=True))

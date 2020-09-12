@@ -9,12 +9,13 @@ sid = '0x0000000007e7bae0'
 class TestColor(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        # cls.dev = YeelightDev(sid)
-        cls.dev = Color(sid)
+        cls.dev = YeelightDev(sid)
+        cls.color = Color(sid)
         cls.dev.watcher.add_report_handler(print)
     
     def test_a_power(self):
-        print(self.dev.commands,self.dev.traits, dir(self.dev))
+        print('dev', self.dev.commands,self.dev.traits)
+        print('color', self.color.commands,self.color.traits)
         # sleep(1)
         # self.dev.on()
         # sleep(0.5)
