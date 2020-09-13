@@ -12,19 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
 
 __all__ = ['Yeelight', 'YeelightWatcher', 'Color', 'Bslamp1', 'DeskLamp']
 
-
 from pyiot.status import Attribute
-from pyiot.traits import ColorTemperature, Dimmer, OnOff
+from pyiot.traits import ColorTemperature, Dimmer, OnOff, Toggle
 from pyiot.discover import DiscoveryYeelight
 import socket
-import asyncio
 import json
-from urllib.parse import urlparse
 from time import sleep
-from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from pyiot.watcher import Watcher, WatcherBaseDriver
 from pyiot import BaseDevice
@@ -37,7 +34,7 @@ class YeelightError(Exception):
 
 
 class YeelightWatcher(WatcherBaseDriver):
-    def __init__(self, dev):
+    def __init__(self, dev: YeelightDev):
         self.connection = socket.create_connection((dev.status.ip, dev.status.port))
         self.reader = self.connection.makefile()
         self._loop = True
@@ -54,15 +51,15 @@ class YeelightWatcher(WatcherBaseDriver):
             
             if 'params' in jdata:
                 if 'ct' in jdata['params']:
-                    jdata['params']['ct_pc'] = self._ct2pc(jdata['params']['ct'])
-                handler({'cmd': 'report',
-                         'sid': self.dev.sid,
-                         'model': self.dev.model,
-                         'data': jdata['params'].copy()})
+                    jdata['params']['ct_pc'] = self._ct2pc(int(jdata['params']['ct']))
+                # handler({'cmd': 'report',
+                #          'sid': self.dev.status.sid,
+                #          'model': self.dev.status.model,
+                #          'data': jdata['params'].copy()})
+                handler(jdata['params'].copy())
     
-    def _ct2pc(self, value):
-        ct = int(value)
-        return int(100 - (self.dev.max_ct - ct) / (self.dev.max_ct-self.dev.min_ct) * 100)
+    def _ct2pc(self, value:int ):
+        return int(100 - (self.dev.max_ct - value) / (self.dev.max_ct-self.dev.min_ct) * 100)
         
                 
     def stop(self):
@@ -78,7 +75,7 @@ class ColorMode(Enum):
     COLOR_FLOW = 4
     NIGHT = 5
         
-class YeelightDev(BaseDevice, OnOff, Dimmer, ColorTemperature):
+class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
     """ Class to controling yeelight devices color bulb BedSide lamp etc.
     
     Args:
@@ -87,13 +84,16 @@ class YeelightDev(BaseDevice, OnOff, Dimmer, ColorTemperature):
         
     def __init__(self, sid:str):
         super().__init__(sid)
-        self.answers = dict()
+        self.answers: Dict[str, Any] = dict()
         self.answer_id = 1
         self.min_ct = 1700
         self.max_ct = 6500
+        self.efx: str = 'smooth'
+        self.duration: int = 500
         self.status.register_attribute(Attribute('ip', str))
         self.status.register_attribute(Attribute('port', int))
         self.status.register_attribute(Attribute('color_mode', int))
+
         self._init_device()
         
         self.watcher = Watcher(YeelightWatcher(self))
@@ -106,11 +106,6 @@ class YeelightDev(BaseDevice, OnOff, Dimmer, ColorTemperature):
             raise YeelightError(f'Device is offline {self.status.sid}')
         self.status.update(dev)
     
-    def is_on(self):
-        return self.status.power == 'on'
-    
-    def is_off(self):
-        return self.status.power == 'off'
     
     # @property
     # def rgb(self):
@@ -182,8 +177,14 @@ class YeelightDev(BaseDevice, OnOff, Dimmer, ColorTemperature):
         """This method is used to switch off the smart LED"""
 
         self.set_power('off')
+    
+    def is_on(self):
+        return self.status.power == 'on'
+    
+    def is_off(self):
+        return self.status.power == 'off'
 
-    def set_power(self, state, efx='smooth', duration=500, mode=0):
+    def set_power(self, state:str, efx: str = 'smooth', duration: int = 500, mode: int = 0) -> Dict[str,Any]:
         """This method is used to switch on or off the smart LED (software managed on/off).
         
         Args:
@@ -213,9 +214,9 @@ class YeelightDev(BaseDevice, OnOff, Dimmer, ColorTemperature):
 
     def toggle(self):
         """This method is used to toggle the smart LED."""
-        return self._send('toggle')
+        self._send('toggle')
     
-    def set_ct_pc(self, percent, efx='smooth', duration=500):
+    def set_ct_pc(self, pc: int):
         """This method is used to change the color temperature of a smart LED with percent scale.
         
         Args:
@@ -231,12 +232,11 @@ class YeelightDev(BaseDevice, OnOff, Dimmer, ColorTemperature):
                 The unit is milliseconds. The minimum support duration is 30 milliseconds.
                 Default is `500`
         """
-        percent = int(percent)
-        self._check_range(percent)
-        value = self.min_ct + ((self.max_ct - self.min_ct) * percent / 100)
-        self.set_ct_abx(value, efx='smooth', duration=500)
+        
+        value = self.min_ct + ((self.max_ct - self.min_ct) * pc / 100)
+        self.set_ct_abx(int(value))
 
-    def set_ct_abx(self, ct, efx='smooth', duration=500):
+    def set_ct_abx(self, ct:int):
         """This method is used to change the color temperature of a smart LED.
         
         Args:
@@ -251,11 +251,11 @@ class YeelightDev(BaseDevice, OnOff, Dimmer, ColorTemperature):
             duration (:obj:`int`, optional): Specifies the total time of the gradual changing.
                 The unit is milliseconds. The minimum support duration is 30 milliseconds.
                 Default is `500`"""
-        ct = int(ct)
+                
         self._check_range(ct, self.min_ct, self.max_ct, msg=f'ct value range {self.min_ct} - {self.max_ct}')
-        return self._send('set_ct_abx', [ct, efx, duration])
+        self._send('set_ct_abx', [ct, self.efx, self.duration])
 
-    def set_bright(self, brightness, efx='smooth', duration=500):
+    def set_bright(self, value: int):
         """This method is used to change the brightness of a smart LED.
         
         Args:
@@ -271,9 +271,8 @@ class YeelightDev(BaseDevice, OnOff, Dimmer, ColorTemperature):
             duration (:obj:`int`, optional): Specifies the total time of the gradual changing.
                 The unit is milliseconds. The minimum support duration is 30 milliseconds.
                 Default is `500`"""
-        brightness = int(brightness)
-        self._check_range(brightness, begin=1)
-        return self._send('set_bright', [brightness, efx, duration])
+        self._check_range(value, begin=1)
+        self._send('set_bright', [value, self.efx, self.duration])
 
     def set_default(self):
         """This method is used to save current state of smart LED in persistent memory.
