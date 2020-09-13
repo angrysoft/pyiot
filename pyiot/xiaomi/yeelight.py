@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from __future__ import annotations
+from pyiot.connections import IdGen
 from pyiot.exceptions import DeviceIsOffline, DeviceTimeout
 from pyiot.connections.tcp import TcpConnection
 
@@ -87,7 +88,7 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
     def __init__(self, sid:str):
         super().__init__(sid)
         self.answers: Dict[str, Any] = dict()
-        self.answer_id = 1
+        self.answer_id = IdGen()
         self.min_ct = 1700
         self.max_ct = 6500
         self.efx: str = 'smooth'
@@ -422,52 +423,49 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
         elif value < begin or value > end:
             raise ValueError(msg)
     
-    def _send_old(self, method, params=[]):
-        ret = ''
-        # socket.setdefaulttimeout(10)
-        try:
-            sock = socket.create_connection((self.status.ip, self.status.port))
-            sock.settimeout(5)
-            _id = self.answer_id
-            if _id > 1000:
-                _id = 1
-                self.answers.clear()
-            self.answer_id += 1
-            _msg = json.dumps({'id': _id,
-                               'method': method,
-                               'params': params})
-            sock.sendall(_msg.encode())
-            # desk lamp need to send in separate msg instead recv freeze
-            sock.sendall('\r\n'.encode())
-            ret = self._get_result(sock, _id)
-        except ConnectionRefusedError:
-            self._find_device()
-            ret = self._send(method,params)
-        finally:
-            sock.shutdown(socket.SHUT_RDWR)
-            sock.close()
-        return ret
+    # def _send_old(self, method, params=[]):
+    #     ret = ''
+    #     # socket.setdefaulttimeout(10)
+    #     try:
+    #         sock = socket.create_connection((self.status.ip, self.status.port))
+    #         sock.settimeout(5)
+    #         _id = self.answer_id
+    #         if _id > 1000:
+    #             _id = 1
+    #             self.answers.clear()
+    #         self.answer_id += 1
+    #         _msg = json.dumps({'id': _id,
+    #                            'method': method,
+    #                            'params': params})
+    #         sock.sendall(_msg.encode())
+    #         # desk lamp need to send in separate msg instead recv freeze
+    #         sock.sendall('\r\n'.encode())
+    #         ret = self._get_result(sock, _id)
+    #     except ConnectionRefusedError:
+    #         self._find_device()
+    #         ret = self._send(method,params)
+    #     finally:
+    #         sock.shutdown(socket.SHUT_RDWR)
+    #         sock.close()
+    #     return ret
     
     def _send(self, method:str, params: List[str]=[]) -> None:
         try:
-            if _id > 1000:
-                _id = 1
-                self.answers.clear()
-            self.answer_id += 1
+            _id  = self.answer_id.get_next_id()
             _msg = json.dumps({'id': _id,
                                'method': method,
                                'params': params})
             _msg += '\r\n'
-            _msg += '\r\n'
-            self.conn.send(_msg)
-            self._get_result(_id)
-            self.conn.close()
+            self.conn.send_lines([_msg, '\r\n'])
+            self._get_result()
         except DeviceIsOffline:
             pass
         except DeviceTimeout:
             pass
+        finally:
+            self.conn.close()
     
-    def _get_result(self, _id):
+    def _get_result(self):
         for i in range(120):
             data_bytes = self.conn.recv(1024)
             ret = ''
@@ -478,10 +476,7 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
                         self.answers[ret.get('id')] = ret
                 except json.decoder.JSONDecodeError:
                     pass
-            if _id in self.answers:
-                return self.answers[_id]
             sleep(0.01)
-        return {}
 
 
 class DeskLamp(YeelightDev):

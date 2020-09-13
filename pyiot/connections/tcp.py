@@ -16,6 +16,7 @@ class TcpConnection:
         try:
             self.sock = socket.create_connection((self.ip, self.port), timeout=timeout)
             for line in lines:
+                print(line)
                 self.sock.sendall(line.encode())
         except socket.timeout:
             raise DeviceTimeout
@@ -51,3 +52,4 @@ class TcpConnection:
         if self.sock:
             self.sock.shutdown(socket.SHUT_RDWR)
             self.sock.close()
+            self.sock = None

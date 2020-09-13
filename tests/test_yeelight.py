@@ -3,8 +3,9 @@ import unittest
 from pyiot.xiaomi.yeelight import Color, YeelightDev
 
 
-sid = '0x0000000007e7bae0'
+# sid = '0x0000000007e7bae0'
 # sid = '0x000000000545b741'
+sid = '0x0000000007200259'
 
 class TestColor(unittest.TestCase):
     @classmethod
@@ -13,7 +14,7 @@ class TestColor(unittest.TestCase):
         cls.dev.watcher.add_report_handler(print)
     
     def test_a_power(self):
-        print('dev', self.dev.commands,self.dev.traits)
+        print('dev', self.dev.commands,self.dev.traits, self.dev.status())
         # sleep(1)
         self.dev.on()
         sleep(0.5)
