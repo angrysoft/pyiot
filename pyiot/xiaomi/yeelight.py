@@ -13,6 +13,8 @@
 # limitations under the License.
 
 from __future__ import annotations
+from pyiot.exceptions import DeviceIsOffline, DeviceTimeout
+from pyiot.connections.tcp import TcpConnection
 
 __all__ = ['Yeelight', 'YeelightWatcher', 'Color', 'Bslamp1', 'DeskLamp']
 
@@ -93,8 +95,8 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
         self.status.register_attribute(Attribute('ip', str))
         self.status.register_attribute(Attribute('port', int))
         self.status.register_attribute(Attribute('color_mode', int))
-
         self._init_device()
+        self.conn = TcpConnection(self.status.ip, self.status.port)
         
         self.watcher = Watcher(YeelightWatcher(self))
         self.watcher.add_report_handler(self.status.update)
@@ -420,7 +422,7 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
         elif value < begin or value > end:
             raise ValueError(msg)
     
-    def _send(self, method, params=[]):
+    def _send_old(self, method, params=[]):
         ret = ''
         # socket.setdefaulttimeout(10)
         try:
@@ -446,9 +448,28 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
             sock.close()
         return ret
     
-    def _get_result(self, sock, _id):
+    def _send(self, method:str, params: List[str]=[]) -> None:
+        try:
+            if _id > 1000:
+                _id = 1
+                self.answers.clear()
+            self.answer_id += 1
+            _msg = json.dumps({'id': _id,
+                               'method': method,
+                               'params': params})
+            _msg += '\r\n'
+            _msg += '\r\n'
+            self.conn.send(_msg)
+            self._get_result(_id)
+            self.conn.close()
+        except DeviceIsOffline:
+            pass
+        except DeviceTimeout:
+            pass
+    
+    def _get_result(self, _id):
         for i in range(120):
-            data_bytes = sock.recv(1024)
+            data_bytes = self.conn.recv(1024)
             ret = ''
             if data_bytes:
                 try:
