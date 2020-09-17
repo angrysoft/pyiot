@@ -25,4 +25,8 @@ class TestGateway(unittest.TestCase):
         ret = self.gw.get_id_list()
         print(ret)
         self.assertIsInstance(ret, list)
+    
+    def test_set_acces(self):
+        ret = self.gw.accept_join()
+        print(ret)
         

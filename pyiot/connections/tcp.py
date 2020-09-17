@@ -12,21 +12,11 @@ class TcpConnection:
         self.port = port
         self.sock : Optional[socket.socket] = None        
     
-    def send_lines(self, lines: List[str], timeout: int = 5):
-        try:
-            self.sock = socket.create_connection((self.ip, self.port), timeout=timeout)
-            for line in lines:
-                print(line)
-                self.sock.sendall(line.encode())
-        except socket.timeout:
-            raise DeviceTimeout
-        except ConnectionRefusedError:
-            raise DeviceIsOffline
-    
     def send(self, msg:bytes, retry:int=3, timeout: int = 5) -> None:
         try:
-            self.sock = socket.create_connection((self.ip, self.port), timeout=timeout)
-            self.sock.settimeout(5)
+            if self.sock is None:
+                self.sock = socket.create_connection((self.ip, self.port), timeout=timeout)
+                self.sock.settimeout(5)
             self.sock.sendall(msg)
         except socket.timeout:
             print(f'send retry {retry}')

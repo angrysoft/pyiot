@@ -131,7 +131,7 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
         This method is used to retrieve current property of smart LED.
         
         Args:
-            *props (str): Variable length argument name of property to retrive (max 18 in one)
+            props (str): Variable length argument name of property to retrive (max 18 in one)
             
                 * `power on` - smart LED is turned on / off: smart LED is turned off
                 * `bright` - Brightness percentage. Range 1 ~ 100
@@ -157,18 +157,15 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
                 * `nl_br` - Brightness of night mode light
                 * `active_mode` - ...
         """
-        # TODO add zip and list[:18] increment
         ret: Dict[str, Any] = {}
         
-        if len(prop) > 18:
-            raise ValueError('Max 18 props at once')
-        ret_props = self._send('get_prop', prop)
-
-        ret = dict()
-        if ret_props:
-            ret_props = ret_props.get('result')
-            for i, p in enumerate(prop):
-                ret[p] = ret_props[i]
+        while props:
+            _props_set = props[:17]
+            del props[:17]
+            _id = self._send('get_prop', _props_set)
+            if _id in self.answers:
+                ret_props = self.answers.get(_id, {}).get('result', {})
+                ret.update(dict(zip(_props_set, ret_props)))
         return ret
 
     def on(self) -> None:
@@ -213,7 +210,7 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
 
         if mode not in (0, 1, 2, 3, 4):
             raise ValueError('mode')
-        return self._send('set_power', [state, efx, duration, mode])
+        self._send('set_power', [state, efx, duration, mode])
 
     def toggle(self):
         """This method is used to toggle the smart LED."""
@@ -305,12 +302,12 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
         A flow expression is a series of flow tuples."""
 
         self._check_range(action, 0, 2)
-        return self._send('start_cf', [count, action, flow_expression])
+        self._send('start_cf', [count, action, flow_expression])
 
     def stop_cf(self):
         """This method is used to stop a running color flow."""
 
-        return self._send('stop_cf')
+        self._send('stop_cf')
 
     def set_scene(self, scene_class, *args):
         """This method is used to set the smart LED directly to specified state.
@@ -330,7 +327,7 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
         params = list()
         params.append(scene_class)
         params.extend(args)
-        return self._send('set_scene', params)
+        self._send('set_scene', params)
 
     def cron_add(self, cron_type, value):
         """This method is used to start a timer job on the smart LED.
@@ -343,7 +340,7 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
         if cron_type != 0:
             cron_type = 0
 
-        return self._send('cron_add', [cron_type, value])
+        self._send('cron_add', [cron_type, value])
 
     def cron_get(self, cron_type):
         """This method is used to retrieve the setting of the current cron job of the specified type.
@@ -362,7 +359,7 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
         if cron_type != 0:
             cron_type = 0
 
-        return self._send('cron_del' [cron_type])
+        self._send('cron_del' [cron_type])
 
     def set_adjust(self, action, prop='bright'):
         """This method is used to change brightness, CT or color of a smart LED
@@ -387,7 +384,7 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
             raise ValueError('prop: bright, ct, color')
         if prop == 'color':
             action = 'circle'
-        return self._send('set_adjust', [action, prop])
+        self._send('set_adjust', [action, prop])
 
     def set_name(self, name):
         """This method is used to name the device. The name will be stored on the
@@ -397,23 +394,23 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
         Args:
             name (str): the name of the device"""
 
-        return self._send('set_name', [name])
+        self._send('set_name', [name])
 
     def adjust_bright(self, percentage, duration=500):
         """This method is used to adjust the brightness by specified percentage
         within specified duration."""
 
-        return self.adjust('adjust_bright', percentage, duration)
+        self.adjust('adjust_bright', percentage, duration)
 
     def adjust_ct(self, percentage, duration=500):
         """This method is used to adjust the color temperature by specified
         percentage within specified duration."""
 
-        return self.adjust('adjust_ct', percentage, duration)
+        self.adjust('adjust_ct', percentage, duration)
 
     def adjust(self, mode, percentage, duration):
         self._check_range(percentage, -100, 100)
-        return self._send(mode, [percentage, duration])
+        self._send(mode, [percentage, duration])
 
     @staticmethod
     def _check_range(value, begin=0, end=100, msg='not in range'):
@@ -423,40 +420,16 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
         elif value < begin or value > end:
             raise ValueError(msg)
     
-    # def _send_old(self, method, params=[]):
-    #     ret = ''
-    #     # socket.setdefaulttimeout(10)
-    #     try:
-    #         sock = socket.create_connection((self.status.ip, self.status.port))
-    #         sock.settimeout(5)
-    #         _id = self.answer_id
-    #         if _id > 1000:
-    #             _id = 1
-    #             self.answers.clear()
-    #         self.answer_id += 1
-    #         _msg = json.dumps({'id': _id,
-    #                            'method': method,
-    #                            'params': params})
-    #         sock.sendall(_msg.encode())
-    #         # desk lamp need to send in separate msg instead recv freeze
-    #         sock.sendall('\r\n'.encode())
-    #         ret = self._get_result(sock, _id)
-    #     except ConnectionRefusedError:
-    #         self._find_device()
-    #         ret = self._send(method,params)
-    #     finally:
-    #         sock.shutdown(socket.SHUT_RDWR)
-    #         sock.close()
-    #     return ret
-    
-    def _send(self, method:str, params: List[str]=[]) -> None:
+    def _send(self, method:str, params: List[str]=[]) -> int:
         try:
-            _id  = self.answer_id.get_next_id()
+            _id:int  = self.answer_id.get_next_id()
+            print('id', _id)
             _msg = json.dumps({'id': _id,
                                'method': method,
                                'params': params})
-            _msg += '\r\n'
-            self.conn.send_lines([_msg, '\r\n'])
+            self.conn.send(_msg.encode())
+            sleep(0.1)
+            self.conn.send('\r\n'.encode())
             self._get_result()
         except DeviceIsOffline:
             pass
@@ -464,20 +437,20 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
             pass
         finally:
             self.conn.close()
+        return _id
     
     def _get_result(self):
-        for i in range(120):
-            data_bytes = self.conn.recv(1024)
-            ret = ''
-            if data_bytes:
-                try:
-                    ret = json.loads(data_bytes.decode())
-                    if 'id' in ret:
-                        self.answers[ret.get('id')] = ret
-                except json.decoder.JSONDecodeError:
-                    pass
-            sleep(0.01)
-
+        data_bytes = self.conn.recv(1024, retry=1)
+        ret = ''
+        if data_bytes:
+            try:
+                ret = json.loads(data_bytes.decode())
+                if 'id' in ret:
+                    self.answers[ret.get('id')] = ret
+                    print('ret', ret)
+            except json.decoder.JSONDecodeError:
+                pass
+        
 
 class DeskLamp(YeelightDev):
     def __init__(self, sid):
@@ -490,7 +463,7 @@ class Color(YeelightDev):
     def __init__(self, sid):
         super().__init__(sid=sid)
         
-    def set_rgb(self, red=0, green=0, blue=0, efx='smooth', duration=500):
+    def set_rgb(self, red=0, green=0, blue=0):
         """This method is used to change the color of a smart LED.
         
         Args:
@@ -507,7 +480,7 @@ class Color(YeelightDev):
                 The unit is milliseconds. The minimum support duration is 30 milliseconds.
                 Default is `500`"""
         rgb = (int(red) << 16) + (int(green) << 8) + int(blue)
-        return self._send('set_rgb', [rgb, efx, duration])
+        self._send('set_rgb', [rgb, self.efx, self.duration])
     
     def set_color(self, rgb, efx='smooth', duration=500):
         """This method is used to change the color of a smart LED.
@@ -524,7 +497,7 @@ class Color(YeelightDev):
                 The unit is milliseconds. The minimum support duration is 30 milliseconds.
                 Default is `500`"""
 
-        return self._send('set_rgb', [rgb, efx, duration])
+        self._send('set_rgb', [rgb, efx, duration])
 
     def set_hsv(self, hue, sat, efx='smooth', duration=500):
         """This method is used to change the color of a smart LED.
@@ -552,7 +525,7 @@ class Color(YeelightDev):
     def adjust_color(self, percentage, duration):
         """This method is used to adjust the color within specified duration."""
 
-        return self.adjust('adjust_color', percentage, duration)
+        self.adjust('adjust_color', percentage, duration)
     
     def set_music(self, action, host, port):
         """This method is used to start or stop music mode on a device. Under music
@@ -573,8 +546,7 @@ class Color(YeelightDev):
         The control device can stop music mode by explicitly send a stop command or just by closing
         the socket."""
 
-        return self._send('set_music', [action, host, port])
-    
+        self._send('set_music', [action, host, port])
     
 class Bslamp1(Color):
     pass

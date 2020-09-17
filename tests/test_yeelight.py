@@ -3,9 +3,9 @@ import unittest
 from pyiot.xiaomi.yeelight import Color, YeelightDev
 
 
-# sid = '0x0000000007e7bae0'
+sid = '0x0000000007e7bae0'
 # sid = '0x000000000545b741'
-sid = '0x0000000007200259'
+# sid = '0x0000000007200259'
 
 class TestColor(unittest.TestCase):
     @classmethod
@@ -19,13 +19,40 @@ class TestColor(unittest.TestCase):
         self.dev.on()
         sleep(0.5)
         self.assertTrue(self.dev.is_on())
+        sleep(1)
         self.dev.off()
         sleep(0.5)
         self.assertTrue(self.dev.is_off())
         sleep(1)
-        # self.dev.set_power('on')
-        # sleep(0.5)
-        # self.assertTrue(self.dev.is_on())
+        self.dev.set_power('on')
+        sleep(0.5)
+        self.assertTrue(self.dev.is_on())
+        
+    def test_a_get_props(self):
+        ret = self.dev.get_prop(['power',
+                                 'bright',
+                                 'ct',
+                                 'rgb',
+                                 'hue',
+                                 'sat',
+                                 'color_mode',
+                                 'flowing',
+                                 'delayoff',
+                                 'flow_params',
+                                 'musing_on',
+                                 'name',
+                                 'bg_power',
+                                 'bg_flowing',
+                                 'bg_flow_params',
+                                 'bg_ct',
+                                 'bg_mode',
+                                 'bg_bright',
+                                 'bg_rgb',
+                                 'bg_hue',
+                                 'bg_sat',
+                                 'nl_br',
+                                 'active_mode'])
+        print(ret)
     
     # def test_b_rgb(self):
     #     sleep(0.5)
