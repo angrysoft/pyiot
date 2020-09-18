@@ -117,6 +117,18 @@ class ColorTemperature(Trait):
     @abstractmethod
     def set_ct_pc(self, pc:int):
         pass
+    
+class Rgb(Trait):
+    _commands:Tuple[str, str] = ('set_rgb', 'set_color')
+    _attributes: Tuple[Attribute] = (Attribute('rgb', str),)
+    
+    @abstractmethod
+    def set_rgb(self, red:int, green:int, blue:int):
+        pass
+    
+    @abstractmethod
+    def set_color(self, rgb:int):
+        pass
 
 class Scene(Trait):
     _commands:Tuple[str] = ('set_scene',)

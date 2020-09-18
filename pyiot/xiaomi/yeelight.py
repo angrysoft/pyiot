@@ -69,14 +69,6 @@ class YeelightWatcher(WatcherBaseDriver):
         self._loop = False
         self.reader.close()
         self.connection.close()       
-
-
-class ColorMode(Enum):
-    RGB = 1
-    CT = 2
-    HSV = 3
-    COLOR_FLOW = 4
-    NIGHT = 5
         
 class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
     """ Class to controling yeelight devices color bulb BedSide lamp etc.
@@ -96,6 +88,7 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
         self.status.register_attribute(Attribute('ip', str))
         self.status.register_attribute(Attribute('port', int))
         self.status.register_attribute(Attribute('color_mode', int))
+        self.status.register_attribute(Attribute('ct', int))
         self._init_device()
         self.conn = TcpConnection(self.status.ip, self.status.port)
         
@@ -108,15 +101,6 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
         if not dev:
             raise YeelightError(f'Device is offline {self.status.sid}')
         self.status.update(dev)
-    
-    
-    # @property
-    # def rgb(self):
-    #     return int(self._data.get('rgb', -1))
-    
-    # @property
-    # def ct(self):
-    #     return self._data.get('ct')
     
     # @property
     # def ct_pc(self):
@@ -164,7 +148,7 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
             del props[:17]
             _id = self._send('get_prop', _props_set)
             if _id in self.answers:
-                ret_props = self.answers.get(_id, {}).get('result', {})
+                ret_props:List[Any] = self.answers.get(_id, {}).get('result', [])
                 ret.update(dict(zip(_props_set, ret_props)))
         return ret
 
@@ -210,7 +194,7 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
 
         if mode not in (0, 1, 2, 3, 4):
             raise ValueError('mode')
-        self._send('set_power', [state, efx, duration, mode])
+        self._send('set_power', [state, self.efx, self.duration, mode])
 
     def toggle(self):
         """This method is used to toggle the smart LED."""
@@ -361,7 +345,7 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
 
         self._send('cron_del' [cron_type])
 
-    def set_adjust(self, action, prop='bright'):
+    def set_adjust(self, action:str, prop:str = 'bright'):
         """This method is used to change brightness, CT or color of a smart LED
         without knowing the current value, it's main used by controllers.
         
@@ -386,7 +370,7 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
             action = 'circle'
         self._send('set_adjust', [action, prop])
 
-    def set_name(self, name):
+    def set_name(self, name:str):
         """This method is used to name the device. The name will be stored on the
         device and reported in discovering response. User can also read the name through “get_prop”
         method.
@@ -396,34 +380,30 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
 
         self._send('set_name', [name])
 
-    def adjust_bright(self, percentage, duration=500):
+    def adjust_bright(self, percentage:int):
         """This method is used to adjust the brightness by specified percentage
         within specified duration."""
 
-        self.adjust('adjust_bright', percentage, duration)
+        self.adjust('adjust_bright', percentage)
 
-    def adjust_ct(self, percentage, duration=500):
+    def adjust_ct(self, percentage:int):
         """This method is used to adjust the color temperature by specified
         percentage within specified duration."""
 
-        self.adjust('adjust_ct', percentage, duration)
+        self.adjust('adjust_ct', percentage)
 
-    def adjust(self, mode, percentage, duration):
-        self._check_range(percentage, -100, 100)
-        self._send(mode, [percentage, duration])
+    def adjust(self, mode:str, percentage:int):
+
+        self._send(mode, [percentage, self.duration])
 
     @staticmethod
-    def _check_range(value, begin=0, end=100, msg='not in range'):
-        if type(value) is not int or type(begin) is not int or type(end) is not int:
-            raise TypeError('int expected')
-        
-        elif value < begin or value > end:
+    def _check_range(value:int, begin:int = 0, end:int = 100, msg: str='not in range'):        
+        if value < begin or value > end:
             raise ValueError(msg)
     
-    def _send(self, method:str, params: List[str]=[]) -> int:
+    def _send(self, method:str, params: List[Any]=[]) -> int:
+        _id:int  = self.answer_id.get_next_id()
         try:
-            _id:int  = self.answer_id.get_next_id()
-            print('id', _id)
             _msg = json.dumps({'id': _id,
                                'method': method,
                                'params': params})
@@ -447,23 +427,22 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
                 ret = json.loads(data_bytes.decode())
                 if 'id' in ret:
                     self.answers[ret.get('id')] = ret
-                    print('ret', ret)
             except json.decoder.JSONDecodeError:
                 pass
         
 
 class DeskLamp(YeelightDev):
-    def __init__(self, sid):
+    def __init__(self, sid:str):
         super().__init__(sid)
         self.min_ct = 2700
         self.max_ct = 6500
 
 
 class Color(YeelightDev):
-    def __init__(self, sid):
+    def __init__(self, sid:str):
         super().__init__(sid=sid)
         
-    def set_rgb(self, red=0, green=0, blue=0):
+    def set_rgb(self, red: int = 0, green: int = 0, blue: int = 0):
         """This method is used to change the color of a smart LED.
         
         Args:
@@ -482,7 +461,7 @@ class Color(YeelightDev):
         rgb = (int(red) << 16) + (int(green) << 8) + int(blue)
         self._send('set_rgb', [rgb, self.efx, self.duration])
     
-    def set_color(self, rgb, efx='smooth', duration=500):
+    def set_color(self, rgb:int):
         """This method is used to change the color of a smart LED.
         
         Args:
@@ -497,7 +476,7 @@ class Color(YeelightDev):
                 The unit is milliseconds. The minimum support duration is 30 milliseconds.
                 Default is `500`"""
 
-        self._send('set_rgb', [rgb, efx, duration])
+        self._send('set_rgb', [rgb, self.efx, self.duration])
 
     def set_hsv(self, hue, sat, efx='smooth', duration=500):
         """This method is used to change the color of a smart LED.

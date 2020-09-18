@@ -14,7 +14,6 @@ class TestColor(unittest.TestCase):
         cls.dev.watcher.add_report_handler(print)
     
     def test_a_power(self):
-        print('dev', self.dev.commands,self.dev.traits, self.dev.status())
         # sleep(1)
         self.dev.on()
         sleep(0.5)
@@ -72,29 +71,30 @@ class TestColor(unittest.TestCase):
     #     sleep(0.8)
     #     self.assertEqual(self.dev.rgb, 16711680)
     
-    # def test_c_ct(self):
-    #     sleep(0.5)
-    #     self.dev.set_ct_abx(6000)
-    #     sleep(0.8)
-    #     self.assertEqual(self.dev.ct, 6000)
-    #     self.dev.adjust_ct(-10)
-    #     sleep(0.8)
-    #     self.assertEqual(self.dev.ct, 5400)
+    def test_c_ct(self):
+        sleep(0.5)
+        self.dev.set_ct_abx(6000)
+        sleep(0.8)
+        self.assertEqual(self.dev.status.ct, 6000)
+        self.dev.adjust_ct(-10)
+        sleep(0.8)
+        self.assertEqual(self.dev.status.ct, 5400)
     
-    # def test_d_ct_pc(self):
-    #     sleep(0.5)
-    #     self.dev.set_ct_pc(50)
-    #     sleep(0.8)
-    #     self.assertEqual(self.dev.ct_pc, 50)
+    def test_d_ct_pc(self):
+        sleep(0.5)
+        self.dev.set_ct_pc(50)
+        sleep(0.8)
+        self.assertEqual(self.dev.status.ct_pc, 50)
     
-    # def test_f_bright(self):
-    #     self.dev.set_bright(40)
-    #     sleep(0.8)
-    #     self.assertEqual(self.dev.bright, 40)
-    #     self.dev.adjust_bright(-10)
-    #     sleep(0.8)
-    #     self.assertEqual(self.dev.bright, 30)
+    def test_f_bright(self):
+        self.dev.set_bright(40)
+        sleep(0.8)
+        self.assertEqual(self.dev.status.bright, 40)
+        self.dev.adjust_bright(-10)
+        sleep(0.8)
+        self.assertEqual(self.dev.status.bright, 30)
     
-    # def test_g_device_status(self):
-    #     ret = self.dev.device_status()
-    #     self.assertIsInstance(ret, dict)
+    def test_g_device_status(self):
+        ret = self.dev.status()
+        print('device status', self.dev.commands,self.dev.traits, ret)
+        self.assertIsInstance(ret, dict)
