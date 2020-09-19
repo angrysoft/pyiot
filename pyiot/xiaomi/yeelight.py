@@ -13,14 +13,12 @@
 # limitations under the License.
 
 from __future__ import annotations
+__all__ = ['Yeelight', 'YeelightWatcher', 'Color', 'Bslamp1', 'DeskLamp']
 from pyiot.connections import IdGen
 from pyiot.exceptions import DeviceIsOffline, DeviceTimeout
 from pyiot.connections.tcp import TcpConnection
-
-__all__ = ['Yeelight', 'YeelightWatcher', 'Color', 'Bslamp1', 'DeskLamp']
-
 from pyiot.status import Attribute
-from pyiot.traits import ColorTemperature, Dimmer, OnOff, Toggle
+from pyiot.traits import ColorTemperature, Dimmer, OnOff, Toggle, Rgb
 from pyiot.discover import DiscoveryYeelight
 import socket
 import json
@@ -168,21 +166,12 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
     def is_off(self):
         return self.status.power == 'off'
 
-    def set_power(self, state:str, efx: str = 'smooth', duration: int = 500, mode: int = 0) -> Dict[str,Any]:
+    def set_power(self, state:str, mode: int = 0) -> Dict[str,Any]:
         """This method is used to switch on or off the smart LED (software managed on/off).
         
         Args:
             state (str): can only be `on` or `off`.
                 `on` means turn on the smart LED, `off` means turn off the smart LED.
-                
-            efx (:obj:`str`, optional): support two values: `sudden` and `smooth`. 
-                If effect is `sudden`, then change will be directly , under this case, parameter `duration` is ignored. 
-                If effect is `smooth`, then the total time of gradual change is specified in parameter `duration`.
-                Default is `smooth`
-            
-            duration (:obj:`int`, optional): Specifies the total time of the gradual changing.
-                The unit is milliseconds. The minimum support duration is 30 milliseconds.
-                Default is `500`
             
             mode (:obj:`int`, optional):
                 * 0: Normal turn on operation (default value)
@@ -293,7 +282,7 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
 
         self._send('stop_cf')
 
-    def set_scene(self, scene_class, *args):
+    def set_scene(self, scene_class: Any, args: List[Any] = []):
         """This method is used to set the smart LED directly to specified state.
         If the smart LED is off, then it will turn on the smart LED firstly and then apply the specified command.
         
@@ -370,16 +359,6 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
             action = 'circle'
         self._send('set_adjust', [action, prop])
 
-    def set_name(self, name:str):
-        """This method is used to name the device. The name will be stored on the
-        device and reported in discovering response. User can also read the name through “get_prop”
-        method.
-        
-        Args:
-            name (str): the name of the device"""
-
-        self._send('set_name', [name])
-
     def adjust_bright(self, percentage:int):
         """This method is used to adjust the brightness by specified percentage
         within specified duration."""
@@ -396,6 +375,16 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
 
         self._send(mode, [percentage, self.duration])
 
+    def set_name(self, name:str):
+        """This method is used to name the device. The name will be stored on the
+        device and reported in discovering response. User can also read the name through “get_prop”
+        method.
+        
+        Args:
+            name (str): the name of the device"""
+
+        self._send('set_name', [name])
+    
     @staticmethod
     def _check_range(value:int, begin:int = 0, end:int = 100, msg: str='not in range'):        
         if value < begin or value > end:
@@ -438,7 +427,7 @@ class DeskLamp(YeelightDev):
         self.max_ct = 6500
 
 
-class Color(YeelightDev):
+class Color(YeelightDev, Rgb, Hsv):
     def __init__(self, sid:str):
         super().__init__(sid=sid)
         
@@ -448,16 +437,7 @@ class Color(YeelightDev):
         Args:
             red (int): Red color value from 0 to 255.
             green (int): Green color value from 0 to 255.
-            blue (int): Blue color value from 0 to 255.
-            
-            efx (:obj:`str`, optional): support two values: `sudden` and `smooth`. 
-                If effect is `sudden`, then change will be directly , under this case, parameter `duration` is ignored. 
-                If effect is `smooth`, then the total time of gradual change is specified in parameter `duration`.
-                Default is `smooth`
-            
-            duration (:obj:`int`, optional): Specifies the total time of the gradual changing.
-                The unit is milliseconds. The minimum support duration is 30 milliseconds.
-                Default is `500`"""
+            blue (int): Blue color value from 0 to 255."""
         rgb = (int(red) << 16) + (int(green) << 8) + int(blue)
         self._send('set_rgb', [rgb, self.efx, self.duration])
     
@@ -465,41 +445,23 @@ class Color(YeelightDev):
         """This method is used to change the color of a smart LED.
         
         Args:
-            rgb (int): Color value in RGB.
-            
-            efx (:obj:`str`, optional): support two values: `sudden` and `smooth`. 
-                If effect is `sudden`, then change will be directly , under this case, parameter `duration` is ignored. 
-                If effect is `smooth`, then the total time of gradual change is specified in parameter `duration`.
-                Default is `smooth`
-            
-            duration (:obj:`int`, optional): Specifies the total time of the gradual changing.
-                The unit is milliseconds. The minimum support duration is 30 milliseconds.
-                Default is `500`"""
+            rgb (int): Color value in RGB."""
 
         self._send('set_rgb', [rgb, self.efx, self.duration])
 
-    def set_hsv(self, hue, sat, efx='smooth', duration=500):
+    def set_hsv(self, hue: int, sat: int):
         """This method is used to change the color of a smart LED.
         
         Args:
             hue (int): The target hue value, whose type is integer.
                 It should be expressed in decimal integer ranges from 0 to 359.
-            sat (int): The target saturation value whose type is integer. It's range is 0 to 100.
-            
-            efx (:obj:`str`, optional): support two values: `sudden` and `smooth`. 
-                If effect is `sudden`, then change will be directly , under this case, parameter `duration` is ignored. 
-                If effect is `smooth`, then the total time of gradual change is specified in parameter `duration`.
-                Default is `smooth`
-            
-            duration (:obj:`int`, optional): Specifies the total time of the gradual changing.
-                The unit is milliseconds. The minimum support duration is 30 milliseconds.
-                Default is `500`"""
+            sat (int): The target saturation value whose type is integer. It's range is 0 to 100."""
         
         hue = int(hue)
         sta = int(sat)
         self._check_range(hue, end=359, msg='hue 0-359')
         self._check_range(sat, msg='sat 0-100')
-        return self._send('set_hsv', [hue, sat, efx, duration])
+        return self._send('set_hsv', [hue, sat, self.efx, self.duration])
     
     def adjust_color(self, percentage, duration):
         """This method is used to adjust the color within specified duration."""

@@ -130,12 +130,19 @@ class Rgb(Trait):
     def set_color(self, rgb:int):
         pass
 
+class Hsv(Trait):
+    _commands:Tuple[str, str] = ('set_hsv')
+    _attributes: Tuple[Attribute] = (Attribute('hue', int), Attribute('sat', int))
+    
+    @abstractmethod
+    def set_rgb(self, red:int, green:int, blue:int):
+
 class Scene(Trait):
     _commands:Tuple[str] = ('set_scene',)
     _attributes: Tuple[Attribute] = (Attribute('scene', str),)
     
     @abstractmethod
-    def set_scene(self, scene:Any):
+    def set_scene(self, scene:Any, args: List[Any] = []):
         pass
     
 

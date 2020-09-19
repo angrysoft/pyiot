@@ -138,8 +138,7 @@ class PhilipsBulb(BaseDevice, OnOff, Dimmer, ColorTemperature):
         """
         if pc == 0:
             pc = 1
-        # cct = int(cct)
-        # self._check_range(cct, 1, 100, msg=f'ct value range 1 - 100')
+
         self.conn.send('set_cct', [int(pc)])
         self.refresh(['cct'])
         
@@ -147,7 +146,7 @@ class PhilipsBulb(BaseDevice, OnOff, Dimmer, ColorTemperature):
         self.conn.send("set_bricct", [brightness, cct])
         self.refresh(['cct', 'bright', 'power']) 
     
-    def set_scene(self, scene: Any) -> None:
+    def set_scene(self, scene: Any, args:List[Any] = []) -> None:
         """Set scene number."""
         self.conn.send("apply_fixed_scene", [scene.value])
         self.refresh(['snm', 'power'])

@@ -1,10 +1,10 @@
+from __future__ import annotations
 from typing import Any, Dict
 from urllib.parse import quote
 from urllib.request import urlopen, Request
 import urllib.error
 from base64 import b64encode
 import json
-from __future__ import annotations
 
 class HttpConnection:
     def __init__(self, url: str, port:int=0, timeout:int = 5, user:str = '', password: str = ''):
