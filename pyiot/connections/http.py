@@ -83,6 +83,7 @@ class Response:
     def __init__(self, resp:Any):
         self.resp = resp
         self._headers = {}
+        self.body = ''
         if resp.readable:
             self.body = resp.read()
             self._headers = resp.headers

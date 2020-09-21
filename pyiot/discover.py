@@ -1,10 +1,12 @@
 from abc import ABC, abstractmethod
+from threading import Event
 from pyiot.exceptions import DeviceTimeout
 from typing import Any, Dict, List
 from pyiot.connections.udp import UdpBroadcastConnection, UdpMulticastConnection, UdpConnection
 from pyiot.xiaomi.protocol import MiioPacket
 from urllib.parse import urlparse
 import socket
+from zeroconf import ServiceInfo, Zeroconf, ServiceStateChange, ServiceBrowser
 
 
 class Discovery:
@@ -23,7 +25,48 @@ class BaseDiscovery(ABC):
         pass  
 
 class DiscoverySonoff(BaseDiscovery):
-    pass
+    def __init__(self) -> None:
+        self.timeout = 10
+        self.searching:Event = Event()
+        self._devices_list: List[Dict[str, Any]] = []
+        self._device: Dict[str, Any] = {}
+        self._sid = '_NotSet_'
+        
+        
+    def find_all(self) -> List[Dict[str, Any]]:
+        self._devices_list.clear()
+        self.searching.clear()
+        zeroconf = Zeroconf()
+        ServiceBrowser(zeroconf, "_ewelink._tcp.local.", handlers=[self._add_service])
+        self.searching.wait(self.timeout)
+        zeroconf.close()
+        return self._devices_list
+    
+    def find_by_sid(self, sid: str) -> Dict[str, Any]:
+        self._device.clear()
+        return self._device
+    
+    def _add_service(self, zeroconf: Zeroconf, service_type: str, name: str, state_change: ServiceStateChange) -> None:
+         if state_change is ServiceStateChange.Added:
+            info = self._parse(zeroconf.get_service_info(service_type, name))
+            if info:
+                if self.sid == info['id']: 
+                    self._devices = info
+                    self.searching.set()
+                else:
+                    self._devices[info['id']] = info
+
+    def _parse(self, info: ServiceInfo):
+        ret = {}
+        props = info.properties
+        if b'data1' in props:
+            try:
+                ret = {'id': props[b'id'].decode(), 'model': props[b'type'].decode(),
+                       'ip': socket.inet_ntoa(info.addresses[0]), 'port': info.port,
+                       'data': json.loads(props[b'data1'])}
+            except IndexError:
+                pass
+        return ret
 
 class DiscoverySony(BaseDiscovery):
     def __init__(self) -> None:

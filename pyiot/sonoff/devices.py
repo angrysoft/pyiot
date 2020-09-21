@@ -2,11 +2,12 @@ __all__ = ['PowerState', 'Pulse', 'Mini', 'DiyPlug']
 
 from .protocol import Discover, EwelinkWatcher
 from pyiot.connections.http import HttpConnection
+from pyiot.traits import OnOff
 from pyiot.watcher import Watcher
 from pyiot import BaseDevice, Attribute
 from enum import Enum
 import json
-
+from typing import Dict, Any
 
 class PowerState(Enum):
     """on: the device is on when power supply is recovered.
@@ -30,7 +31,7 @@ class BaseSONOFFDIYDevice(BaseDevice, OnOff):
 ​    WiFi password: 20170618sn
     then you need to discover device and if you have an ip of device you can set new wifi ssid and password with set_wifi method
     """
-    def __init__(self, sid:str , ip=None, port=8081):
+    def __init__(self, sid:str , ip:str = '', port:int = 8081):
         super().__init__(sid)
         self.status.register_attribute(Attribute('ip', str))
         self.status.register_attribute(Attribute('port', int))
@@ -51,7 +52,7 @@ class BaseSONOFFDIYDevice(BaseDevice, OnOff):
         self.watcher = Watcher(EwelinkWatcher())
         self.watcher.add_report_handler(self.report)
     
-    def report(self, data):
+    def report(self, data: Dict[str, Any]):
         if self.status.sid == data.get('id'):
             self.status.update(data)
        

@@ -12,6 +12,12 @@ class BaseDevice:
         cls._get_trait_list(cls.__bases__)
         return super(BaseDevice, cls).__new__(cls)
     
+    def __init__(self, sid:str) -> None:
+        self.status.register_attribute(Attribute('sid', str, value=sid, readonly=True))
+        self.status.register_attribute(Attribute('name', str))
+        self.status.register_attribute(Attribute('place', str))
+        self.status.register_attribute(Attribute('model', str, readonly=True, oneshot=True))
+    
     @classmethod
     def _get_trait_list(cls, classes:Tuple[object]) -> None:
         for _base_class in classes:
@@ -30,11 +36,6 @@ class BaseDevice:
             cls._get_trait_list(_class.__bases__)   
     
             
-    def __init__(self, sid:str) -> None:
-        self.status.register_attribute(Attribute('sid', str, value=sid, readonly=True))
-        self.status.register_attribute(Attribute('name', str))
-        self.status.register_attribute(Attribute('place', str))
-        self.status.register_attribute(Attribute('model', str, readonly=True, oneshot=True))
     
     @property
     def commands(self) -> Set[str]:
