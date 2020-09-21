@@ -32,15 +32,19 @@ class BaseSONOFFDIYDevice(BaseDevice, OnOff):
     """
     def __init__(self, sid:str , ip=None, port=8081):
         super().__init__(sid)
+        self.status.register_attribute(Attribute('ip', str))
+        self.status.register_attribute(Attribute('port', int))
+        self.status.register_attribute(Attribute('startup', str))
+        self.status.register_attribute(Attribute('pulse', str))
+        self.status.register_attribute(Attribute('pulseWidth', str))
+        self.status.register_attribute(Attribute('port', int))
+        self.status.add_alias('switch', 'power')
+        self.status.add_alias('ssid', 'sid')
+        
         if ip is None:
             self._find_device()
         else:
             self.status.update({'ip': ip, 'port': port})
-        self.status.register_attribute(Attribute('ip', str))
-        self.status.register_attribute(Attribute('port', int))
-        self.status.register_attribute(Attribute('startup', str))
-        self.status.register_attribute(Attribute('port', int))
-        self.status.add_alias('switch', 'power')
         
         self.conn = HttpConnection(url=f'http://{self.status.ip}', port=self.status.port)
         self._init_device()
@@ -48,7 +52,7 @@ class BaseSONOFFDIYDevice(BaseDevice, OnOff):
         self.watcher.add_report_handler(self.report)
     
     def report(self, data):
-        if self.sid == data.get('id'):
+        if self.status.sid == data.get('id'):
             self.status.update(data)
        
     def _init_device(self):
@@ -60,25 +64,25 @@ class BaseSONOFFDIYDevice(BaseDevice, OnOff):
         if dev:
             self.report(dev)
         
-    def set_power(self, state):
-        """This method is used to switch on or off.
+    # def set_power(self, state):
+    #     """This method is used to switch on or off.
         
-        Args:
-            state (str): can only be `on` or `off`.
-        """
-        st = {'on': self.on, 'off': self.off}.get(state)
-        if st is None:
-            raise ValueError('state (str): can only be `on` or `off`.')
-        else:
-            st()
+    #     Args:
+    #         state (str): can only be `on` or `off`.
+    #     """
+    #     st = {'on': self.on, 'off': self.off}.get(state)
+    #     if st is None:
+    #         raise ValueError('state (str): can only be `on` or `off`.')
+    #     else:
+    #         st()
     
     def on(self):
         """Set power state on"""
-        resp = self.conn.post(path='zeroconf/switch', data=self._cmd(switch='on'))
+        self.conn.post(path='zeroconf/switch', data=self._cmd(switch='on'))
     
     def off(self):
         """Set power state on"""
-        resp = self.conn.post(path='zeroconf/switch', data=self._cmd(switch='off'))
+        self.conn.post(path='zeroconf/switch', data=self._cmd(switch='off'))
     
     def is_on(self):
         return self.status.power == 'on'
@@ -94,11 +98,9 @@ class BaseSONOFFDIYDevice(BaseDevice, OnOff):
         """
         if not isinstance(state, PowerState):
             raise ValueError(f"{state} is not instance PowerState")
-        resp = self.conn.post(path='zeroconf/startup', data=self._cmd(startup=state.value))
-        if resp.code == 200:
-            return resp.json
+        self.conn.post(path='zeroconf/startup', data=self._cmd(startup=state.value))
     
-    def set_pulse(self, pulse:str, pulse_width:500):
+    def set_pulse(self, pulse:str, pulse_width:int = 500):
         """Set pulse
         
             Args:
@@ -110,16 +112,12 @@ class BaseSONOFFDIYDevice(BaseDevice, OnOff):
         """
         if not isinstance(pulse, Pulse):
             raise ValueError(f"{pulse} is not instance PowerState")
-        resp = self.conn.post(path='zeroconf/pulse', data=self._cmd(pulse=pulse.value, pulseWidth=pulse_width))
-        if resp.code == 200:
-            return resp.json
+        self.conn.post(path='zeroconf/pulse', data=self._cmd(pulse=pulse.value, pulseWidth=pulse_width))
     
     def set_wifi(self, ssid:str, password:str):
-        resp = self.conn.post(path='zeroconf/wifi', data=self._cmd(ssid=ssid, password=password))
-        if resp.code == 200:
-            return resp.json
+        self.conn.post(path='zeroconf/wifi', data=self._cmd(ssid=ssid, password=password))
     
-    def info(self):
+    def get_info(self):
         resp = self.conn.post(path='zeroconf/info', data=self._cmd())
         if resp.code == 200:
             ret = resp.json.get('data')
@@ -127,25 +125,13 @@ class BaseSONOFFDIYDevice(BaseDevice, OnOff):
                 ret = json.loads(ret)
             return ret
     
-    def get_signal_strength(self):
+    def get_signal_strength(self) -> int:
         """The WiFi signal strength currently received by the device, negative integer, dBm"""
         resp = self.conn.post(path='zeroconf/signal_strength', data=self._cmd())
         if resp.code == 200:
             return resp.json
         else:
             return 0
-    
-    @property
-    def pulse(self):
-        return self._data.get('pulse', 'unknown')
-    
-    @property
-    def pulse_width(self):
-        return self._data.get('pulseWidth', 'unknown')
-    
-    @property
-    def ssid(self):
-        return self._data.get('ssid', 'unknown')
     
     def _cmd(self, **kwargs):
         return {'deviceid': self.status.sid, 'data':kwargs}
