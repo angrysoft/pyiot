@@ -6,6 +6,7 @@ from pyiot.connections.udp import UdpBroadcastConnection, UdpMulticastConnection
 from pyiot.xiaomi.protocol import MiioPacket
 from urllib.parse import urlparse
 import socket
+import json
 from zeroconf import ServiceInfo, Zeroconf, ServiceStateChange, ServiceBrowser
 
 
@@ -48,17 +49,17 @@ class DiscoverySonoff(BaseDiscovery):
     
     def _add_service(self, zeroconf: Zeroconf, service_type: str, name: str, state_change: ServiceStateChange) -> None:
          if state_change is ServiceStateChange.Added:
-            info = self._parse(zeroconf.get_service_info(service_type, name))
+            info:Dict[str,Any] = self._parse(zeroconf.get_service_info(service_type, name))
             if info:
-                if self.sid == info['id']: 
+                if self._sid == info['id']: 
                     self._devices = info
                     self.searching.set()
                 else:
                     self._devices[info['id']] = info
 
-    def _parse(self, info: ServiceInfo):
-        ret = {}
-        props = info.properties
+    def _parse(self, info: ServiceInfo) -> Dict[str, Any]:
+        ret:Dict[str,Any] = {}
+        props:Dict[bytes, Any] = info.properties
         if b'data1' in props:
             try:
                 ret = {'id': props[b'id'].decode(), 'model': props[b'type'].decode(),

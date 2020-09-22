@@ -131,11 +131,12 @@ class Rgb(Trait):
         pass
 
 class Hsv(Trait):
-    _commands:Tuple[str, str] = ('set_hsv')
-    _attributes: Tuple[Attribute] = (Attribute('hue', int), Attribute('sat', int))
+    _commands:Tuple[str] = ('set_hsv',)
+    _attributes: Tuple[Attribute, Attribute] = (Attribute('hue', int), Attribute('sat', int))
     
     @abstractmethod
-    def set_rgb(self, red:int, green:int, blue:int):
+    def set_hsv(self, hue:int, sat:int):
+        pass
 
 class Scene(Trait):
     _commands:Tuple[str] = ('set_scene',)
@@ -145,7 +146,66 @@ class Scene(Trait):
     def set_scene(self, scene:Any, args: List[Any] = []):
         pass
     
-
-
+class Volume(Trait):
+    _commands:Tuple[str,str,str] = ('volume_up', 'volume_down', 'set_volume')
+    _attributes: Tuple[Attribute] = (Attribute('volume', str),)
     
+    @abstractmethod
+    def volume_up(self):
+        pass
     
+    @abstractmethod
+    def volume_down(self):
+        pass
+    
+    @abstractmethod
+    def set_volume(self, value:int):
+        pass
+    
+    @abstractmethod
+    def mute(self, status:bool):
+        pass
+    
+class Channels(Trait):
+    _commands:Tuple[str,str,str] = ('channel_up', 'channel_down', 'set_channel')
+    _attributes: Tuple[Attribute] = (Attribute('channel', str),)
+    
+    @abstractmethod
+    def channel_up(self):
+        pass
+    
+    @abstractmethod
+    def channel_down(self):
+        pass
+    
+    @abstractmethod
+    def set_channel(self, value:int):
+        pass
+
+class Arrows(Trait):
+    _commands:Tuple[str,str,str,str] = ('up', 'down', 'left', 'right')
+    _attributes: Tuple[Attribute] = tuple()
+    
+    @abstractmethod
+    def up(self):
+        pass
+
+    @abstractmethod
+    def down(self):
+        pass
+    
+    @abstractmethod
+    def left(self):
+        pass
+    
+    @abstractmethod
+    def right(self):
+        pass
+
+class ButtonOK(Trait):
+    _commands:Tuple[str] = ('ok', )
+    _attributes: Tuple[Attribute] = ()
+    
+    @abstractmethod
+    def ok(self):
+        pass
