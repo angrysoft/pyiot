@@ -114,19 +114,15 @@ class Bravia(BaseDevice, OnOff, ):
     def get_supported_api(self):
         """This API provides the supported services and their information"""
         
-        return self._get('guide', 'getSupportedApiInfo', [{"services": []}])
+        return self._send('guide', 'getSupportedApiInfo', [{"services": []}])
     
     def get_interface_information(self):
         """This API provides information of the REST API interface provided by the server. This API must not include private information."""
-        return self._get('system', 'getInterfaceInformation')
+        return self._send('system', 'getInterfaceInformation')
     
     def get_system_info(self):
         """This API provides general information on the device."""
-        
-        ret = self.conn.post(path='system',
-                                data=self._cmd('getSystemInformation'))
-        if ret.code == 200:
-            return self._parse_result(ret.json)
+        return self._send('system', 'getSystemInformation')
     
     def get_connected_sources(self):
         """This API provides information on the current status of all external input sources of the device."""
@@ -260,12 +256,6 @@ class Bravia(BaseDevice, OnOff, ):
     def _cmd(cmd: str, params: List[Any] = [], pid: int = 10, version: str = '1.0') -> Dict[str, Any]:
         return {'method': cmd, 'params': params, 'id': pid, 'version': version}
 
-    def _get(self, path:str, cmd: str, params: List[Any] = []):
-        ret = self.conn.post(path=path,
-                                data=self._cmd(cmd, params))
-        if ret.code == 200:
-            return self._parse_result(ret.json)
-    
     def _send(self, path:str, cmd: str, params: List[Any] = []):
         ret = self.conn.post(path=path, data=self._cmd(cmd, params))
         if ret.code == 200:

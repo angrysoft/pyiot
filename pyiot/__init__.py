@@ -19,7 +19,7 @@ class BaseDevice:
         self.status.register_attribute(Attribute('model', str, readonly=True, oneshot=True))
     
     @classmethod
-    def _get_trait_list(cls, classes:Tuple[object]) -> None:
+    def _get_trait_list(cls, classes:Tuple[type, ...]) -> None:
         for _base_class in classes:
             if issubclass(_base_class, Trait):
                 cls._check_trait(_base_class)
@@ -34,8 +34,6 @@ class BaseDevice:
                 cls.status.register_attribute(_attr)
         else:
             cls._get_trait_list(_class.__bases__)   
-    
-            
     
     @property
     def commands(self) -> Set[str]:

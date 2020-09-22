@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Set, Dict, List, Tuple
+from typing import Any, Set, List, Tuple
 from pyiot.status import Attribute
 
 
@@ -8,8 +8,8 @@ class Trait(ABC):
 
   
 class MutliSwitch(Trait):
-    _commands:Tuple[str,str] = ('on', 'off')
-    _attributes: Tuple[Attribute] = tuple()
+    _commands:Tuple[str, ...] = ('on', 'off')
+    _attributes: Tuple[Attribute, ...] = tuple()
     
     @abstractmethod
     def on(self, switch_no:int):
@@ -36,8 +36,8 @@ class MutliSwitch(Trait):
         pass
 
 class OnOff(Trait):
-    _commands:Tuple[str, str] = ('on', 'off')
-    _attributes: Tuple[Attribute] = (Attribute('power', str),)
+    _commands:Tuple[str, ...] = ('on', 'off')
+    _attributes: Tuple[Attribute,  ...] = (Attribute('power', str),)
     
     @abstractmethod
     def on(self) -> None:
@@ -57,8 +57,8 @@ class OnOff(Trait):
         pass
     
 class Dimmer(Trait):
-    _commands:Tuple[str] = ('set_bright',)
-    _attributes: List[Attribute] = [Attribute('bright', int)]
+    _commands:Tuple[str, ...] = ('set_bright',)
+    _attributes: Tuple[Attribute, ...] = (Attribute('bright', int),)
     
     @abstractmethod
     def set_bright(self, value:int):
@@ -66,8 +66,8 @@ class Dimmer(Trait):
     
 
 class Toggle(Trait):
-    _commands:Tuple[str] = ('toggle',)
-    _attributes: Dict[str, Any] = {}
+    _commands:Tuple[str, ...] = ('toggle',)
+    _attributes: Tuple[Attribute, ...] = tuple()
     
     @abstractmethod
     def toggle(self) -> None:
@@ -75,7 +75,7 @@ class Toggle(Trait):
 
 class OpenClose(Trait):
     _commands:Set[str] = set()
-    _attributes: Tuple[Attribute] = (Attribute('status', str),)
+    _attributes: Tuple[Attribute, ...] = (Attribute('status', str),)
     
     @abstractmethod    
     def is_open(self) -> bool:
@@ -87,31 +87,31 @@ class OpenClose(Trait):
 
 
 class MotionStatus(Trait):
-    _commands:Tuple[str] = tuple()
-    _attributes: Tuple[Attribute] = tuple()
+    _commands:Tuple[str,  ...] = tuple()
+    _attributes: Tuple[Attribute, ...] = tuple()
 
 
 class TemperatureStatus(Trait):
-    _commands:Tuple[str] = tuple()
+    _commands:Tuple[str, ...] = tuple()
     _attributes:Tuple[Attribute] = (Attribute('temperature', str),)
 
 
 class HumidityStatus(Trait):
-    _commands:Tuple[str] = tuple()
+    _commands:Tuple[str, ...] = tuple()
     _attributes:Tuple[Attribute] = (Attribute('humidity', str),)
 
 class PressureStatus(Trait):
-    _commands:Tuple[str] = tuple()
+    _commands:Tuple[str, ...] = tuple()
     _attributes:Tuple[Attribute] = (Attribute('pressure', str),)
 
 
 class LuminosityStatus(Trait):
-    _commands:Tuple[str] = tuple()
+    _commands:Tuple[str, ...] = tuple()
     _attributes: Tuple[Attribute] = (Attribute('luminosity', str),)
 
 
 class ColorTemperature(Trait):
-    _commands:Tuple[str] = ('set_ct_pc',)
+    _commands:Tuple[str, ...] = ('set_ct_pc',)
     _attributes: Tuple[Attribute] = (Attribute('ct_pc', str),)
     
     @abstractmethod
@@ -119,7 +119,7 @@ class ColorTemperature(Trait):
         pass
     
 class Rgb(Trait):
-    _commands:Tuple[str, str] = ('set_rgb', 'set_color')
+    _commands:Tuple[str, ...] = ('set_rgb', 'set_color')
     _attributes: Tuple[Attribute] = (Attribute('rgb', str),)
     
     @abstractmethod
@@ -131,7 +131,7 @@ class Rgb(Trait):
         pass
 
 class Hsv(Trait):
-    _commands:Tuple[str] = ('set_hsv',)
+    _commands:Tuple[str, ...] = ('set_hsv',)
     _attributes: Tuple[Attribute, Attribute] = (Attribute('hue', int), Attribute('sat', int))
     
     @abstractmethod
@@ -139,7 +139,7 @@ class Hsv(Trait):
         pass
 
 class Scene(Trait):
-    _commands:Tuple[str] = ('set_scene',)
+    _commands:Tuple[str, ...] = ('set_scene',)
     _attributes: Tuple[Attribute] = (Attribute('scene', str),)
     
     @abstractmethod
@@ -147,7 +147,7 @@ class Scene(Trait):
         pass
     
 class Volume(Trait):
-    _commands:Tuple[str,str,str] = ('volume_up', 'volume_down', 'set_volume')
+    _commands:Tuple[str, ...] = ('volume_up', 'volume_down', 'set_volume')
     _attributes: Tuple[Attribute] = (Attribute('volume', str),)
     
     @abstractmethod
@@ -167,7 +167,7 @@ class Volume(Trait):
         pass
     
 class Channels(Trait):
-    _commands:Tuple[str,str,str] = ('channel_up', 'channel_down', 'set_channel')
+    _commands:Tuple[str, ...] = ('channel_up', 'channel_down', 'set_channel')
     _attributes: Tuple[Attribute] = (Attribute('channel', str),)
     
     @abstractmethod
@@ -183,8 +183,8 @@ class Channels(Trait):
         pass
 
 class Arrows(Trait):
-    _commands:Tuple[str,str,str,str] = ('up', 'down', 'left', 'right')
-    _attributes: Tuple[Attribute] = tuple()
+    _commands:Tuple[str, ...] = ('up', 'down', 'left', 'right')
+    _attributes: Tuple[Attribute,  ...] = tuple()
     
     @abstractmethod
     def up(self):
@@ -203,8 +203,8 @@ class Arrows(Trait):
         pass
 
 class ButtonOK(Trait):
-    _commands:Tuple[str] = ('ok', )
-    _attributes: Tuple[Attribute] = ()
+    _commands:Tuple[str, ...] = ('ok', )
+    _attributes: Tuple[Attribute, ...] = tuple()
     
     @abstractmethod
     def ok(self):
