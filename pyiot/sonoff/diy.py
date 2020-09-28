@@ -1,9 +1,10 @@
 __all__ = ['PowerState', 'Pulse', 'Mini', 'DiyPlug']
 
-from .protocol import Discover, EwelinkWatcher
+from .protocol import EwelinkWatcher
 from pyiot.connections.http import HttpConnection
 from pyiot.traits import OnOff
 from pyiot.watcher import Watcher
+from pyiot.discover import DiscoverySonoff
 from pyiot import BaseDevice, Attribute
 from enum import Enum
 import json
@@ -37,45 +38,31 @@ class BaseSONOFFDIYDevice(BaseDevice, OnOff):
         self.status.register_attribute(Attribute('port', int))
         self.status.register_attribute(Attribute('startup', str))
         self.status.register_attribute(Attribute('pulse', str))
-        self.status.register_attribute(Attribute('pulseWidth', str))
+        self.status.register_attribute(Attribute('pulseWidth', int))
+        self.status.register_attribute(Attribute('rrsi', int))
+        self.status.register_attribute(Attribute('ssid', str))
+        self.status.register_attribute(Attribute('sledOnline', str))
         self.status.register_attribute(Attribute('port', int))
         self.status.add_alias('switch', 'power')
-        self.status.add_alias('ssid', 'sid')
         
-        if ip is None:
-            self._find_device()
-        else:
+        if ip:
             self.status.update({'ip': ip, 'port': port})
+        else:
+            self._find_device()
         
         self.conn = HttpConnection(url=f'http://{self.status.ip}', port=self.status.port)
-        self._init_device()
         self.watcher = Watcher(EwelinkWatcher())
         self.watcher.add_report_handler(self.report)
     
     def report(self, data: Dict[str, Any]):
         if self.status.sid == data.get('id'):
-            self.status.update(data)
-       
-    def _init_device(self):
-        self.report(self.info())
+            self.status.update(data.get('data', {}))
         
     def _find_device(self):
-        dsc = Discover()
-        dev = dsc.search(self.sid)
+        dsc = DiscoverySonoff()
+        dev = dsc.find_by_sid(self.status.sid)
         if dev:
-            self.report(dev)
-        
-    # def set_power(self, state):
-    #     """This method is used to switch on or off.
-        
-    #     Args:
-    #         state (str): can only be `on` or `off`.
-    #     """
-    #     st = {'on': self.on, 'off': self.off}.get(state)
-    #     if st is None:
-    #         raise ValueError('state (str): can only be `on` or `off`.')
-    #     else:
-    #         st()
+            self.status.update(dev)
     
     def on(self):
         """Set power state on"""
@@ -118,13 +105,16 @@ class BaseSONOFFDIYDevice(BaseDevice, OnOff):
     def set_wifi(self, ssid:str, password:str):
         self.conn.post(path='zeroconf/wifi', data=self._cmd(ssid=ssid, password=password))
     
-    def get_info(self):
+    def get_info(self) -> Dict[str, Any]:
+        ret: Dict[str, Any] = {}
         resp = self.conn.post(path='zeroconf/info', data=self._cmd())
         if resp.code == 200:
-            ret = resp.json.get('data')
-            if type(ret) == str:
-                ret = json.loads(ret)
-            return ret
+            _data = resp.json.get('data')
+            if type(_data) == str:
+                ret = json.loads(_data)
+            else:
+                ret = _data.copy()
+        return ret
     
     def get_signal_strength(self) -> int:
         """The WiFi signal strength currently received by the device, negative integer, dBm"""

@@ -20,26 +20,27 @@ class TestSonoff(unittest.TestCase):
             sleep(1)
             self.assertTrue(self.dev.is_off())
             sleep(1)
-            self.dev.set_power('on')
+            self.dev.execute('on')
             sleep(1)
             self.assertTrue(self.dev.is_on())
-            self.dev.write({'data':{'status': 'off'}})
+            sleep(1)
+            self.dev.execute('off')
             sleep(1)
             self.assertTrue(self.dev.is_off())
             
       def test_c_power(self):
-            self.assertIn(self.dev.power, ['on', 'off'])
+            self.assertIn(self.dev.status.power, ['on', 'off'])
       
       def test_c_pulse(self):
-            self.assertIn(self.dev.pulse, ['on', 'off'])
+            self.assertIn(self.dev.status.pulse, ['on', 'off'])
       
       def test_c_puslse_width(self):
-            self.assertIsInstance(self.dev.pulse_width, int)
+            self.assertIsInstance(self.dev.status.pulseWidth, int)
       
       def test_d_set_power_on_state(self):
             self.dev.set_power_on_state(PowerState.OFF)
             sleep(1)
-            self.assertIn(self.dev.startup, ['on', 'off', 'stay'])
+            self.assertIn(self.dev.status.startup, ['on', 'off', 'stay'])
             
       def test_e_device_status(self):
             self.assertIsInstance(self.dev.device_status(), dict)

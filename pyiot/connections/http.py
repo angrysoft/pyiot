@@ -84,7 +84,7 @@ class Response:
         self.resp = resp
         self._headers = {}
         self.body = ''
-        if resp.readable:
+        if hasattr(resp, 'readable'):
             self.body = resp.read()
             self._headers = resp.headers
 
@@ -97,7 +97,7 @@ class Response:
         return self.resp.status
 
     @property
-    def json(self):
+    def json(self) -> Dict[str, Any]:
         try:
             return json.loads(self.body)
         except json.JSONDecodeError:

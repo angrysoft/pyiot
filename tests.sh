@@ -50,7 +50,10 @@ while [ "$1" != "" ]; do
         "all")
         sonoff_test &&
         yeelight_test &&
-        aqara_test &&v echo "All Test Pass"
+        aqara_test &&
+        gateway_test &&
+        bravia_test &&
+        philips_test && echo "All Test Pass"
         ;;
     esac
 done

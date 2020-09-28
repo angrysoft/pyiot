@@ -1,4 +1,3 @@
-__all__ = ['DiyPlug', 'Mini', 'PowerState', 'Pulse', 'Discover', 'EwelinkWatcher']
+__all__ = ['DiyPlug', 'Mini', 'PowerState', 'Pulse']
 
-from .devices import *
-from .protocol import Discover, EwelinkWatcher
+from .diy import *
