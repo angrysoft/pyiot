@@ -144,6 +144,7 @@ class DiscoverySony(BaseDiscovery):
                     dev['ip'] = url.hostname
                     dev['port'] = url.port
                     continue
+                   
                 dev[key] = val
         return dev
 
@@ -214,8 +215,11 @@ class DiscoveryYeelight(BaseDiscovery):
                     url = urlparse(val)
                     dev['ip'] = url.hostname
                     dev['port'] = url.port
-                    continue
-                dev[key] = val
+                elif key in ('rgb', 'hue', 'sat'):
+                    dev[key] = int(val)
+                else:
+                    dev[key] = val
+                    
         return dev
 
 class DiscoveryAqara(BaseDiscovery):

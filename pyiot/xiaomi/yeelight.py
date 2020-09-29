@@ -18,7 +18,7 @@ from pyiot.connections import IdGen
 from pyiot.exceptions import DeviceIsOffline, DeviceTimeout
 from pyiot.connections.tcp import TcpConnection
 from pyiot.status import Attribute
-from pyiot.traits import ColorTemperature, Dimmer, OnOff, Toggle, Rgb
+from pyiot.traits import ColorTemperature, Dimmer, OnOff, Toggle, Rgb, Hsv
 from pyiot.discover import DiscoveryYeelight
 import socket
 import json
@@ -457,8 +457,6 @@ class Color(YeelightDev, Rgb, Hsv):
                 It should be expressed in decimal integer ranges from 0 to 359.
             sat (int): The target saturation value whose type is integer. It's range is 0 to 100."""
         
-        hue = int(hue)
-        sta = int(sat)
         self._check_range(hue, end=359, msg='hue 0-359')
         self._check_range(sat, msg='sat 0-100')
         return self._send('set_hsv', [hue, sat, self.efx, self.duration])
