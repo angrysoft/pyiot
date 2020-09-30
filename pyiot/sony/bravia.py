@@ -1,4 +1,3 @@
-from re import L
 from pyiot.status import Attribute
 from pyiot.connections.http import HttpConnection, Response
 from pyiot import BaseDevice
@@ -127,40 +126,26 @@ class Bravia(BaseDevice, OnOff, ):
     def get_connected_sources(self):
         """This API provides information on the current status of all external input sources of the device."""
         
-        ret = self.conn.post(path='avContent',
-                                data=self._cmd('getCurrentExternalInputsStatus'))
-        if ret.code == 200:
-            return self._parse_result(ret.json)
+        return self._send('avContent', 'getCurrentExternalInputsStatus')
     
     def get_application_list(self):
         """This API provides the list of applications that can be launched by setActiveApp"""
         
-        ret = self.conn.post(path='appControl',
-                                data=self._cmd('getApplicationList'))
-        if ret.code == 200:
-            return self._parse_result(ret.json)
+        return self._send('appControl', 'getApplicationList')
+
     
     def get_application_status(self):
         """This API provides the status of the application itself or the accompanying status related to a specific application."""
         
-        ret = self.conn.post(path='appControl',
-                                data=self._cmd('getApplicationStatusList'))
-        if ret.code == 200:
-            return self._parse_result(ret.json)
+        return self._send('appControl', 'getApplicationStatusList')
     
     def get_content_info(self):
         """This API provides information of the currently playing content or the currently selected input."""
-        ret = self.conn.post(path='avContent',
-                                data=self._cmd('getPlayingContentInfo'))
-        if ret.code == 200:
-            return self._parse_result(ret.json)
+        return self._send('avContent', 'getPlayingContentInfo')
     
     def get_sources(self):
         """This API provides the list of sources in the scheme."""
-        ret = self.conn.post(path='avContent',
-                                data=self._cmd('getSourceList', params=[{"scheme": "extInput"}]))
-        if ret.code == 200:
-            return self._parse_result(ret.json)
+        return self._send('avContent', 'getSourceList', [{"scheme": "extInput"}])
     
     def set_sources(self, exinput: str, extype: str = 'tuner', port:str = '1', trip:str = '', srv: str = ''):
         """This API provides the list of sources in the scheme."""
@@ -174,44 +159,30 @@ class Bravia(BaseDevice, OnOff, ):
         self.conn.post(path='avContent', data=self._cmd('setPlayContent', params=[{"uri": f"{ext}"}]))
         
     def set_sources_uri(self, uri:str):
-        ret = self.conn.post(path='avContent',
-                                data=self._cmd('setPlayContent', params=[{"uri": f"{uri}"}]))
-        if ret.code == 200:
-            return self._parse_result(ret.json)
+        self.conn.post(path='avContent', data=self._cmd('setPlayContent', params=[{"uri": f"{uri}"}]))
     
     def get_sound_settings(self, target: str = ''):
         """This API provides the current settings and supported settings related to the sound configuration items."""
         
-        ret = self.conn.post(path='audio',
-                                data=self._cmd('getSoundSettings', params=[{'target': f'{target}'}], version='1.0'))
-        if ret.code == 200:
-            return self._parse_result(ret.json)
+        return self._send('audio', 'getSoundSettings', [{'target': f'{target}'}])
     
     def get_speaker_settings(self):
         """TThis API provides current settings and supported settings related to speaker configuration items."""
         
-        ret = self.conn.post(path='audio',
-                                data=self._cmd('getSpeakerSettings', params=[{'target': ''}]))
-        if ret.code == 200:
-            return self._parse_result(ret.json)
+        return self._send('audio', 'getSpeakerSettings', [{'target': ''}])
     
     def set_mute(self, status:bool):
         """This API provides the function to change the audio mute status.
         
         Args:
             status (bool)"""
-        ret = self.conn.post(path='audio',
-                                data=self._cmd('setAudioMute', params=[{"status": status}]))
+        self.conn.post(path='audio', data=self._cmd('setAudioMute', params=[{"status": status}]))
     
     def get_volume(self):
-        ret = self.conn.post(path='audio',
-                                data=self._cmd('getVolumeInformation'))
-        if ret.code == 200:
-            return self._parse_result(ret.json)
+        return self._send('audio', 'getVolumeInformation')
     
-    def set_volume(self, value, target: str = ''):
-        ret = self.conn.post(path='audio',
-                          data=self._cmd('setAudioVolume', params=[{"volume": f'{value}',"target": target}], pid=666))
+    def set_volume(self, value:int, target: str = ''):
+        self.conn.post(path='audio', data=self._cmd('setAudioVolume', params=[{"volume": f'{value}',"target": target}], pid=666))
 
     def get_all_commands(self) -> Dict[str,Any]:
         ret = self.conn.post(path='system', data=self._cmd('getRemoteControllerInfo'))
@@ -256,18 +227,21 @@ class Bravia(BaseDevice, OnOff, ):
     def _cmd(cmd: str, params: List[Any] = [], pid: int = 10, version: str = '1.0') -> Dict[str, Any]:
         return {'method': cmd, 'params': params, 'id': pid, 'version': version}
 
-    def _send(self, path:str, cmd: str, params: List[Any] = []):
-        ret = self.conn.post(path=path, data=self._cmd(cmd, params))
-        if ret.code == 200:
-            return self._parse_result(ret.json)
+    def _send(self, path:str, cmd: str, params: List[Any] = []) -> Dict[str, Any]:
+        ret: Dict[str, Any] = {}
+        resp = self.conn.post(path=path, data=self._cmd(cmd, params))
+        if resp.code == 200:
+            ret =  self._parse_result(resp.json)
+        return ret
     
-    def _parse_result(self, msg: Dict[str, Any]):
+    def _parse_result(self, msg: Dict[str, Any]) -> Dict[str, Any]:
+        ret: Dict[str, Any] = {}
         if type(msg) == dict:
             if 'error' in msg:
                 raise BraviaError(msg['error'])
             elif 'result' in msg and msg['result']:
-                return msg['result'][0]
-
+                ret = msg['result'][0]
+        return ret
 
 class BraviaError(Exception):
     _codes = {
@@ -278,7 +252,7 @@ class BraviaError(Exception):
         14: 'Unsupported Version'
         }
     
-    def __init__(self, code=[], messeage: str =f'Unknow Error'):
+    def __init__(self, code: List[int]=[], messeage: str =f'Unknow Error') -> None:
         self._code_no = 0
         if code:
             self.message = self._codes.get(code[0], code)

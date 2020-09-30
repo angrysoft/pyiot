@@ -163,7 +163,7 @@ class Volume(Trait):
         pass
     
     @abstractmethod
-    def mute(self, status:bool):
+    def set_mute(self, status:bool):
         pass
     
 class Channels(Trait):
