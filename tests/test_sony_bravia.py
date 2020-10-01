@@ -9,11 +9,10 @@ class BraviaTest(unittest.TestCase):
         cls.tv = Bravia('192.168.10.5') # , macaddres='FC:F1:52:2A:9B:1E')
     
     def test_a_power(self):
-        self.power = self.tv.power
-        self.assertIsInstance(self.power, bool, msg=f'Tv power is {self.power}')
+        self.assertIsInstance(self.tv.is_on(), bool, msg=f'Tv power is {self.power}')
         self.tv.on()
         sleep(2)
-        self.assertTrue(self.tv.power)
+        self.assertTrue(self.tv.status.is_on())
     
     def _cmd(self, cmd, *args):
         try:
@@ -77,8 +76,7 @@ class BraviaTest(unittest.TestCase):
     def test_send_ircc(self):
         self.tv.send_ircc('VolumeUp')
     
-    def test_write(self):
-        self.tv.write({'data':{'button': 'VolumeDown'}})
+    
     
     # def test_all_cmds(self):
     #     print(self.tv.get_all_commands())

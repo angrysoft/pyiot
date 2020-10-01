@@ -35,6 +35,14 @@ philips_test() {
     python -m unittest -v tests/test_philipsbulb.py
 }
 
+print_tests() {
+    tests=("sonoff" "yeelight" "aqara" "aqara_gateway" "bravia" "base" "philips" "all")
+    for test in ${tests[@]}
+    do
+        echo ">>> $test"
+    done
+}
+
 
 while [ "$1" != "" ]; do
     arg=$1;shift
@@ -43,7 +51,7 @@ while [ "$1" != "" ]; do
         "sonoff") sonoff_test;;
         "yeelight") yeelight_test;;
         "aqara")aqara_test;;
-        "gateway")gateway_test;;
+        "aqara_gateway")gateway_test;;
         "bravia")bravia_test;;
         "base")base_test;;
         "philips")philips_test;;
@@ -55,6 +63,7 @@ while [ "$1" != "" ]; do
         bravia_test &&
         philips_test && echo "All Test Pass"
         ;;
+        "list") print_tests;;
     esac
 done
 

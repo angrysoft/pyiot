@@ -23,7 +23,7 @@ from typing import Dict, Any, List
 # limitations under the License.
 
 
-class Bravia(BaseDevice, OnOff, ):
+class Bravia(BaseDevice, OnOff):
     """Navigate to: [Settings] → [Network] → [Home Network Setup] → [IP Control]
         Set [Authentication] to [Normal and Pre-Shared Key]
         There should be a new menu entry [Pre-Shared Key]. Set it for example to 0000.
