@@ -19,12 +19,11 @@ from pyiot.exceptions import DeviceIsOffline, DeviceTimeout
 from pyiot.connections.tcp import TcpConnection
 from pyiot.status import Attribute
 from pyiot.traits import ColorTemperature, Dimmer, OnOff, Toggle, Rgb, Hsv
-from pyiot.discover import DiscoveryYeelight
+from pyiot.discover.yeelight import DiscoverYeelight
 import socket
 import json
 from time import sleep
-from enum import Enum
-from pyiot.watcher import Watcher, WatcherBaseDriver
+from pyiot.watchers import Watcher, WatcherBaseDriver
 from pyiot import BaseDevice
 from typing import Dict, List, Any
 
@@ -94,7 +93,7 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
         self.watcher.add_report_handler(self.status.update)
     
     def _init_device(self):
-        dev = DiscoveryYeelight()
+        dev = DiscoverYeelight()
         dev = dev.find_by_sid(self.status.sid)
         if not dev:
             raise YeelightError(f'Device is offline {self.status.sid}')
@@ -166,7 +165,7 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
     def is_off(self):
         return self.status.power == 'off'
 
-    def set_power(self, state:str, mode: int = 0) -> Dict[str,Any]:
+    def set_power(self, state:str, mode: int = 0) -> None:
         """This method is used to switch on or off the smart LED (software managed on/off).
         
         Args:
@@ -254,8 +253,8 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
 
         return self._send('set_default')
 
-    def start_cf(self, count=0, action=0, 
-                 flow_expression="1000, 2, 2700, 100, 500, 1, 255, 10, 5000, 7, 0,0, 500, 2, 5000, 1"):
+    def start_cf(self, count: int = 0, action: int = 0, 
+                 flow_expression: str = "1000, 2, 2700, 100, 500, 1, 255, 10, 5000, 7, 0,0, 500, 2, 5000, 1"):
         """This method is used to start a color flow. Color flow is a series of smart
         LED visible state changing. It can be brightness changing, color changing or color
         temperature changing. This is the most powerful command. All our recommended scenes,

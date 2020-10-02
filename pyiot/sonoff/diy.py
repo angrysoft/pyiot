@@ -1,10 +1,10 @@
 __all__ = ['PowerState', 'Pulse', 'Mini', 'DiyPlug']
 
-from .protocol import EwelinkWatcher
+from pyiot.watchers.sonoff import EwelinkWatcher
 from pyiot.connections.http import HttpConnection
 from pyiot.traits import OnOff
-from pyiot.watcher import Watcher
-from pyiot.discover import DiscoverySonoff
+from pyiot.watchers import Watcher
+from pyiot.discover.sonoff import DiscoverSonoff
 from pyiot import BaseDevice, Attribute
 from enum import Enum
 import json
@@ -59,7 +59,7 @@ class BaseSONOFFDIYDevice(BaseDevice, OnOff):
             self.status.update(data.get('data', {}))
         
     def _find_device(self):
-        dsc = DiscoverySonoff()
+        dsc = DiscoverSonoff()
         dev = dsc.find_by_sid(self.status.sid)
         if dev:
             self.status.update(dev)
@@ -84,8 +84,6 @@ class BaseSONOFFDIYDevice(BaseDevice, OnOff):
             Args:
                 state (PowerState) 
         """
-        if not isinstance(state, PowerState):
-            raise ValueError(f"{state} is not instance PowerState")
         self.conn.post(path='zeroconf/startup', data=self._cmd(startup=state.value))
     
     def set_pulse(self, pulse:str, pulse_width:int = 500):
@@ -98,8 +96,6 @@ class BaseSONOFFDIYDevice(BaseDevice, OnOff):
                                   positive integer, ms, only supports multiples of 500 
                                   in range of 500~36000000
         """
-        if not isinstance(pulse, Pulse):
-            raise ValueError(f"{pulse} is not instance PowerState")
         self.conn.post(path='zeroconf/pulse', data=self._cmd(pulse=pulse.value, pulseWidth=pulse_width))
     
     def set_wifi(self, ssid:str, password:str):
@@ -109,7 +105,7 @@ class BaseSONOFFDIYDevice(BaseDevice, OnOff):
         ret: Dict[str, Any] = {}
         resp = self.conn.post(path='zeroconf/info', data=self._cmd())
         if resp.code == 200:
-            _data = resp.json.get('data')
+            _data = resp.json.get('data', {})
             if type(_data) == str:
                 ret = json.loads(_data)
             else:
@@ -124,7 +120,7 @@ class BaseSONOFFDIYDevice(BaseDevice, OnOff):
         else:
             return 0
     
-    def _cmd(self, **kwargs):
+    def _cmd(self, **kwargs) -> Dict[str, Any]:
         return {'deviceid': self.status.sid, 'data':kwargs}
     
         

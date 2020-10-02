@@ -1,5 +1,5 @@
 import unittest
-from pyiot.base import DeviceStatus, Attribute
+from pyiot.status import DeviceStatus, Attribute
 
 class TestBase(unittest.TestCase):
     @classmethod

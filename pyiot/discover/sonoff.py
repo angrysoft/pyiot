@@ -3,6 +3,7 @@ from zeroconf import ServiceInfo, Zeroconf, ServiceStateChange, ServiceBrowser
 from threading import Event
 import socket
 import json
+from typing import List, Dict, Any
 
 class DiscoverSonoff(BaseDiscovery):
     def __init__(self) -> None:

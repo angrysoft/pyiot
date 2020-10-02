@@ -1,21 +1,20 @@
 from . import BaseDiscovery
-from pyiot.connections.udp import UdpConnection
+from pyiot.connections.udp import UdpMulticastConnection
 from pyiot.exceptions import DeviceTimeout
 from urllib.parse import urlparse
 from typing import List, Dict, Any
 
-class DiscoverSony(BaseDiscovery):
+
+class DiscoverYeelight(BaseDiscovery):
     def __init__(self) -> None:
         self.ip: str = '239.255.255.250'
-        self.port: int = 1900
+        self.port: int = 1982
         self.search_request: bytes = 'M-SEARCH * HTTP/1.1\r\n' \
-                                     'HOST: 239.255.255.250:1900\r\n' \
+                                     'HOST: 239.255.255.250:1982\r\n' \
                                      'MAN: "ssdp:discover"\r\n' \
-                                     'MX: 1\r\n' \
-                                     'ST: urn:schemas-sony-com:service:ScalarWebAPI:1\r\n' \
-                                     '\r\n'.encode()
+                                     'ST: wifi_bulb\r\n'.encode()
                                      
-        self.conn = UdpConnection()
+        self.conn = UdpMulticastConnection()
         self.conn.sock.settimeout(10)
         
     def find_all(self) -> List[Dict[str, Any]]:
@@ -73,7 +72,9 @@ class DiscoverSony(BaseDiscovery):
                     url = urlparse(val)
                     dev['ip'] = url.hostname
                     dev['port'] = url.port
-                    continue
-                   
-                dev[key] = val
+                elif key in ('rgb', 'hue', 'sat'):
+                    dev[key] = int(val)
+                else:
+                    dev[key] = val
+                    
         return dev

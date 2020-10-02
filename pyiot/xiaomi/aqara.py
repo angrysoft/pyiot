@@ -36,7 +36,7 @@ import binascii
 from Cryptodome.Cipher import AES
 from pyiot.traits import HumidityStatus, LuminosityStatus, MotionStatus, MutliSwitch, OnOff, OpenClose, PressureStatus, TemperatureStatus, Toggle
 from pyiot.connections.udp import UdpConnection
-from pyiot.watcher import Watcher, WatcherBaseDriver
+from pyiot.watchers import Watcher, WatcherBaseDriver
 from pyiot import BaseDevice
 from pyiot.status import Attribute
 from typing import Callable, Dict, Any, List, Optional

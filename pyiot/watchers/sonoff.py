@@ -2,7 +2,7 @@ from zeroconf import ServiceBrowser, Zeroconf, ServiceStateChange
 import json
 import socket
 from threading import Thread, Event, RLock
-from pyiot.watcher import WatcherBaseDriver
+from pyiot.watchers import WatcherBaseDriver
 
 
 class EwelinkWatcher(WatcherBaseDriver):
@@ -38,4 +38,3 @@ class EwelinkWatcher(WatcherBaseDriver):
 
     def stop(self):
         self.ev.set()
-        

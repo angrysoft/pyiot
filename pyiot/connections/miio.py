@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from pyiot.connections.udp import UdpBroadcastConnection, UdpConnection
+from .udp import UdpBroadcastConnection, UdpConnection
 from Cryptodome.Cipher import AES
 from Cryptodome.Util.Padding import pad, unpad
 from  hashlib import md5
@@ -20,7 +20,6 @@ import struct
 import json
 from datetime import datetime
 from typing import List, Any, Dict, Optional
-import socket
 
 
 class MiioPacket():
