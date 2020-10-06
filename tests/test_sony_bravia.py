@@ -6,15 +6,16 @@ from pyiot.sony import Bravia, BraviaError
 class BraviaTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.tv = Bravia('192.168.10.5') # , macaddres='FC:F1:52:2A:9B:1E')
+        cls.tv = Bravia('192.168.10.5', macaddres='FC:F1:52:2A:9B:1E')
     
     def test_a_power(self):
-        self.assertIsInstance(self.tv.is_on(), bool, msg=f'Tv power is {self.power}')
+        self.assertIsInstance(self.tv.is_on(), bool, msg=f'Tv power is  {self.tv.status.power}')
         self.tv.on()
         sleep(2)
-        self.assertTrue(self.tv.status.is_on())
+        self.assertTrue(self.tv.is_on())
     
     def _cmd(self, cmd, *args):
+        ret = {}
         try:
             if args:
                 ret = cmd(*args)
@@ -30,6 +31,11 @@ class BraviaTest(unittest.TestCase):
     
     def test_supported_apiinfo(self):
         ret = self._cmd(self.tv.get_supported_api)
+        self.assertIsInstance(ret, list, msg=ret)
+    
+    def test_supported_function(self):
+        ret = self._cmd(self.tv.get_supported_function)
+        print(ret)
         self.assertIsInstance(ret, list, msg=ret)
     
     def test_application_list(self):
@@ -57,21 +63,23 @@ class BraviaTest(unittest.TestCase):
         self.assertIsInstance(ret, list, msg=ret)
     
     def test_a_volume_set(self):
-        ret = self._cmd(self.tv.set_volume, '+50', 'speaker')
-        print(ret, type(ret))
-        self.assertIsInstance(ret, dict, msg=ret)
+        self._cmd(self.tv.set_volume, '+50', 'speaker')
     
-    # def test_b_volume(self):
-    #     print(self.tv.get_volume())
+    def test_b_volume(self):
+        print(self.tv.get_volume())
     
     def test_mute(self):
+        self.tv.set_mute(True)
+        print('mute')
+        sleep(4)
         self.tv.set_mute(False)
+        print('unmute')
     
     #def test_set_source(self):
     #    self.tv.set_sources('cec', port=3)
     
-    # def test_system_info(self):
-    #     print(self.tv.system_info())
+    def test_system_info(self):
+        print(self.tv.get_system_info())
     
     def test_send_ircc(self):
         self.tv.send_ircc('VolumeUp')
@@ -81,9 +89,9 @@ class BraviaTest(unittest.TestCase):
     # def test_all_cmds(self):
     #     print(self.tv.get_all_commands())
     
-    # def test_sources_list(self):
-    #     for s in self.tv.connected_sources():
-    #         print(s)
+    def test_sources_list(self):
+        for s in self.tv.get_connected_sources():
+            print(s)
     
     # def test_zz_off(self):
     #     self.tv.off()

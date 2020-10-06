@@ -1,7 +1,7 @@
 from pyiot.status import Attribute
 from pyiot.connections.http import HttpConnection, Response
 from pyiot import BaseDevice
-from pyiot.traits import OnOff
+from pyiot.traits import Channels, OnOff, Volume
 import socket
 from threading import Thread
 import struct
@@ -23,7 +23,7 @@ from typing import Dict, Any, List
 # limitations under the License.
 
 
-class Bravia(BaseDevice, OnOff):
+class Bravia(BaseDevice, OnOff, Volume, Channels):
     """Navigate to: [Settings] → [Network] → [Home Network Setup] → [IP Control]
         Set [Authentication] to [Normal and Pre-Shared Key]
         There should be a new menu entry [Pre-Shared Key]. Set it for example to 0000.
@@ -58,7 +58,7 @@ class Bravia(BaseDevice, OnOff):
         if data:
             self.status.update(data)
             Thread(target=self._handle_events,
-                   args=({'cmd': 'report', 'sid': self.sid, 'model': self.model, 'data': data},)).start()
+                   args=({'cmd': 'report', 'sid': self.status.sid, 'model': self.status.model, 'data': data},)).start()
         
     
     def _check_power_status(self) -> None:
@@ -110,6 +110,21 @@ class Bravia(BaseDevice, OnOff):
         self._check_power_status()
         return self.status.power in ('off', 'standby')
     
+    def volume_up(self):
+        self.send_ircc('VolumeUp')
+    
+    def volume_down(self):
+        self.send_ircc('VolumeDown')
+    
+    def channel_up(self):
+        self.send_ircc('ChannelUp')
+    
+    def channel_down(self):
+        self.send_ircc('ChannelDown')
+    
+    def set_channel(self, value: int):
+        pass
+    
     def get_supported_api(self):
         """This API provides the supported services and their information"""
         
@@ -122,6 +137,10 @@ class Bravia(BaseDevice, OnOff):
     def get_system_info(self):
         """This API provides general information on the device."""
         return self._send('system', 'getSystemInformation')
+    
+    def get_supported_function(self):
+        """his API provides the list of device capabilities within the scope of system service handling."""
+        return self._send('system', 'getSystemSupportedFunction')
     
     def get_connected_sources(self):
         """This API provides information on the current status of all external input sources of the device."""
@@ -207,7 +226,7 @@ class Bravia(BaseDevice, OnOff):
                 self.ircc_code = self.get_all_commands()
             code = self.ircc_code.get(name)
         except AttributeError:
-            raise BraviaError(messeage=f'Ircc name not recognize {name}')
+            raise BraviaError(message=f'Ircc name not recognize {name}')
         
         headers = {'SOAPACTION': '"urn:schemas-sony-com:service:IRCC:1#X_SendIRCC"',
                    'Content-Type': 'text/xml; charset=UTF-8',
@@ -236,7 +255,7 @@ class Bravia(BaseDevice, OnOff):
     
     def _parse_result(self, msg: Dict[str, Any]) -> Dict[str, Any]:
         ret: Dict[str, Any] = {}
-        if type(msg) == dict:
+        if type(msg) is dict:
             if 'error' in msg:
                 raise BraviaError(msg['error'])
             elif 'result' in msg and msg['result']:
@@ -252,7 +271,7 @@ class BraviaError(Exception):
         14: 'Unsupported Version'
         }
     
-    def __init__(self, code: List[int]=[], messeage: str =f'Unknow Error') -> None:
+    def __init__(self, code: List[int]=[], message: str =f'Unknow Error') -> None:
         self._code_no = 0
         if code:
             self.message = self._codes.get(code[0], code)
