@@ -202,10 +202,103 @@ class Arrows(Trait):
     def right(self):
         pass
 
+class KeyPad(Trait):
+    _commands:Tuple[str, ...] = ('one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'zero')
+    _attributes: Tuple[Attribute,  ...] = tuple()
+
+    @abstractmethod
+    def one(self):
+        pass
+    
+    @abstractmethod
+    def two(self):
+        pass
+
+    @abstractmethod
+    def three(self):
+        pass
+
+    @abstractmethod
+    def four(self):
+        pass
+
+    @abstractmethod
+    def five(self):
+        pass
+
+    @abstractmethod
+    def six(self):
+        pass
+
+    @abstractmethod
+    def seven(self):
+        pass
+
+    @abstractmethod
+    def eight(self):
+        pass
+
+    @abstractmethod
+    def nine(self):
+        pass
+
+    @abstractmethod
+    def zero(self):
+        pass
+
+class InputSource(Trait):
+    _commands:Tuple[str, ...] = ('change_input', )
+    _attributes: Tuple[Attribute, ...] = tuple()
+
+    @abstractmethod
+    def change_input(self):
+        pass
+
+class MediaButtons(Trait):
+    _commands:Tuple[str, ...] = ('play', 'pause', 'stop', 'rewind', 'forward')
+    _attributes: Tuple[Attribute, ...] = tuple()
+
+    @abstractmethod
+    def play(self):
+        pass
+
+    @abstractmethod
+    def pause(self):
+        pass
+
+    @abstractmethod
+    def stop(self):
+        pass
+
+    @abstractmethod
+    def prev(self):
+        pass
+
+    @abstractmethod
+    def next(self):
+        pass
+
+
 class ButtonOK(Trait):
     _commands:Tuple[str, ...] = ('ok', )
     _attributes: Tuple[Attribute, ...] = tuple()
     
     @abstractmethod
     def ok(self):
+        pass
+
+class ButtonExit(Trait):
+    _commands:Tuple[str, ...] = ('exit', )
+    _attributes: Tuple[Attribute, ...] = tuple()
+    
+    @abstractmethod
+    def exit(self):
+        pass
+
+class ButtonReturn(Trait):
+    _commands:Tuple[str, ...] = ('ret', )
+    _attributes: Tuple[Attribute, ...] = tuple()
+    
+    @abstractmethod
+    def ret(self):
         pass

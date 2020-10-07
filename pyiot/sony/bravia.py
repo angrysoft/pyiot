@@ -1,10 +1,11 @@
 from pyiot.status import Attribute
 from pyiot.connections.http import HttpConnection, Response
 from pyiot import BaseDevice
-from pyiot.traits import Channels, OnOff, Volume
+from pyiot.traits import Arrows, ButtonExit, ButtonOK, ButtonReturn, Channels, MediaButtons, OnOff, Volume
 import socket
 from threading import Thread
 import struct
+from time import sleep
 from typing import Dict, Any, List
 
 
@@ -23,7 +24,7 @@ from typing import Dict, Any, List
 # limitations under the License.
 
 
-class Bravia(BaseDevice, OnOff, Volume, Channels):
+class Bravia(BaseDevice, OnOff, Volume, Channels, Arrows, MediaButtons, ButtonOK, ButtonExit, ButtonReturn):
     """Navigate to: [Settings] → [Network] → [Home Network Setup] → [IP Control]
         Set [Authentication] to [Normal and Pre-Shared Key]
         There should be a new menu entry [Pre-Shared Key]. Set it for example to 0000.
@@ -123,7 +124,45 @@ class Bravia(BaseDevice, OnOff, Volume, Channels):
         self.send_ircc('ChannelDown')
     
     def set_channel(self, value: int):
-        pass
+        for num in str(value):
+            self.send_ircc(f'Num{num}')
+            sleep(0.5)
+    
+    def up(self):
+        self.send_ircc("Up")
+    
+    def down(self):
+        self.send_ircc("Down")
+    
+    def left(self):
+        self.send_ircc("Left")
+
+    def right(self):
+        self.send_ircc("Right")
+    
+    def ok(self):
+        self.send_ircc('Confirm')
+    
+    def play(self):
+        self.send_ircc('Play')
+    
+    def pause(self):
+        self.send_ircc('Pause')
+    
+    def stop(self):
+        self.send_ircc('Stop')
+    
+    def prev(self):
+        self.send_ircc('Prev')
+    
+    def next(self):
+        self.send_ircc('Next')
+    
+    def exit(self):
+        self.send_ircc('Exit')
+    
+    def ret(self):
+        self.send_ircc('Retrun')
     
     def get_supported_api(self):
         """This API provides the supported services and their information"""

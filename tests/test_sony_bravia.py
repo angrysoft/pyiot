@@ -48,6 +48,7 @@ class BraviaTest(unittest.TestCase):
     
     def test_content_info(self):
         ret = self._cmd(self.tv.get_content_info)
+        print(ret)
         self.assertIsInstance(ret, dict, msg=ret)
     
     def test_sound_settings(self):
@@ -84,7 +85,16 @@ class BraviaTest(unittest.TestCase):
     def test_send_ircc(self):
         self.tv.send_ircc('VolumeUp')
     
-    
+    def test_commands(self):
+        self.tv.volume_up()
+        sleep(0.5)
+        self.tv.volume_down()
+        sleep(0.5)
+        self.tv.channel_up()
+        sleep(1)
+        self.tv.channel_down()
+        sleep(1)
+        self.tv.set_channel(101)
     
     # def test_all_cmds(self):
     #     print(self.tv.get_all_commands())

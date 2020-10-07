@@ -13,59 +13,22 @@
 # limitations under the License.
 
 from __future__ import annotations
-__all__ = ['Yeelight', 'YeelightWatcher', 'Color', 'Bslamp1', 'DeskLamp']
+__all__ = ['Yeelight', 'Color', 'Bslamp1', 'DeskLamp']
 from pyiot.connections import IdGen
 from pyiot.exceptions import DeviceIsOffline, DeviceTimeout
 from pyiot.connections.tcp import TcpConnection
 from pyiot.status import Attribute
 from pyiot.traits import ColorTemperature, Dimmer, OnOff, Toggle, Rgb, Hsv
 from pyiot.discover.yeelight import DiscoverYeelight
-import socket
+from pyiot.watchers import Watcher
+from pyiot.watchers.yeelight import YeelightWatcher
+from pyiot import BaseDevice
 import json
 from time import sleep
-from pyiot.watchers import Watcher, WatcherBaseDriver
-from pyiot import BaseDevice
 from typing import Dict, List, Any
 
 
-
-class YeelightError(Exception):
-    pass
-
-
-class YeelightWatcher(WatcherBaseDriver):
-    def __init__(self, dev: YeelightDev):
-        self.connection = socket.create_connection((dev.status.ip, dev.status.port))
-        self.reader = self.connection.makefile()
-        self._loop = True
-        self.dev = dev
-        
-    def watch(self, handler):
-        while self._loop:
-            _data = dict()
-            try:
-                jdata = json.loads(self.reader.readline())
-            except json.JSONDecodeError as err:
-                print(err)
-                continue
-            
-            if 'params' in jdata:
-                if 'ct' in jdata['params']:
-                    jdata['params']['ct_pc'] = self._ct2pc(int(jdata['params']['ct']))
-                # handler({'cmd': 'report',
-                #          'sid': self.dev.status.sid,
-                #          'model': self.dev.status.model,
-                #          'data': jdata['params'].copy()})
-                handler(jdata['params'].copy())
-    
-    def _ct2pc(self, value:int ):
-        return int(100 - (self.dev.max_ct - value) / (self.dev.max_ct-self.dev.min_ct) * 100)
-        
-                
-    def stop(self):
-        self._loop = False
-        self.reader.close()
-        self.connection.close()       
+     
         
 class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
     """ Class to controling yeelight devices color bulb BedSide lamp etc.
@@ -96,7 +59,7 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
         dev = DiscoverYeelight()
         dev = dev.find_by_sid(self.status.sid)
         if not dev:
-            raise YeelightError(f'Device is offline {self.status.sid}')
+            raise DeviceIsOffline(f'Device is offline {self.status.sid}')
         self.status.update(dev)
     
     # @property
@@ -460,10 +423,10 @@ class Color(YeelightDev, Rgb, Hsv):
         self._check_range(sat, msg='sat 0-100')
         return self._send('set_hsv', [hue, sat, self.efx, self.duration])
     
-    def adjust_color(self, percentage, duration):
+    def adjust_color(self, percentage):
         """This method is used to adjust the color within specified duration."""
 
-        self.adjust('adjust_color', percentage, duration)
+        self.adjust('adjust_color', percentage)
     
     def set_music(self, action, host, port):
         """This method is used to start or stop music mode on a device. Under music

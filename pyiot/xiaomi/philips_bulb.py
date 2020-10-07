@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__all__ = ['PhilipsBulb', 'PhilipsBulbException']
+__all__ = ['PhilipsBulb']
 
 from typing import List, Dict, Any
 from pyiot.traits import Dimmer, OnOff, ColorTemperature
@@ -21,17 +21,6 @@ from pyiot.discover.miio import DiscoverMiio
 from pyiot.connections.miio import MiioConnection
 from threading import Thread
 
-
-class PhilipsBulbException(Exception):
-    pass
-
-
-class PhilipsBulbWatcher:
-    def __init__(self, dev):
-        pass
-    
-    def watch(self, handler):
-        pass
 
 class PhilipsBulb(BaseDevice, OnOff, Dimmer, ColorTemperature):
     """ Class to controling philips bulb.
