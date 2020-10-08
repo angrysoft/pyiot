@@ -1,10 +1,10 @@
 from . import WatcherBaseDriver
-from pyiot.xiaomi.yeelight import YeelightDev
+# from pyiot.xiaomi.yeelight import YeelightDev
 import socket
 import json
 
 class YeelightWatcher(WatcherBaseDriver):
-    def __init__(self, dev: YeelightDev):
+    def __init__(self, dev):
         self.connection = socket.create_connection((dev.status.ip, dev.status.port))
         self.reader = self.connection.makefile()
         self._loop = True

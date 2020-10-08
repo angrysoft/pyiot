@@ -15,14 +15,14 @@
 __all__ = ['PhilipsBulb']
 
 from typing import List, Dict, Any
-from pyiot.traits import Dimmer, OnOff, ColorTemperature
+from pyiot.traits import Dimmer, OnOff, ColorTemperature, Scene
 from pyiot import BaseDevice
 from pyiot.discover.miio import DiscoverMiio
 from pyiot.connections.miio import MiioConnection
 from threading import Thread
 
 
-class PhilipsBulb(BaseDevice, OnOff, Dimmer, ColorTemperature):
+class PhilipsBulb(BaseDevice, OnOff, Dimmer, ColorTemperature, Scene):
     """ Class to controling philips bulb.
     
     Args:
