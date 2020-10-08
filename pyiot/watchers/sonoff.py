@@ -1,7 +1,6 @@
 from zeroconf import ServiceBrowser, Zeroconf, ServiceStateChange
 import json
-import socket
-from threading import Thread, Event, RLock
+from threading import Event
 from pyiot.watchers import WatcherBaseDriver
 
 

@@ -59,6 +59,7 @@ class DiscoverSony(BaseDiscovery):
     
     def _parse_devices(self, data_in:str) -> Dict[str, Any]:
         dev: Dict[str, Any] = {}
+        print(data_in)
         for line in data_in.split('\r\n'):
             tmp = line.split(':', 1)
             if len(tmp) > 1:
@@ -70,6 +71,7 @@ class DiscoverSony(BaseDiscovery):
                 if key == 'support':
                     val = val.split(' ')
                 elif key == 'location':
+                    print(val)
                     url = urlparse(val)
                     dev['ip'] = url.hostname
                     dev['port'] = url.port

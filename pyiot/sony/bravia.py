@@ -24,45 +24,14 @@ from typing import Dict, Any, List
 # limitations under the License.
 
 
-class Bravia(BaseDevice, OnOff, Volume, Channels, Arrows, MediaButtons, ButtonOK, ButtonExit, ButtonReturn):
-    """Navigate to: [Settings] → [Network] → [Home Network Setup] → [IP Control]
-        Set [Authentication] to [Normal and Pre-Shared Key]
-        There should be a new menu entry [Pre-Shared Key]. Set it for example to 0000.
-    """
-
-    def __init__(self, ip:str, macaddres: str = '', psk:str = '0000', sid:str = '', model:str = 'Unknown'):
-        super().__init__(sid)
-        self.status.register_attribute(Attribute('ip', str, value=ip))
-        self.status.register_attribute(Attribute('psk', str, value=psk))
-        self.status.register_attribute(Attribute('ircc_codes', dict))
-        self.status.register_attribute(Attribute('mac', str, value=macaddres))
-        self.status.add_alias('cid', 'sid')
-        self._report_handelers = set()
+class BraviaApi:
+    def __init__(self, ip:str, mac: str = '', psk:str = '0000') -> None:
         self.conn = HttpConnection(f'http://{ip}/sony')
-        self.conn.add_header('X-Auth-PSK', self.status.psk)
-        self._dev_init()
+        self.conn.add_header('X-Auth-PSK', psk)
+        self.mac = mac
+        self.ircc_codes: Dict[str, Any] = {}
     
-    def _dev_init(self):
-        if self.is_on():
-            self.ircc_code = self.get_all_commands()
-            self.status.update(self.get_system_info())
-    
-    def add_report_handler(self, handler):
-        self._report_handelers.add(handler)
-        
-    def _handle_events(self, event):
-        for handler in self._report_handelers:
-            handler(event)
-    
-    def refresh_status(self):
-        data = self.get_content_info()
-        if data:
-            self.status.update(data)
-            Thread(target=self._handle_events,
-                   args=({'cmd': 'report', 'sid': self.status.sid, 'model': self.status.model, 'data': data},)).start()
-        
-    
-    def _check_power_status(self) -> None:
+    def check_power_status(self) -> str:
         """This API provides the current power status of the device."""
         power: str = 'off'
         try:
@@ -81,12 +50,12 @@ class Bravia(BaseDevice, OnOff, Volume, Channels, Arrows, MediaButtons, ButtonOK
         except Exception:
             pass
         
-        self.status.power = power
+        return power
         
     def on(self):
         """Power on tv"""
         # TODO: check if this wakeup tv when is in standby mode
-        mac: str = self.status.mac.replace(":", "")
+        mac: str = self.mac.replace(":", "")
         data: bytes = b'FFFFFFFFFFFF' + (mac * 20).encode()
         send_data: bytes = b''
 
@@ -102,67 +71,6 @@ class Bravia(BaseDevice, OnOff, Volume, Channels, Arrows, MediaButtons, ButtonOK
     def off(self):
         """Power off tv"""
         self.conn.post(path='system', data=self._cmd('setPowerStatus', params=[{"status": False}]))
-        
-    def is_on(self):
-        self._check_power_status()
-        return self.status.power == 'on'
-    
-    def is_off(self) -> bool:
-        self._check_power_status()
-        return self.status.power in ('off', 'standby')
-    
-    def volume_up(self):
-        self.send_ircc('VolumeUp')
-    
-    def volume_down(self):
-        self.send_ircc('VolumeDown')
-    
-    def channel_up(self):
-        self.send_ircc('ChannelUp')
-    
-    def channel_down(self):
-        self.send_ircc('ChannelDown')
-    
-    def set_channel(self, value: int):
-        for num in str(value):
-            self.send_ircc(f'Num{num}')
-            sleep(0.5)
-    
-    def up(self):
-        self.send_ircc("Up")
-    
-    def down(self):
-        self.send_ircc("Down")
-    
-    def left(self):
-        self.send_ircc("Left")
-
-    def right(self):
-        self.send_ircc("Right")
-    
-    def ok(self):
-        self.send_ircc('Confirm')
-    
-    def play(self):
-        self.send_ircc('Play')
-    
-    def pause(self):
-        self.send_ircc('Pause')
-    
-    def stop(self):
-        self.send_ircc('Stop')
-    
-    def prev(self):
-        self.send_ircc('Prev')
-    
-    def next(self):
-        self.send_ircc('Next')
-    
-    def exit(self):
-        self.send_ircc('Exit')
-    
-    def ret(self):
-        self.send_ircc('Retrun')
     
     def get_supported_api(self):
         """This API provides the supported services and their information"""
@@ -191,7 +99,6 @@ class Bravia(BaseDevice, OnOff, Volume, Channels, Arrows, MediaButtons, ButtonOK
         
         return self._send('appControl', 'getApplicationList')
 
-    
     def get_application_status(self):
         """This API provides the status of the application itself or the accompanying status related to a specific application."""
         
@@ -254,6 +161,10 @@ class Bravia(BaseDevice, OnOff, Volume, Channels, Arrows, MediaButtons, ButtonOK
             return {}
         return commands
     
+    def get_power_saving_mode(self):
+        """This API provides the setting of the power saving mode to adjust the device's power consumption."""
+
+    
     def send_ircc(self, name:str):
         """Send command codes of IR remote. (InfraRed Compatible Control over Internet Protocol)
         
@@ -261,9 +172,9 @@ class Bravia(BaseDevice, OnOff, Volume, Channels, Arrows, MediaButtons, ButtonOK
             name (str): name of command to send
         """
         try:
-            if not self.status.ircc_codes:
-                self.ircc_code = self.get_all_commands()
-            code = self.ircc_code.get(name)
+            if not self.ircc_codes:
+                self.ircc_codes = self.get_all_commands()
+            code = self.ircc_codes.get(name)
         except AttributeError:
             raise BraviaError(message=f'Ircc name not recognize {name}')
         
@@ -279,7 +190,6 @@ class Bravia(BaseDevice, OnOff, Volume, Channels, Arrows, MediaButtons, ButtonOK
             f'</s:Body>' \
             f'</s:Envelope>'
         self.conn.post(path='IRCC', headers=headers, raw=data)
-        self.refresh_status()
 
     @staticmethod
     def _cmd(cmd: str, params: List[Any] = [], pid: int = 10, version: str = '1.0') -> Dict[str, Any]:
@@ -300,6 +210,116 @@ class Bravia(BaseDevice, OnOff, Volume, Channels, Arrows, MediaButtons, ButtonOK
             elif 'result' in msg and msg['result']:
                 ret = msg['result'][0]
         return ret
+
+class KDL48W585B(BaseDevice, OnOff, Volume, Channels, Arrows, MediaButtons, ButtonOK, ButtonExit, ButtonReturn):
+    """Navigate to: [Settings] → [Network] → [Home Network Setup] → [IP Control]
+        Set [Authentication] to [Normal and Pre-Shared Key]
+        There should be a new menu entry [Pre-Shared Key]. Set it for example to 0000.
+    """
+
+    def __init__(self, ip:str, mac: str = '', psk:str = '0000', sid:str = ''):
+        super().__init__(sid)
+        self.status.register_attribute(Attribute('ip', str, value=ip))
+        self.status.register_attribute(Attribute('psk', str, value=psk))
+        self.status.register_attribute(Attribute('power', str))
+        self.status.register_attribute(Attribute('mac', str, value=mac))
+        self.status.add_alias('mac', 'sid')
+        self._report_handelers = set()
+        self.dev_api = BraviaApi(ip, mac, psk)
+        self._dev_init()
+    
+    def _dev_init(self):
+        if self.is_on():
+            self.status.update(self.dev_api.get_system_info())
+    
+    def add_report_handler(self, handler):
+        self._report_handelers.add(handler)
+        
+    def _handle_events(self, event):
+        for handler in self._report_handelers:
+            handler(event)
+    
+    # def refresh_status(self):
+    #     data = self.get_content_info()
+    #     if data:
+    #         self.status.update(data)
+    #         Thread(target=self._handle_events,
+    #                args=({'cmd': 'report', 'sid': self.status.sid, 'model': self.status.model, 'data': data},)).start()
+        
+    
+    def on(self):
+        self.dev_api.on()
+
+    def off(self):
+        self.dev_api.off()
+        
+    def is_on(self):
+        self.status.power = self.dev_api.check_power_status()
+        return self.status.power == 'on'
+    
+    def is_off(self) -> bool:
+        self.status.power = self.dev_api.check_power_status()
+        return self.status.power in ('off', 'standby')
+    
+    def volume_up(self):
+        self.dev_api.send_ircc('VolumeUp')
+    
+    def volume_down(self):
+        self.dev_api.send_ircc('VolumeDown')
+    
+    def set_volume(self, value: int):
+        pass
+
+    def set_mute(self, status: bool):
+        pass
+    
+    def channel_up(self):
+        self.dev_api.send_ircc('ChannelUp')
+    
+    def channel_down(self):
+        self.dev_api.send_ircc('ChannelDown')
+    
+    def set_channel(self, value: int):
+        for num in str(value):
+            self.dev_api.send_ircc(f'Num{num}')
+            sleep(0.5)
+    
+    def up(self):
+        self.dev_api.send_ircc("Up")
+    
+    def down(self):
+        self.dev_api.send_ircc("Down")
+    
+    def left(self):
+        self.dev_api.send_ircc("Left")
+
+    def right(self):
+        self.dev_api.send_ircc("Right")
+    
+    def ok(self):
+        self.dev_api.send_ircc('Confirm')
+    
+    def play(self):
+        self.dev_api.send_ircc('Play')
+    
+    def pause(self):
+        self.dev_api.send_ircc('Pause')
+    
+    def stop(self):
+        self.dev_api.send_ircc('Stop')
+    
+    def prev(self):
+        self.dev_api.send_ircc('Prev')
+    
+    def next(self):
+        self.dev_api.send_ircc('Next')
+    
+    def exit(self):
+        self.dev_api.send_ircc('Exit')
+    
+    def ret(self):
+        self.dev_api.send_ircc('Retrun')
+    
 
 class BraviaError(Exception):
     _codes = {

@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__all__ = ['Bravia', 'BraviaError']
+__all__ = ['Bravia', 'BraviaError', 'KDL48W585B']
 
 
-from .bravia import Bravia, BraviaError
+from .bravia import BraviaApi, BraviaError, KDL48W585B
  

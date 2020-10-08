@@ -1,18 +1,16 @@
+from pyiot.sony.bravia import BraviaApi, KDL48W585B, BraviaError
 from time import sleep
 import unittest
-import os
-from pyiot.sony import Bravia, BraviaError
 
 class BraviaTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.tv = Bravia('192.168.10.5', macaddres='FC:F1:52:2A:9B:1E')
+        cls.tv = BraviaApi('192.168.10.5', mac='FC:F1:52:2A:9B:1E')
     
     def test_a_power(self):
-        self.assertIsInstance(self.tv.is_on(), bool, msg=f'Tv power is  {self.tv.status.power}')
         self.tv.on()
         sleep(2)
-        self.assertTrue(self.tv.is_on())
+        self.assertTrue(self.tv.check_power_status())
     
     def _cmd(self, cmd, *args):
         ret = {}
@@ -37,6 +35,11 @@ class BraviaTest(unittest.TestCase):
         ret = self._cmd(self.tv.get_supported_function)
         print(ret)
         self.assertIsInstance(ret, list, msg=ret)
+    
+    def test_interface_information(self):
+        ret = self._cmd(self.tv.get_interface_information)
+        print(ret)
+        self.assertIsInstance(ret, dict, msg=ret)
     
     def test_application_list(self):
         ret = self._cmd(self.tv.get_application_list)
@@ -85,16 +88,6 @@ class BraviaTest(unittest.TestCase):
     def test_send_ircc(self):
         self.tv.send_ircc('VolumeUp')
     
-    def test_commands(self):
-        self.tv.volume_up()
-        sleep(0.5)
-        self.tv.volume_down()
-        sleep(0.5)
-        self.tv.channel_up()
-        sleep(1)
-        self.tv.channel_down()
-        sleep(1)
-        self.tv.set_channel(101)
     
     # def test_all_cmds(self):
     #     print(self.tv.get_all_commands())
@@ -107,3 +100,21 @@ class BraviaTest(unittest.TestCase):
     #     self.tv.off()
     #     sleep(0.5)
     #     self.assertFalse(self.tv.power)
+    
+class KDL48W585BTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.tv = KDL48W585B('192.168.10.5', mac='FC:F1:52:2A:9B:1E')
+    
+    def test_volume(self):
+        self.tv.volume_up()
+        sleep(0.5)
+        self.tv.volume_down()
+    
+    def test_channels(self):
+        self.tv.channel_up()
+        sleep(1)
+        self.tv.channel_down()
+        sleep(1)
+        self.tv.set_channel(101)
+
