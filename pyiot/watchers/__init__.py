@@ -2,6 +2,7 @@ from threading import Thread
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, Optional, Set
 
+
 class WatcherBaseDriver(ABC):
     @abstractmethod
     def watch(self, handler:Callable[[Optional[Dict[str,Any]]], None]) -> None:
