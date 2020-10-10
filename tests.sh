@@ -35,6 +35,11 @@ philips_test() {
     python -m unittest -v tests/test_philipsbulb.py
 }
 
+clock_test() {
+    echo ">>> Run Clock Test"
+    python -m unittest -v tests/test_clock.py
+}
+
 print_tests() {
     tests=("sonoff" "yeelight" "aqara" "aqara_gateway" "bravia" "base" "philips" "all")
     for test in ${tests[@]}
@@ -55,6 +60,7 @@ while [ "$1" != "" ]; do
         "bravia")bravia_test;;
         "base")base_test;;
         "philips")philips_test;;
+        "clock")clock_test;;
         "all")
         sonoff_test &&
         yeelight_test &&

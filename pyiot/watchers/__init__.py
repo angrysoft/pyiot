@@ -1,3 +1,4 @@
+from pyiot import BaseDevice
 from threading import Thread
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, Optional, Set
@@ -5,12 +6,24 @@ from typing import Any, Callable, Dict, Optional, Set
 
 class WatcherBaseDriver(ABC):
     @abstractmethod
-    def watch(self, handler:Callable[[Optional[Dict[str,Any]]], None]) -> None:
+    def watch(self, handler:Callable[[Optional[Dict[str,Any]]], None], device: Optional[BaseDevice] = None) -> None:
         pass
     
     @abstractmethod
     def stop(self) -> None:
         pass  
+
+
+class WatcherTimerDriver(WatcherBaseDriver):
+    def __init__(self, sleep_time: int) -> None:
+        self.sleep_time = sleep_time
+
+    def watch(self, handler: Callable[[Optional[Dict[str, Any]]], None], device: Optional[BaseDevice] = None) -> None:
+        pass
+    
+    def stop(self) -> None:
+        pass
+    
     
 
 class Watcher:
