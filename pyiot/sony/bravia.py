@@ -163,6 +163,19 @@ class BraviaApi:
     
     def get_power_saving_mode(self):
         """This API provides the setting of the power saving mode to adjust the device's power consumption."""
+        return self._send('system', 'getPowerSavingMode')
+    
+    def set_power_saving_mode(self, mode: str):
+        """This API provides the function to change the setting of the power saving mode and adjust the device's power consumption.
+
+        Args:
+            mode (str): Current power saving mode. The following values are defined.
+                        off - Power saving mode is disabled.
+                        low - Power saving mode is enabled at a low level.
+                        high - Power saving mode is enabled at a high level.
+                        pictureOff - Power saving mode is enabled with the panel output off.
+        """
+        self.conn.post(path='system', data=self._cmd('setPowerSavingMode', params=[{"mode": f'{mode}'}], pid=52))
 
     
     def send_ircc(self, name:str):

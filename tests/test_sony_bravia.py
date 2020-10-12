@@ -79,6 +79,14 @@ class BraviaTest(unittest.TestCase):
         self.tv.set_mute(False)
         print('unmute')
     
+    def test_power_saving(self):
+        ret = self._cmd(self.tv.get_power_saving_mode)
+        print(ret)
+        self.tv.set_power_saving_mode('pictureOff')
+        sleep(3)
+        ret = self._cmd(self.tv.get_power_saving_mode)
+        print(ret)
+        
     #def test_set_source(self):
     #    self.tv.set_sources('cec', port=3)
     

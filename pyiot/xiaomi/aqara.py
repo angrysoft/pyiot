@@ -227,7 +227,7 @@ class AqaraSubDevice(BaseDevice):
 #     @property
 #     def short_id(self):
 #         return self._data.get('short_id')
-    
+
 class CtrlNeutral(AqaraSubDevice, OnOff):
 
     def __init__(self, sid:str, gateway:GatewayInterface):
