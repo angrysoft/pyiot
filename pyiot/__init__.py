@@ -1,4 +1,5 @@
 __version__ = '0.2'
+
 from typing import Any, Set, Dict, Tuple
 from pyiot.status import DeviceStatus, Attribute
 from pyiot.traits import Trait
@@ -27,7 +28,6 @@ class BaseDevice:
     @classmethod
     def _check_trait(cls, _class: object):
         if _class in cls._trait_sublases:
-            print('base_class', _class, _class.__name__)
             cls._traits.add(_class.__name__)
             cls._cmds.update(_class._commands)
             for _attr in _class._attributes:

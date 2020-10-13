@@ -85,7 +85,7 @@ class DeviceStatus(object):
             setattr(self, name, value)
     
     def __call__(self) -> Dict[str, Any]:
-        ret = {}
+        ret: Dict[str, Any] = {}
         for attr in self._attributes:
             ret[attr] = self._attributes[attr].value
         return ret

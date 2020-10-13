@@ -1,9 +1,11 @@
+from pyiot.watchers.sony import BraviaWatcher
+from pyiot.watchers import Watcher
 from pyiot.status import Attribute
 from pyiot.connections.http import HttpConnection, Response
 from pyiot import BaseDevice
 from pyiot.traits import Arrows, ButtonExit, ButtonOK, ButtonReturn, Channels, MediaButtons, OnOff, Volume
 import socket
-from threading import Thread
+from threading import Event
 import struct
 from time import sleep
 from typing import Dict, Any, List
@@ -240,26 +242,22 @@ class KDL48W585B(BaseDevice, OnOff, Volume, Channels, Arrows, MediaButtons, Butt
         self._report_handelers = set()
         self.dev_api = BraviaApi(ip, mac, psk)
         self._dev_init()
+        self.event = Event()
+        self.watcher = Watcher(BraviaWatcher(30, self))
+        
     
     def _dev_init(self):
         if self.is_on():
             self.status.update(self.dev_api.get_system_info())
     
-    def add_report_handler(self, handler):
-        self._report_handelers.add(handler)
+    def refresh_status(self):
+        if self.is_on():
+            data = self.dev_api.get_content_info()
+            if data:
+                self.status.update(data)
+        if not self.event.is_set():
+            self.event.set()
         
-    def _handle_events(self, event):
-        for handler in self._report_handelers:
-            handler(event)
-    
-    # def refresh_status(self):
-    #     data = self.get_content_info()
-    #     if data:
-    #         self.status.update(data)
-    #         Thread(target=self._handle_events,
-    #                args=({'cmd': 'report', 'sid': self.status.sid, 'model': self.status.model, 'data': data},)).start()
-        
-    
     def on(self):
         self.dev_api.on()
 
