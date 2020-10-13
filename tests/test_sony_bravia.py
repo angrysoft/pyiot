@@ -1,6 +1,7 @@
 from pyiot.sony.bravia import BraviaApi, KDL48W585B, BraviaError
 from time import sleep
 import unittest
+from typing import Any
 
 class BraviaTest(unittest.TestCase):
     @classmethod
@@ -12,7 +13,7 @@ class BraviaTest(unittest.TestCase):
         sleep(2)
         self.assertTrue(self.tv.check_power_status())
     
-    def _cmd(self, cmd, *args):
+    def _cmd(self, cmd, *args) -> Any:
         ret = {}
         try:
             if args:
