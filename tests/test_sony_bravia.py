@@ -86,6 +86,7 @@ class BraviaTest(unittest.TestCase):
         sleep(3)
         ret = self._cmd(self.tv.get_power_saving_mode)
         print(ret)
+        self.tv.set_power_saving_mode('high')
         
     #def test_set_source(self):
     #    self.tv.set_sources('cec', port=3)
@@ -113,6 +114,7 @@ class KDL48W585BTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.tv = KDL48W585B('192.168.10.5', mac='FC:F1:52:2A:9B:1E')
+        cls.tv.watcher.add_report_handler(print)
     
     def test_volume(self):
         self.tv.volume_up()

@@ -52,7 +52,9 @@ class DeviceStatus(object):
         del self._attributes[attr_name]
         
     def add_alias(self, alias_name:str, attribute_name:str) ->None:
-        if attribute_name in self._attributes:
+        if alias_name in self._attributes:
+            raise ValueError('Alias or attribute allready exist')
+        elif attribute_name in self._attributes:
             self._attributes[alias_name] = self._attributes[attribute_name]
         else:
             raise ValueError(f'No registered attribute named {attribute_name}')

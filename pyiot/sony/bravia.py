@@ -5,11 +5,10 @@ from pyiot.connections.http import HttpConnection, Response
 from pyiot import BaseDevice
 from pyiot.traits import Arrows, ButtonExit, ButtonOK, ButtonReturn, Channels, MediaButtons, OnOff, Volume
 import socket
-from threading import Event
 import struct
 from time import sleep
 from typing import Dict, Any, List
-
+from threading import Event
 
 # Copyright 2019 AngrySoft Sebastian Zwierzchowski
 #
@@ -238,11 +237,10 @@ class KDL48W585B(BaseDevice, OnOff, Volume, Channels, Arrows, MediaButtons, Butt
         self.status.register_attribute(Attribute('psk', str, value=psk))
         self.status.register_attribute(Attribute('power', str))
         self.status.register_attribute(Attribute('mac', str, value=mac))
-        self.status.add_alias('mac', 'sid')
-        self._report_handelers = set()
+        self.status.add_alias('dispNum', 'channel')
+        self._event: Event = None
         self.dev_api = BraviaApi(ip, mac, psk)
         self._dev_init()
-        self.event = Event()
         self.watcher = Watcher(BraviaWatcher(30, self))
         
     
@@ -255,14 +253,16 @@ class KDL48W585B(BaseDevice, OnOff, Volume, Channels, Arrows, MediaButtons, Butt
             data = self.dev_api.get_content_info()
             if data:
                 self.status.update(data)
-        if not self.event.is_set():
-            self.event.set()
+        if isinstance(self._event, Event) and not self._event.is_set():
+            self._event.set()
         
     def on(self):
         self.dev_api.on()
+        self.refresh_status()
 
     def off(self):
         self.dev_api.off()
+        self.refresh_status()
         
     def is_on(self):
         self.status.power = self.dev_api.check_power_status()
@@ -286,14 +286,17 @@ class KDL48W585B(BaseDevice, OnOff, Volume, Channels, Arrows, MediaButtons, Butt
     
     def channel_up(self):
         self.dev_api.send_ircc('ChannelUp')
+        self.refresh_status()
     
     def channel_down(self):
         self.dev_api.send_ircc('ChannelDown')
+        self.refresh_status()
     
     def set_channel(self, value: int):
         for num in str(value):
             self.dev_api.send_ircc(f'Num{num}')
             sleep(0.5)
+        self.refresh_status()
     
     def up(self):
         self.dev_api.send_ircc("Up")

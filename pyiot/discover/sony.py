@@ -2,6 +2,7 @@ from . import BaseDiscovery
 from pyiot.connections.udp import UdpConnection
 from pyiot.exceptions import DeviceTimeout
 from urllib.parse import urlparse
+from uuid import UUID
 from typing import List, Dict, Any
 
 class DiscoverSony(BaseDiscovery):
@@ -53,13 +54,12 @@ class DiscoverSony(BaseDiscovery):
                 break
             if data:
                 dev = self._parse_devices(data.decode())
-                if dev and sid == dev['id']:
+                if dev and sid == dev['sid']:
                     return dev
         return {}
     
     def _parse_devices(self, data_in:str) -> Dict[str, Any]:
         dev: Dict[str, Any] = {}
-        print(data_in)
         for line in data_in.split('\r\n'):
             tmp = line.split(':', 1)
             if len(tmp) > 1:
@@ -75,7 +75,11 @@ class DiscoverSony(BaseDiscovery):
                     url = urlparse(val)
                     dev['ip'] = url.hostname
                     dev['port'] = url.port
-                    continue
-                   
-                dev[key] = val
+                elif key == 'usn':
+                    try:
+                        dev['sid'] = val.split(':')[1]
+                    except IndexError:
+                        pass
+                else:
+                    dev[key] = val
         return dev
