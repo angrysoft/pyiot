@@ -45,9 +45,6 @@ class Time:
     
     def __repr__(self) -> str:
         return f'{self._hour:02}:{self._minute:02}:{self._seconds:02}'
-
-    
-
     
 
 class Clock(BaseDevice):
