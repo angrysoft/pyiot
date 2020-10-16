@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from __future__ import annotations
+from pyiot.zigbee import ZigbeeGateway
 
 __all__ = [
     'GatewayWatcher',
@@ -39,6 +40,25 @@ from pyiot import BaseDevice
 from pyiot.status import Attribute
 from typing import Dict, Any, List, Optional
 
+
+class AqaraGateway(ZigbeeGateway):
+    def __init__(self, ip:str = 'auto', port:int = 9898, sid:str = '', gwpasswd:str = ''):
+        self.conn = UdpConnection()
+        self.aes_key_iv = bytes([0x17, 0x99, 0x6d, 0x09, 0x3d, 0x28, 0xdd, 0xb3, 0xba, 0x69, 0x5a, 0x2e, 0x6f, 0x58, 0x56, 0x2e])
+        self.multicast_addr = ('224.0.0.50', 4321)
+        if ip == 'auto':
+            gateway: Dict[str, str] = self.whois()
+            self.unicast_addr = ( gateway.get('ip', ''), int(gateway.get('port',0)))
+            self.sid: str = gateway.get('sid','') 
+        else:
+            self.unicast_addr = (ip, port)
+            self.sid = sid
+        self.gwpasswd = gwpasswd
+        self._token: str = ''
+        self._subdevices:Dict[str, AqaraSubDevice] = dict()
+        self.watcher: Watcher = Watcher(GatewayWatcher())
+        self.watcher.add_report_handler(self._handle_events)
+    
 
 class GatewayInterface:
     def __init__(self, ip:str = 'auto', port:int = 9898, sid:str = '', gwpasswd:str = ''):
@@ -160,6 +180,7 @@ class AqaraSubDevice(BaseDevice):
         self.status.register_attribute(Attribute("low_voltage", int, readonly=True, value=2800))
         self.writable = False
         self.gateway.register_sub_device(self)
+        self.watcher = self.gateway.watcher
     
     def _init_device(self):
         data = self.gateway.read_device(self.status.sid)

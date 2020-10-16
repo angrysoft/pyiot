@@ -55,6 +55,19 @@ class OnOff(Trait):
     @abstractmethod
     def is_off(self) -> bool:
         pass
+
+class SuspendResume(Trait):
+    _commands:Tuple[str, ...] = ('suspend', 'resume')
+    _attributes: Tuple[Attribute,  ...] = (Attribute('power_state', str),)
+    
+    @abstractmethod
+    def suspend(self) -> None:
+        pass
+    
+    @abstractmethod
+    def resume(self) -> None:
+        pass
+    
     
 class Dimmer(Trait):
     _commands:Tuple[str, ...] = ('set_bright',)
