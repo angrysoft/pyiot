@@ -61,6 +61,10 @@ class ZigbeeGateway(ABC):
         """
         pass
     
+    @abstractmethod
+    def get_watcher(self) -> Watcher:
+        pass
+    
     
 
 class ZigbeeDevice(BaseDevice):
@@ -68,8 +72,19 @@ class ZigbeeDevice(BaseDevice):
         super().__init__(sid)
         self.gateway = gateway
         self.status.register_attribute(Attribute('voltage', int))
+        self.status.register_attribute(Attribute('linkquality', int))
         self.status.register_attribute(Attribute('short_id', int, readonly=True, oneshot=True))
         self.status.register_attribute(Attribute("low_voltage", int, readonly=True, value=2800))
         self.writable = False
         self.gateway.register_sub_device(self)
-        self.watcher: Watcher = self.gateway.watcher 
+        self.watcher: Watcher = self.gateway.get_watcher()
+    
+    def _init_device(self):
+        data = self.gateway.get_device(self.status.sid)
+        if 'data' in data:
+            self.status.update(data.get('data', {}))
+        else:
+            self.status.update(data)
+        
+    
+    

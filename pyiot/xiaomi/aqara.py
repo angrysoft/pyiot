@@ -32,7 +32,7 @@ __all__ = [
 
 import binascii
 from Cryptodome.Cipher import AES
-from pyiot.traits import HumidityStatus, LuminosityStatus, MotionStatus, MutliSwitch, OnOff, OpenClose, PressureStatus, TemperatureStatus, Toggle
+from pyiot.traits import HumidityStatus, IlluminanceStatus, MotionStatus, MutliSwitch, OnOff, OpenClose, PressureStatus, TemperatureStatus, Toggle
 from pyiot.connections.udp import UdpConnection
 from pyiot.watchers.aqara import GatewayWatcher
 from pyiot.watchers import Watcher
@@ -276,6 +276,7 @@ class CtrlNeutral2(AqaraSubDevice, MutliSwitch):
         self.writable = True
         self.status.register_attribute(Attribute('channel_0', str))
         self.status.register_attribute(Attribute('channel_1', str))
+        self.status.register_attribute(Attribute('switches', list, readonly=True, value=['channel_0', 'channel_1']))
         self._init_device()
         
     def on(self, switch_no:int):
@@ -290,11 +291,8 @@ class CtrlNeutral2(AqaraSubDevice, MutliSwitch):
     def is_off(self, switch_no:int) -> bool:
         return self.status.get(f'channel_{switch_no}') == "off"
     
-    def switches(self) -> List[str]:
-        return ['channel_0', 'channel_1']
-    
     def switch_no(self) -> int:
-        return len(self.switches())
+        return len(self.status.switches)
 
 
 class Plug(AqaraSubDevice, OnOff, Toggle):
@@ -360,7 +358,7 @@ class Magnet(AqaraSubDevice, OpenClose):
         return self.status.status == 'close'
 
 
-class SensorMotionAq2(AqaraSubDevice, MotionStatus, LuminosityStatus):
+class SensorMotionAq2(AqaraSubDevice, MotionStatus, IlluminanceStatus):
     def __init__(self, sid:str, gateway:GatewayInterface):
         super().__init__(sid, gateway)
         self.status.add_alias('lux', 'luminosity')
