@@ -280,6 +280,7 @@ class CtrlNeutral2(AqaraSubDevice, MutliSwitch):
         self._init_device()
         
     def on(self, switch_no:int):
+        self.gateway.set_device(
         self.write({f'channel_{switch_no}': 'on'})
         
     def off(self,  switch_no:int):
