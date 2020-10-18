@@ -2,6 +2,7 @@ from pyiot.xiaomi.aqara import SensorHt, SensorMotionAq2, SensorSwitchAq2,Gatewa
 from time import sleep
 import unittest
 import os
+from pyiot.zigbee.aqaragateway import AqaraGateway
 
 # sid = '0x000000000545b741'
 ctrlNeural1 = '158d00024e2e5b'
@@ -18,9 +19,11 @@ sensor_motionaq2 = '158d0002ec03fe'
 class TestAqara(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        passwd = os.environ.get('GWPASSWD')
+        passwd:str = os.environ.get('GWPASSWD', '')
         cls.gw = GatewayInterface(gwpasswd=passwd)
         cls.gw.watcher.add_report_handler(print)
+        cls.agw = AqaraGateway(gwpasswd=passwd)
+        cls.agw.watcher.add_report_handler(print)
     
     # def test_a_gateway(self):
     #     token = self.gw.token
@@ -33,7 +36,7 @@ class TestAqara(unittest.TestCase):
         
     # @unittest.skip("demonstrating skipping")
     def test_CtrlNeural1(self):
-        dev = CtrlNeutral(ctrlNeural1, gateway=self.gw)
+        dev = CtrlNeutral(ctrlNeural1, gateway=self.agw)
         print(dev.commands,dev.traits)
         sleep(0.5)
         dev.on()
@@ -47,20 +50,20 @@ class TestAqara(unittest.TestCase):
     def test_CtrlNeural2(self):
         dev = CtrlNeutral2(ctrlNeural2, gateway=self.gw)
         sleep(0.5)
-        print(dev.commands,dev.traits, dev.switches(), dev.switch_no())
-        dev.on(0)
+        print(dev.commands,dev.traits, dev.status.switches, dev.switch_no())
+        dev.on('channel_0')
         sleep(1)
-        self.assertTrue(dev.is_on(0))
-        dev.off(0)
+        self.assertTrue(dev.is_on('channel_0'))
+        dev.off('channel_0')
         sleep(1)
-        self.assertTrue(dev.is_off(0))
+        self.assertTrue(dev.is_off('channel_0'))
         sleep(0.5)
-        dev.on(1)
+        dev.on('channel_1')
         sleep(1)
-        self.assertTrue(dev.is_on(1))
-        dev.off(1)
+        self.assertTrue(dev.is_on('channel_1'))
+        dev.off('channel_1')
         sleep(1)
-        self.assertTrue(dev.is_off(1))
+        self.assertTrue(dev.is_off('channel_1'))
     
     # @unittest.skip("demonstrating skipping")    
     def test_Plug(self):

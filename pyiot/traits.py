@@ -9,31 +9,24 @@ class Trait(ABC):
   
 class MutliSwitch(Trait):
     _commands:Tuple[str, ...] = ('on', 'off')
-    _attributes: Tuple[Attribute, ...] = tuple()
+    _attributes: Tuple[Attribute, ...] = (Attribute('switches', list, readonly=True, oneshot=True),)
     
     @abstractmethod
-    def on(self, switch_no:int):
+    def on(self, switch_name:str):
         pass
     
     @abstractmethod
-    def off(self, switch_no:int):
+    def off(self, switch_name:str):
         pass
     
     @abstractmethod
-    def is_on(self, switch_no:int) -> bool:
+    def is_on(self, switch_name:str) -> bool:
         pass
     
     @abstractmethod
-    def is_off(self, switch_no:int) -> bool:
+    def is_off(self, switch_name:str) -> bool:
         pass
     
-    @abstractmethod
-    def switches(self) -> List[str]:
-        pass
-    
-    @abstractmethod
-    def switch_no(self) -> int:
-        pass
 
 class OnOff(Trait):
     _commands:Tuple[str, ...] = ('on', 'off')

@@ -2,8 +2,7 @@ from typing import Any, Dict, Optional
 
 class Attribute:
     def __init__(self, name:str, attr_type:Any, readonly:bool = False, oneshot: bool = False,
-                 value:Optional[Any] = None, alias:str = '') -> None:
-        self._alias = alias
+                 value:Optional[Any] = None) -> None:
         self._name = name
         self._type = attr_type
         # TODO : Raise error when readonly is true and value is not set
@@ -13,9 +12,6 @@ class Attribute:
             self._value = value
         else:
             self._value = attr_type()
-    @property
-    def alias(self) -> str:
-        return self._alias
     
     @property
     def readonly(self) -> bool:

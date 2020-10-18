@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from __future__ import annotations
-from pyiot.zigbee import ZigbeeGateway
+from pyiot.zigbee import ZigbeeDevice, ZigbeeGateway
 
 __all__ = [
     'GatewayWatcher',
@@ -40,24 +40,6 @@ from pyiot import BaseDevice
 from pyiot.status import Attribute
 from typing import Dict, Any, List, Optional
 
-
-class AqaraGateway(ZigbeeGateway):
-    def __init__(self, ip:str = 'auto', port:int = 9898, sid:str = '', gwpasswd:str = ''):
-        self.conn = UdpConnection()
-        self.aes_key_iv = bytes([0x17, 0x99, 0x6d, 0x09, 0x3d, 0x28, 0xdd, 0xb3, 0xba, 0x69, 0x5a, 0x2e, 0x6f, 0x58, 0x56, 0x2e])
-        self.multicast_addr = ('224.0.0.50', 4321)
-        if ip == 'auto':
-            gateway: Dict[str, str] = self.whois()
-            self.unicast_addr = ( gateway.get('ip', ''), int(gateway.get('port',0)))
-            self.sid: str = gateway.get('sid','') 
-        else:
-            self.unicast_addr = (ip, port)
-            self.sid = sid
-        self.gwpasswd = gwpasswd
-        self._token: str = ''
-        self._subdevices:Dict[str, AqaraSubDevice] = dict()
-        self.watcher: Watcher = Watcher(GatewayWatcher())
-        self.watcher.add_report_handler(self._handle_events)
     
 
 class GatewayInterface:
@@ -133,9 +115,9 @@ class GatewayInterface:
         When users need to control the device, the user can use the "write" command."""
         _data = data.copy()
         _data['key'] = self.get_key()
-        msg:Dict[str,Any] = dict(cmd='write', model=model, sid=sid)
-        if short_id is not None:
-            msg['short_id'] = short_id
+        msg:Dict[str,Any] = dict(cmd='write', sid=sid)
+        # if short_id is not None:
+        #     msg['short_id'] = short_id
         if data:
             msg['data'] = _data
         self.conn.send_json(msg, self.unicast_addr)
@@ -249,26 +231,27 @@ class AqaraSubDevice(BaseDevice):
 #     def short_id(self):
 #         return self._data.get('short_id')
 
-class CtrlNeutral(AqaraSubDevice, OnOff):
+class CtrlNeutral(ZigbeeDevice, OnOff):
 
-    def __init__(self, sid:str, gateway:GatewayInterface):
+    def __init__(self, sid:str, gateway:ZigbeeGateway):
         super().__init__(sid, gateway)
         self.writable = True
         self.status.add_alias('channel_0', 'power')
         self._init_device()
     
     def on(self):
-        self.gateway.send_command('single', 'on')
-        # self.write({'channel_0': 'on'})
+        self.gateway.send_command(self.status.sid, 'single', 'on')
+        # self.gateway.set_device(self.status.sid, {'channel_0': 'on'})
         
     def off(self):
-        self.write({'channel_0': 'off'})
+         # self.gateway.send_command('single', 'on')
+        self.gateway.set_device(self.status.sid, {'channel_0': 'off'})
     
     def is_on(self) -> bool:
-        return self.status.get('channel_0') == "on"
+        return self.status.get('power') == "on"
     
     def is_off(self) -> bool:
-        return self.status.get('channel_0') == "off"
+        return self.status.get('power') == "off"
         
 
 class CtrlNeutral2(AqaraSubDevice, MutliSwitch):
@@ -277,21 +260,21 @@ class CtrlNeutral2(AqaraSubDevice, MutliSwitch):
         self.writable = True
         self.status.register_attribute(Attribute('channel_0', str))
         self.status.register_attribute(Attribute('channel_1', str))
-        self.status.register_attribute(Attribute('switches', list, readonly=True, value=['channel_0', 'channel_1']))
+        self.status.switches = ['channel_0', 'channel_1']
         self._init_device()
         
-    def on(self, switch_no:int):
-        self.gateway.send_command()
-        self.write({f'channel_{switch_no}': 'on'})
+    def on(self, switch_name:str):
+        # self.gateway.send_command()
+        self.write({f'{switch_name}': 'on'})
         
-    def off(self,  switch_no:int):
-        self.write({f'channel_{switch_no}': 'off'})
+    def off(self,   switch_name:str):
+        self.write({f'{switch_name}': 'off'})
         
-    def is_on(self, switch_no:int) -> bool:
-        return self.status.get(f'channel_{switch_no}') == "on"
+    def is_on(self,  switch_name:str) -> bool:
+        return self.status.get(switch_name) == "on"
     
-    def is_off(self, switch_no:int) -> bool:
-        return self.status.get(f'channel_{switch_no}') == "off"
+    def is_off(self,  switch_name:str) -> bool:
+        return self.status.get(switch_name) == "off"
     
     def switch_no(self) -> int:
         return len(self.status.switches)
@@ -363,5 +346,5 @@ class Magnet(AqaraSubDevice, OpenClose):
 class SensorMotionAq2(AqaraSubDevice, MotionStatus, IlluminanceStatus):
     def __init__(self, sid:str, gateway:GatewayInterface):
         super().__init__(sid, gateway)
-        self.status.add_alias('lux', 'luminosity')
+        self.status.add_alias('lux', 'illuminance')
         self._init_device()

@@ -18,7 +18,7 @@ class ZigbeeGateway(ABC):
         pass
     
     @abstractmethod
-    def send_command(self, argument_name: str, value: str):
+    def send_command(self,device_id: str, argument_name: str, value: str):
         pass
     
     @abstractmethod
@@ -58,11 +58,15 @@ class ZigbeeGateway(ABC):
     
     @abstractmethod
     def register_sub_device(self, device: ZigbeeDevice) -> None:
-        """Register sub-device
+        """Register sub-device for status update
 
         Args:
             device (ZigbeeDevice): Device instance
         """
+        pass
+    
+    @abstractmethod
+    def unregister_sub_device(self, device_id:str):
         pass
     
     @abstractmethod
