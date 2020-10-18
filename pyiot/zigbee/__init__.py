@@ -18,6 +18,10 @@ class ZigbeeGateway(ABC):
         pass
     
     @abstractmethod
+    def send_command(self, argument_name: str, value: str):
+        pass
+    
+    @abstractmethod
     def get_device(self, device_id: str) -> Dict[str, Any]:
         """Get device attribute status.
         
