@@ -33,7 +33,7 @@ class Attribute:
             if not self._value and self._oneshot:
                 self._value = _value
             else:
-                raise AttributeError('Readonly')
+                raise AttributeError(f'{self._name} is readonly')
         else:
             self._value =_value
         

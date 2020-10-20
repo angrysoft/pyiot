@@ -1,4 +1,4 @@
-from pyiot.xiaomi.aqara import Gateway, SensorHt, SensorMotionAq2, SensorSwitchAq2,GatewayInterface, CtrlNeutral, CtrlNeutral2, Plug, Switch, WeatherV1, Magnet
+from pyiot.xiaomi.aqara import Gateway, SensorHt, SensorMotionAq2, SensorSwitchAq2, CtrlNeutral, CtrlNeutral2, Plug, Switch, WeatherV1, Magnet
 from time import sleep
 import unittest
 import os
@@ -7,6 +7,7 @@ from pyiot.zigbee.aqaragateway import AqaraGateway
 # sid = '0x000000000545b741'
 ctrlNeural1 = '158d00024e2e5b'
 ctrlNeural2 = '158d00029b1929'
+ctrlNeural2_1 = '158d0002bffe5a'
 plug = '158d00027d0065'
 switch = '158d00033ef2d8'
 sensor_switchaq2 = '158d000200a020'
@@ -50,6 +51,10 @@ class TestAqara(unittest.TestCase):
         dev = CtrlNeutral2(ctrlNeural2, gateway=self.agw)
         sleep(0.5)
         print(dev.commands,dev.traits, dev.status.switches)
+        
+        dev1 = CtrlNeutral2(ctrlNeural2_1, gateway= self.agw)
+        print(dev1.commands,dev1.traits, dev1.status.switches)
+        
         dev.on('left')
         sleep(1)
         self.assertTrue(dev.is_on('left'))
