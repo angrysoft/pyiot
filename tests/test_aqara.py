@@ -1,4 +1,4 @@
-from pyiot.xiaomi.aqara import SensorHt, SensorMotionAq2, SensorSwitchAq2,GatewayInterface, CtrlNeutral, CtrlNeutral2, Plug, Switch, WeatherV1, Magnet
+from pyiot.xiaomi.aqara import Gateway, SensorHt, SensorMotionAq2, SensorSwitchAq2,GatewayInterface, CtrlNeutral, CtrlNeutral2, Plug, Switch, WeatherV1, Magnet
 from time import sleep
 import unittest
 import os
@@ -14,6 +14,7 @@ sensor_ht = '158d000208d668'
 weatherv1 = '158d0002e966b9'
 magnet = '158d0002a67612'
 sensor_motionaq2 = '158d0002ec03fe'
+gateway = '7c49eb17b2a0'
 
 
 class TestAqara(unittest.TestCase):
@@ -23,14 +24,14 @@ class TestAqara(unittest.TestCase):
         cls.agw = AqaraGateway(gwpasswd=passwd)
         cls.agw.watcher.add_report_handler(print)
     
-    # def test_a_gateway(self):
-    #     token = self.agw.token
-    #     self.agw.set_rgb(red=255)
-    #     sleep(1)
-    #     self.assertEqual(self.agw.rgb, 1694433280)
-    #     self.agw.off_led()
-    #     sleep(1)
-    #     self.assertEqual(self.agw.rgb, 0)
+    def test_a_gateway(self):
+        dev = Gateway(gateway, self.agw)
+        dev.set_rgb(red=255)
+        sleep(1)
+        self.assertEqual(dev.status.rgb, 1694433280)
+        dev.set_color(0)
+        sleep(1)
+        self.assertEqual(dev.status.rgb, 0)
         
     # @unittest.skip("demonstrating skipping")
     def test_CtrlNeural1(self):

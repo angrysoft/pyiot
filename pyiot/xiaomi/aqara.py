@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from __future__ import annotations
+from pyiot.zigbee.aqaragateway import AqaraGateway
 from pyiot.zigbee import ZigbeeDevice, ZigbeeGateway
 
 __all__ = [
@@ -32,7 +33,7 @@ __all__ = [
 
 import binascii
 from Cryptodome.Cipher import AES
-from pyiot.traits import HumidityStatus, IlluminanceStatus, MotionStatus, MutliSwitch, OnOff, OpenClose, PressureStatus, TemperatureStatus, Toggle
+from pyiot.traits import Dimmer, HumidityStatus, IlluminanceStatus, MotionStatus, MutliSwitch, OnOff, OpenClose, PressureStatus, Rgb, TemperatureStatus, Toggle
 from pyiot.connections.udp import UdpConnection
 from pyiot.watchers.aqara import GatewayWatcher
 from pyiot.watchers import Watcher
@@ -177,14 +178,24 @@ class AqaraSubDevice(BaseDevice):
                                   data)
     
                         
-# class Gateway(AqaraSubDevice):    
-#     def __init__(self, sid:str, gateway:GatewayInterface):
-#         super().__init__(sid, gateway)
-#         self.writable = True
+class Gateway(ZigbeeDevice, Rgb, Dimmer, IlluminanceStatus):    
+    def __init__(self, sid:str, gateway: AqaraGateway):
+        super().__init__(sid, gateway)
+        self.writable = True
+        self.status.register_attribute(Attribute('proto_version', str))
+        self.status.bright = 255
+        self._init_device()
+    
+    def set_bright(self, value: int):
+        pass
             
-#     def set_rgb(self, red=0, green=0, blue=0, dimmer=255):
-#         color = (dimmer << 24) + (red << 16) + (green << 8) + blue
-#         return self.write_device('gateway', self.sid, 0, {'rgb': color})
+    def set_rgb(self, red: int = 0, green: int = 0, blue: int = 0) -> None:
+        color = (self.status.bright << 24) + (red << 16) + (green << 8) + blue
+        self.set_color(color)
+        
+    def set_color(self, rgb: int):
+        self.gateway.set_device(self.status.sid, {'rgb': rgb})
+        
 
 #     def off_led(self):
 #         return self.write_device('gateway', self.sid, 0, {'rgb': 0})
@@ -203,33 +214,7 @@ class AqaraSubDevice(BaseDevice):
 #     def stop_sound(self):
 #         """Stop playing any sound from speaker"""
 #         return self.write_device('gateway', self.sid, 0, {'mid': 10000})
-    
-#     def device_status(self):
-#         return {**super().device_status(), 'illumination': self.illumination, 'rgb': self.rgb}.copy()
-    
-#     @property
-#     def illumination(self):
-#         return self._data.get('illumination', '')
-    
-#     @property
-#     def proto_version(self):
-#         return self._data.get('proto_version', '')
-
-#     @property
-#     def rgb(self):
-#         return int(self._data.get('rgb', -1))
-    
-#     @rgb.setter
-#     def rgb(self, value):
-#         self.write_device('gateway', self.sid, 0, {'rgb': value})
-        
-#     @property
-#     def model(self):
-#         return self._data.get('model')
-    
-#     @property
-#     def short_id(self):
-#         return self._data.get('short_id')
+      
 
 class CtrlNeutral(ZigbeeDevice, OnOff):
 
