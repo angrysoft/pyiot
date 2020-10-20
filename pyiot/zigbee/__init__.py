@@ -89,10 +89,11 @@ class ZigbeeDevice(BaseDevice):
     
     def _init_device(self):
         data = self.gateway.get_device(self.status.sid)
+        print('init', data)
         if 'data' in data:
             self.status.update(data.get('data', {}))
-        else:
-            self.status.update(data)
+       
+        self.status.update(data)
         
     
     

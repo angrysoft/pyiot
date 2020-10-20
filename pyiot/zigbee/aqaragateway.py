@@ -66,6 +66,7 @@ class AqaraGateway(ZigbeeGateway):
         self.conn.send_json({'cmd': 'write',
                              'sid': device_id,
                              'data': _payload}, self.unicast_addr)
+        self.conn.recv_json()
             
     def send_command(self,device_id: str, argument_name: str, value: str):
         payload = AqaraPayload(argument_name, value)
@@ -105,11 +106,11 @@ class AqaraPayload: #(ZigbeePayload):
         self._value = value
         self._argument_name = argument_name
         self._arguments = {'left': 'channel_0', 'single': 'channel_0',
-                           'right': 'channel_1',
+                           'right': 'channel_1'
                            }
         
     def get_payload(self) -> Dict[str, Any]:
         ret = {}
-        ret[self._arguments.get(self._argument_name)] =self._value
+        ret[self._arguments.get(self._argument_name, self._argument_name)] = self._value
         return ret
         

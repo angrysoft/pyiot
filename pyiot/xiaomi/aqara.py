@@ -237,15 +237,14 @@ class CtrlNeutral(ZigbeeDevice, OnOff):
         super().__init__(sid, gateway)
         self.writable = True
         self.status.add_alias('channel_0', 'power')
+        self.status.add_alias('single', 'power')
         self._init_device()
     
     def on(self):
         self.gateway.send_command(self.status.sid, 'single', 'on')
-        # self.gateway.set_device(self.status.sid, {'channel_0': 'on'})
         
     def off(self):
-         # self.gateway.send_command('single', 'on')
-        self.gateway.set_device(self.status.sid, {'channel_0': 'off'})
+         self.gateway.send_command(self.status.sid, 'single', 'off')
     
     def is_on(self) -> bool:
         return self.status.get('power') == "on"
@@ -254,34 +253,32 @@ class CtrlNeutral(ZigbeeDevice, OnOff):
         return self.status.get('power') == "off"
         
 
-class CtrlNeutral2(AqaraSubDevice, MutliSwitch):
-    def __init__(self, sid:str, gateway:GatewayInterface):
+class CtrlNeutral2(ZigbeeDevice, MutliSwitch):
+    def __init__(self, sid:str, gateway:ZigbeeGateway):
         super().__init__(sid, gateway)
         self.writable = True
-        self.status.register_attribute(Attribute('channel_0', str))
-        self.status.register_attribute(Attribute('channel_1', str))
-        self.status.switches = ['channel_0', 'channel_1']
+        self.status.register_attribute(Attribute('left', str))
+        self.status.register_attribute(Attribute('right', str))
+        self.status.add_alias('channel_0', 'left')
+        self.status.add_alias('channel_1', 'right')
+        self.status.switches = ['left', 'right']
         self._init_device()
         
     def on(self, switch_name:str):
-        # self.gateway.send_command()
-        self.write({f'{switch_name}': 'on'})
+        self.gateway.send_command(self.status.sid, f'{switch_name}', 'on')
         
     def off(self,   switch_name:str):
-        self.write({f'{switch_name}': 'off'})
+        self.gateway.send_command(self.status.sid, f'{switch_name}', 'off')
         
     def is_on(self,  switch_name:str) -> bool:
         return self.status.get(switch_name) == "on"
     
     def is_off(self,  switch_name:str) -> bool:
         return self.status.get(switch_name) == "off"
-    
-    def switch_no(self) -> int:
-        return len(self.status.switches)
 
 
-class Plug(AqaraSubDevice, OnOff, Toggle):
-    def __init__(self, sid:str, gateway:GatewayInterface):
+class Plug(ZigbeeDevice, OnOff, Toggle):
+    def __init__(self, sid:str, gateway: ZigbeeGateway):
         super().__init__(sid, gateway)
         self.status.add_alias('status', 'power')
         self.status.register_attribute(Attribute('inuse', str))
@@ -291,49 +288,48 @@ class Plug(AqaraSubDevice, OnOff, Toggle):
         self._init_device()
     
     def on(self) -> None:
-        self.write({'status': 'on'})
+        self.gateway.send_command(self.status.sid, 'status', 'on')
         
     def off(self) -> None:
-        self.write({'status': 'off'})
+        self.gateway.send_command(self.status.sid, 'status', 'off')
         
     def is_on(self) -> bool:
-        return self.status.get('status') == "on"
+        return self.status.power == "on"
     
     def is_off(self) -> bool:
-        return self.status.get('status') == "off"
+        return self.status.power == "off"
     
     def toggle(self) -> None:
-        self.write({'status': 'toggle'})
+        self.gateway.send_command(self.status.sid, 'status', 'toggle')
 
 
-class SensorSwitchAq2(AqaraSubDevice):
-    def __init__(self, sid:str, gateway:GatewayInterface):
+class SensorSwitchAq2(ZigbeeDevice):
+    def __init__(self, sid:str, gateway: ZigbeeGateway):
         super().__init__(sid, gateway)
         self._init_device()
 
 
-class Switch(AqaraSubDevice):
-    def __init__(self, sid:str, gateway:GatewayInterface):
+class Switch(ZigbeeDevice):
+    def __init__(self, sid:str, gateway: ZigbeeGateway):
         super().__init__(sid, gateway)
         self._init_device()
 
 
-class SensorHt(AqaraSubDevice, TemperatureStatus, HumidityStatus):
-    def __init__(self, sid:str, gateway:GatewayInterface):
+class SensorHt(ZigbeeDevice, TemperatureStatus, HumidityStatus):
+    def __init__(self, sid:str, gateway: ZigbeeGateway):
         super().__init__(sid, gateway)
         self._init_device()
 
 
-class WeatherV1(AqaraSubDevice, TemperatureStatus, HumidityStatus, PressureStatus):
-    def __init__(self, sid:str, gateway:GatewayInterface):
+class WeatherV1(ZigbeeDevice, TemperatureStatus, HumidityStatus, PressureStatus):
+    def __init__(self, sid:str, gateway: ZigbeeGateway):
         super().__init__(sid, gateway)
         self._init_device()
   
 
-class Magnet(AqaraSubDevice, OpenClose):
-    def __init__(self, sid:str, gateway:GatewayInterface):
+class Magnet(ZigbeeDevice, OpenClose):
+    def __init__(self, sid:str, gateway: ZigbeeGateway):
         super().__init__(sid, gateway)
-        self.status.register_attribute(Attribute('status', str))
         self._init_device()
     
     def is_open(self) -> bool:
@@ -343,8 +339,8 @@ class Magnet(AqaraSubDevice, OpenClose):
         return self.status.status == 'close'
 
 
-class SensorMotionAq2(AqaraSubDevice, MotionStatus, IlluminanceStatus):
-    def __init__(self, sid:str, gateway:GatewayInterface):
+class SensorMotionAq2(ZigbeeDevice, MotionStatus, IlluminanceStatus):
+    def __init__(self, sid:str, gateway: ZigbeeGateway):
         super().__init__(sid, gateway)
         self.status.add_alias('lux', 'illuminance')
         self._init_device()

@@ -1,8 +1,8 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Callable
 
 class Attribute:
     def __init__(self, name:str, attr_type:Any, readonly:bool = False, oneshot: bool = False,
-                 value:Optional[Any] = None) -> None:
+                 value:Optional[Any] = None, setter: Optional[Callable[[Any], None]] = None) -> None:
         self._name = name
         self._type = attr_type
         # TODO : Raise error when readonly is true and value is not set
@@ -12,6 +12,8 @@ class Attribute:
             self._value = value
         else:
             self._value = attr_type()
+        
+        self._setter = setter
     
     @property
     def readonly(self) -> bool:

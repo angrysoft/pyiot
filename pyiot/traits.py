@@ -79,6 +79,7 @@ class Toggle(Trait):
     def toggle(self) -> None:
         pass
 
+
 class OpenClose(Trait):
     _commands:Set[str] = set()
     _attributes: Tuple[Attribute, ...] = (Attribute('status', str),)

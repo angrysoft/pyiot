@@ -20,19 +20,17 @@ class TestAqara(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         passwd:str = os.environ.get('GWPASSWD', '')
-        cls.gw = GatewayInterface(gwpasswd=passwd)
-        cls.gw.watcher.add_report_handler(print)
         cls.agw = AqaraGateway(gwpasswd=passwd)
         cls.agw.watcher.add_report_handler(print)
     
     # def test_a_gateway(self):
-    #     token = self.gw.token
-    #     self.gw.set_rgb(red=255)
+    #     token = self.agw.token
+    #     self.agw.set_rgb(red=255)
     #     sleep(1)
-    #     self.assertEqual(self.gw.rgb, 1694433280)
-    #     self.gw.off_led()
+    #     self.assertEqual(self.agw.rgb, 1694433280)
+    #     self.agw.off_led()
     #     sleep(1)
-    #     self.assertEqual(self.gw.rgb, 0)
+    #     self.assertEqual(self.agw.rgb, 0)
         
     # @unittest.skip("demonstrating skipping")
     def test_CtrlNeural1(self):
@@ -48,26 +46,26 @@ class TestAqara(unittest.TestCase):
         
     # @unittest.skip("demonstrating skipping")
     def test_CtrlNeural2(self):
-        dev = CtrlNeutral2(ctrlNeural2, gateway=self.gw)
+        dev = CtrlNeutral2(ctrlNeural2, gateway=self.agw)
         sleep(0.5)
-        print(dev.commands,dev.traits, dev.status.switches, dev.switch_no())
-        dev.on('channel_0')
+        print(dev.commands,dev.traits, dev.status.switches)
+        dev.on('left')
         sleep(1)
-        self.assertTrue(dev.is_on('channel_0'))
-        dev.off('channel_0')
+        self.assertTrue(dev.is_on('left'))
+        dev.off('left')
         sleep(1)
-        self.assertTrue(dev.is_off('channel_0'))
+        self.assertTrue(dev.is_off('left'))
         sleep(0.5)
-        dev.on('channel_1')
+        dev.on('right')
         sleep(1)
-        self.assertTrue(dev.is_on('channel_1'))
-        dev.off('channel_1')
+        self.assertTrue(dev.is_on('right'))
+        dev.off('right')
         sleep(1)
-        self.assertTrue(dev.is_off('channel_1'))
+        self.assertTrue(dev.is_off('right'))
     
     # @unittest.skip("demonstrating skipping")    
     def test_Plug(self):
-        dev = Plug(plug, gateway=self.gw)
+        dev = Plug(plug, gateway=self.agw)
         print(dev.commands,dev.traits)
         sleep(0.5)
         dev.on()
@@ -84,32 +82,32 @@ class TestAqara(unittest.TestCase):
         self.assertTrue(dev.is_off())
     
     def test_sensorswitch(self):
-        dev = SensorSwitchAq2(sensor_switchaq2, gateway=self.gw)
+        dev = SensorSwitchAq2(sensor_switchaq2, gateway=self.agw)
         
         print(dev.status())
     
     def test_switch(self):
-        dev = Switch(switch, gateway=self.gw)
-        print(self.gw.read_device(switch))
+        dev = Switch(switch, gateway=self.agw)
+        print(self.agw.get_device(switch))
         
         print(dev.device_status())
     
     def test_sensorht(self):
-        dev = SensorHt(sensor_ht, gateway=self.gw)
+        dev = SensorHt(sensor_ht, gateway=self.agw)
         
         print(dev.device_status())
     
     def test_weather(self):
-        dev = WeatherV1(weatherv1, gateway=self.gw)
+        dev = WeatherV1(weatherv1, gateway=self.agw)
        
         print(dev.device_status())
     
     def test_magnet(self):
-        dev = Magnet(magnet, gateway=self.gw)
+        dev = Magnet(magnet, gateway=self.agw)
         
         print(dev.device_status())
     
     def test_senosrmotion(self):
-        dev = SensorMotionAq2(sensor_motionaq2, gateway=self.gw)
+        dev = SensorMotionAq2(sensor_motionaq2, gateway=self.agw)
         print(dev.device_status())
         
