@@ -48,6 +48,7 @@ class DeviceStatus(object):
     
     def unregister_attribute(self, attr_name: str):
         del self._attributes[attr_name]
+        # TODO: need to add remove aliases
         
     def add_alias(self, alias_name:str, attribute_name:str) ->None:
         if alias_name in self._attributes:
@@ -82,7 +83,8 @@ class DeviceStatus(object):
         if name in self._attributes:
             self._attributes[name].value = value
         else:
-            setattr(self, name, value)
+            print(name, value)
+            # setattr(self, name, value)
     
     def __call__(self) -> Dict[str, Any]:
         ret: Dict[str, Any] = {}

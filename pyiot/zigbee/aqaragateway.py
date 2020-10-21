@@ -75,7 +75,11 @@ class AqaraGateway(ZigbeeGateway):
     
     def get_device(self, device_id: str) -> Dict[str, Any]:
         self.conn.send_json({'cmd': 'read', 'sid': device_id}, self.unicast_addr)
-        return self.conn.recv_json()
+        ret =  self.conn.recv_json()
+        if ret.get('sid', '') == device_id:
+            return ret
+        else:
+            return {}
     
     def get_device_list(self) -> List[Dict[str, Any]]:
         self.conn.send_json({'cmd':'get_id_list'}, self.unicast_addr)

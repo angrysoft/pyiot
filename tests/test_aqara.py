@@ -25,6 +25,7 @@ class TestAqara(unittest.TestCase):
         cls.agw = AqaraGateway(gwpasswd=passwd)
         cls.agw.watcher.add_report_handler(print)
     
+    # @unittest.skip("demonstrating skipping")
     def test_a_gateway(self):
         dev = Gateway(gateway, self.agw)
         dev.set_rgb(red=255)
@@ -50,10 +51,14 @@ class TestAqara(unittest.TestCase):
     def test_CtrlNeural2(self):
         dev = CtrlNeutral2(ctrlNeural2, gateway=self.agw)
         sleep(0.5)
-        print(dev.commands,dev.traits, dev.status.switches)
-        
         dev1 = CtrlNeutral2(ctrlNeural2_1, gateway= self.agw)
-        print(dev1.commands,dev1.traits, dev1.status.switches)
+        sleep(0.5)
+
+        dev2 = CtrlNeutral2('158d0002a18c2b', gateway= self.agw)
+        sleep(0.5)
+
+        for d in self.agw._subdevices:
+            print(d, id(self.agw._subdevices[d].status))
         
         dev.on('left')
         sleep(1)

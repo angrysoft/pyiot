@@ -1,19 +1,24 @@
+from __future__ import annotations
 __version__ = '0.2'
-
-from typing import Any, Set, Dict, Tuple
+from typing import Any, Set, Dict, Tuple, List
 from pyiot.status import DeviceStatus, Attribute
 from pyiot.traits import Trait
+from copy import deepcopy
 
 class BaseDevice:
     def __new__(cls, sid:str, *args: Any, **kwargs: Any):
         cls._traits:Set[str] = set()
         cls._cmds:Set[str] = set()
-        cls.status:DeviceStatus = DeviceStatus()
+        cls._attr_list:List[Attribute] = []
         cls._trait_sublases = Trait.__subclasses__()
         cls._get_trait_list(cls.__bases__)
-        return super(BaseDevice, cls).__new__(cls)
+        # return super(BaseDevice, cls).__new__(cls)
+        return object.__new__(cls)
     
     def __init__(self, sid:str) -> None:
+        self.status = DeviceStatus()
+        for _attr in self._attr_list:
+            self.status.register_attribute(deepcopy(_attr))
         self.status.register_attribute(Attribute('sid', str, value=sid, readonly=True))
         self.status.register_attribute(Attribute('name', str))
         self.status.register_attribute(Attribute('place', str))
@@ -30,18 +35,19 @@ class BaseDevice:
         if _class in cls._trait_sublases:
             cls._traits.add(_class.__name__)
             cls._cmds.update(_class._commands)
+            _attr : Attribute
             for _attr in _class._attributes:
-                cls.status.register_attribute(_attr)
+                cls._attr_list.append(_attr)
         else:
             cls._get_trait_list(_class.__bases__)   
     
     @property
-    def commands(self) -> Set[str]:
-        return self._cmds
+    def commands(self) -> Tuple[str, ...]:
+        return tuple(self._cmds)
     
     @property
-    def traits(self) -> Set[str]:
-        return self._traits
+    def traits(self) -> Tuple[str, ...]:
+        return tuple(self._traits)
           
     def execute(self, cmd: str, **kwargs:Any):
         if cmd in self.commands:
