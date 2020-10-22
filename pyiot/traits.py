@@ -95,7 +95,7 @@ class OpenClose(Trait):
 
 class MotionStatus(Trait):
     _commands:Tuple[str,  ...] = tuple()
-    _attributes: Tuple[Attribute, ...] = tuple()
+    _attributes: Tuple[Attribute, ...] = (Attribute('occupancy', bool), )
 
 
 class TemperatureStatus(Trait):

@@ -110,7 +110,8 @@ class AqaraPayload: #(ZigbeePayload):
         self._value = value
         self._argument_name = argument_name
         self._arguments = {'left': 'channel_0', 'single': 'channel_0',
-                           'right': 'channel_1'
+                           'right': 'channel_1',
+                           'motion': 'occupancy'
                            }
         
     def get_payload(self) -> Dict[str, Any]:
