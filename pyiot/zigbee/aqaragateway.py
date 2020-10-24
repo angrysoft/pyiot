@@ -98,6 +98,10 @@ class AqaraGateway(ZigbeeGateway):
     
     def register_sub_device(self, device: ZigbeeDevice):
         self._subdevices[device.status.sid] = device
+        self.conn.send_json({'cmd': 'read', 'sid': device.status.sid}, self.unicast_addr)
+        ret =  self.conn.recv_json()
+        if ret.get('sid', '') == device.status.sid:
+            device.status.update(ret)
     
     def unregister_sub_device(self, device_id:str):
         del self._subdevices[device_id]

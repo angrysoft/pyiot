@@ -15,7 +15,7 @@ class Zigbee2mqttGateway(ZigbeeGateway):
         self.watcher.add_report_handler(self._handle_events)
     
     def _handle_events(self, event:Dict[str,Any]):
-        print(event)
+        print('foo info: ', event)
         # _sid: str = event.get('sid', '')
         # if _sid == self.sid and 'token' in event:
         #     self.token = event['token']
@@ -43,7 +43,8 @@ class Zigbee2mqttGateway(ZigbeeGateway):
         self._client.publish("zigbee2mqtt/bridge/config/permit_join", string_status.get(status))
     
     def register_sub_device(self, device: ZigbeeDevice) -> None:
-        pass
+        # TODO : send get devicei attributes
+        self._subdevices[device.status.sid] = device
     
     def unregister_sub_device(self, device_id: str) -> None:
         pass
