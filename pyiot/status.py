@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Callable
+from typing import Any, Dict, Optional, Callable, List
 
 class Attribute:
     def __init__(self, name:str, attr_type:Any, readonly:bool = False, oneshot: bool = False,
@@ -70,7 +70,10 @@ class DeviceStatus(object):
     
     def set(self, name:str, value:Any):
         if name in self._attributes:
-            self._attributes[name].value = value  
+            self._attributes[name].value = value
+    
+    def get_names(self) -> List[str]:
+        return list(self._attributes.keys())
     
     def __getattr__(self, name: str) -> Any:
         if name in self._attributes:

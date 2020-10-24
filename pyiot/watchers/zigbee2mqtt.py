@@ -11,12 +11,15 @@ class Zigbee2mqttWatcher(WatcherBaseDriver):
         self._client.on_disconnect = self._on_disconnet
         self._connected = False
         self._handler = None
+        self._loop = True
         
     def _on_connect(self, client, userdata, flags, rc):
+        print('connected')
         self._connected = True
         client.subscribe('zigbee2mqtt/#')
     
     def _on_message(self, client, userdata, message):
+        print(message.topic, message.payload)
         msg = {}
         msg['sid'] = dirname(message.topic)
         msg.update(message.payload)

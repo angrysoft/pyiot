@@ -13,7 +13,6 @@
 # limitations under the License.
 
 from __future__ import annotations
-from copy import copy
 from pyiot.zigbee.aqaragateway import AqaraGateway
 from pyiot.zigbee import ZigbeeDevice, ZigbeeGateway
 
