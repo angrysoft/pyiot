@@ -46,7 +46,10 @@ class Zigbee2mqttGateway(ZigbeeGateway):
         # TODO : send get devicei attributes
         self._subdevices[device.status.sid] = device
         print(device.status.get_attr_names())
-        self._client.publish(f"zigbee2mqtt/{device.status.sid}/get", '{"": ""}')
+        args = {}
+        for x in device.status.get_attr_names():
+            args[x] = ""
+        self._client.publish(f"zigbee2mqtt/{device.status.sid}/get", json.dumps(args))
     
     def unregister_sub_device(self, device_id: str) -> None:
         del self._subdevices[device_id]
