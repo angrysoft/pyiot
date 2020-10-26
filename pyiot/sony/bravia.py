@@ -10,6 +10,7 @@ from time import sleep
 from typing import Dict, Any, List
 from threading import Event
 
+
 # Copyright 2019 AngrySoft Sebastian Zwierzchowski
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

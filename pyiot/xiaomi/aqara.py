@@ -13,8 +13,6 @@
 # limitations under the License.
 
 from __future__ import annotations
-from pyiot.zigbee.aqaragateway import AqaraGateway
-from pyiot.zigbee import ZigbeeDevice, ZigbeeGateway
 
 __all__ = [
     'Gateway',
@@ -29,6 +27,8 @@ __all__ = [
     'SensorMotionAq2'
     ]
 
+from pyiot.zigbee.aqaragateway import AqaraGateway
+from pyiot.zigbee import ZigbeeDevice, ZigbeeGateway
 from pyiot.traits import Dimmer, HumidityStatus,IlluminanceStatus, MotionStatus, MutliSwitch, \
     OnOff, OpenClose, PressureStatus, Rgb, TemperatureStatus, Toggle
 from pyiot.status import Attribute
@@ -41,7 +41,6 @@ class Gateway(ZigbeeDevice, Rgb, Dimmer, IlluminanceStatus):
         self.writable = True
         self.status.register_attribute(Attribute('proto_version', str))
         self.status.bright = 255
-        self._init_device()
     
     def set_bright(self, value: int):
         pass
@@ -80,7 +79,6 @@ class CtrlNeutral(ZigbeeDevice, OnOff):
         self.writable = True
         self.status.add_alias('channel_0', 'power')
         self.status.add_alias('single', 'power')
-        self._init_device()
     
     def on(self):
         self.gateway.send_command(self.status.sid, 'single', 'on')
@@ -104,7 +102,6 @@ class CtrlNeutral2(ZigbeeDevice, MutliSwitch):
         self.status.add_alias('channel_0', 'left')
         self.status.add_alias('channel_1', 'right')
         self.status.switches = ['left', 'right']
-        self._init_device()
         
     def on(self, switch_name:str):
         self.gateway.send_command(self.status.sid, f'{switch_name}', 'on')
@@ -127,7 +124,6 @@ class Plug(ZigbeeDevice, OnOff, Toggle):
         self.status.register_attribute(Attribute('power_consumed', str))
         self.status.register_attribute(Attribute('load_power', str))
         self.writable = True
-        self._init_device()
     
     def on(self) -> None:
         self.gateway.send_command(self.status.sid, 'status', 'on')
@@ -148,31 +144,26 @@ class Plug(ZigbeeDevice, OnOff, Toggle):
 class SensorSwitchAq2(ZigbeeDevice):
     def __init__(self, sid:str, gateway: ZigbeeGateway):
         super().__init__(sid, gateway)
-        self._init_device()
 
 
 class Switch(ZigbeeDevice):
     def __init__(self, sid:str, gateway: ZigbeeGateway):
         super().__init__(sid, gateway)
-        self._init_device()
 
 
 class SensorHt(ZigbeeDevice, TemperatureStatus, HumidityStatus):
     def __init__(self, sid:str, gateway: ZigbeeGateway):
         super().__init__(sid, gateway)
-        self._init_device()
 
 
 class WeatherV1(ZigbeeDevice, TemperatureStatus, HumidityStatus, PressureStatus):
     def __init__(self, sid:str, gateway: ZigbeeGateway):
         super().__init__(sid, gateway)
-        self._init_device()
   
 
 class Magnet(ZigbeeDevice, OpenClose):
     def __init__(self, sid:str, gateway: ZigbeeGateway):
         super().__init__(sid, gateway)
-        self._init_device()
     
     def is_open(self) -> bool:
         return self.status.status == 'open'
@@ -185,4 +176,3 @@ class SensorMotionAq2(ZigbeeDevice, MotionStatus, IlluminanceStatus):
     def __init__(self, sid:str, gateway: ZigbeeGateway):
         super().__init__(sid, gateway)
         self.status.add_alias('lux', 'illuminance')
-        self._init_device()

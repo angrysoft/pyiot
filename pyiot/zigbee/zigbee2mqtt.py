@@ -32,7 +32,7 @@ class Zigbee2mqttGateway(ZigbeeGateway):
         self.set_device(device_id, payload.get_payload())
     
     def get_device(self, device_id: str) -> Dict[str, Any]:
-        pass
+        return {}
     
     def get_device_list(self) -> List[Dict[str, Any]]:
         self._client.publish("zigbee2mqtt/bridge/config/devices/get ", '')
