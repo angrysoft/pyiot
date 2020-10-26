@@ -27,9 +27,7 @@ import json
 from time import sleep
 from typing import Dict, List, Any
 
-
-     
-        
+    
 class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
     """ Class to controling yeelight devices color bulb BedSide lamp etc.
     
@@ -259,7 +257,7 @@ class YeelightDev(BaseDevice, OnOff, Toggle, Dimmer, ColorTemperature):
             
             *args (int): args depends of scene_class """
 
-        params = list()
+        params: List[Any] = list()
         params.append(scene_class)
         params.extend(args)
         self._send('set_scene', params)

@@ -74,7 +74,6 @@ class ZigbeeGateway(ABC):
         pass
     
     
-
 class ZigbeeDevice(BaseDevice):
     def __init__(self, sid:str, gateway:ZigbeeGateway):
         super().__init__(sid)
@@ -86,13 +85,3 @@ class ZigbeeDevice(BaseDevice):
         self.writable = False
         self.gateway.register_sub_device(self)
         self.watcher: Watcher = self.gateway.get_watcher()
-    
-    def _init_device(self):
-        data = self.gateway.get_device(self.status.sid)
-        if 'data' in data:
-            self.status.update(data.get('data', {}))
-       
-        self.status.update(data)
-        
-    
-    

@@ -5,7 +5,6 @@ class Attribute:
                  value:Optional[Any] = None, setter: Optional[Callable[[Any], None]] = None) -> None:
         self._name = name
         self._type = attr_type
-        # TODO : Raise error when readonly is true and value is not set
         self._readonly = readonly
         self._oneshot = oneshot
         if value is not None:
@@ -43,14 +42,19 @@ class DeviceStatus(object):
         self.__dict__['_attributes'] = {}
         self.__dict__['_empty'] = Attribute('_empty', str)
     
-    def register_attribute(self, attr: Attribute):
+    def register_attribute(self, attr: Attribute) -> None:
+        if attr.name in self._attributes:
+            raise AttributeError(f'Attrubute with name {attr.name} already registred')
         self._attributes[attr.name] = attr
     
-    def unregister_attribute(self, attr_name: str):
-        del self._attributes[attr_name]
-        # TODO: need to add remove aliases
+    def unregister_attribute(self, attr_name: str) -> None:
+        if attr_name in self._attributes:
+            attr: Attribute = self._attributes[attr_name]
+            for _attr in self._attributes:
+                if attr is self._attributes[_attr]:
+                    del self._attributes[_attr]
         
-    def add_alias(self, alias_name:str, attribute_name:str) ->None:
+    def add_alias(self, alias_name:str, attribute_name:str) -> None:
         if alias_name in self._attributes:
             raise ValueError('Alias or attribute allready exist')
         elif attribute_name in self._attributes:
@@ -68,7 +72,7 @@ class DeviceStatus(object):
     def get(self, name:str) -> Any:
         return self._attributes.get(name, self._empty).value
     
-    def set(self, name:str, value:Any):
+    def set(self, name:str, value:Any) -> None:
         if name in self._attributes:
             self._attributes[name].value = value
     

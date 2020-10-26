@@ -12,6 +12,12 @@ class Time:
         self._minute: int = minute
         self._seconds: int = seconds
     
+    def set_now(self):
+        _date = datetime.now()
+        self._hour = _date.hour
+        self._minute = _date.minute
+        self._seconds = _date.second
+    
     @property
     def hour(self) -> int:
         return self._hour
@@ -54,25 +60,9 @@ class Clock(BaseDevice):
         self.status.register_attribute(Attribute('sunset', Time))
         self.status.register_attribute(Attribute('time', Time))
         self.status.place = 'all'
-
-#     async def timer(self):
-#         self.sun_info()
-#         await self._to_change_min()
-#         while True:
-#             date = datetime.now()
-#             self._time.update({'hour': date.hour, 'minute': date.minute})
-#             # bus.emit(f'report.clock.time.{self.time}', {'time': self.time})
-#             if self.time == self.sunrise:
-#                 # bus.emit(f'report.clock.time.sunrise', {'time': self.time})
-#             elif self.time == self.sunset:
-#                 # bus.emit(f'report.clock.time.sunset', {'time': self.time})
-#             await asyncio.sleep(60)
-            
-#     async def _to_change_min(self):
-#         while datetime.now().second:
-#             await asyncio.sleep(1)
+        self.sun_info()
     
-    def sun_info(self, *args):
+    def sun_info(self):
         utcoffset = datetime.now() - datetime.utcnow()
         with request.urlopen('https://api.sunrise-sunset.org/json?lat=52.2319581&lng=21.0067249&formatted=0') as r:
             try:    
