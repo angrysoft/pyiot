@@ -1,7 +1,7 @@
 from . import ZigbeeGateway, ZigbeeDevice
 from pyiot.watchers import Watcher
 from pyiot.watchers.zigbee2mqtt import Zigbee2mqttWatcher
-
+import json
 import paho.mqtt.client as mqqt
 from typing import Any, Dict, List
 
@@ -25,7 +25,7 @@ class Zigbee2mqttGateway(ZigbeeGateway):
         #     dev.status.update(event.get('data', {}))
         
     def set_device(self, device_id: str, payload: Dict[str, Any]) -> None:
-        self._client.publish(f"zigbee2mqtt/{device_id}/set", payload)
+        self._client.publish(f"zigbee2mqtt/{device_id}/set", json.dumps(payload))
     
     def send_command(self,device_id: str, argument_name: str, value: str):
         payload = Zigbee2mqttPayload(argument_name, value)
@@ -45,9 +45,11 @@ class Zigbee2mqttGateway(ZigbeeGateway):
     def register_sub_device(self, device: ZigbeeDevice) -> None:
         # TODO : send get devicei attributes
         self._subdevices[device.status.sid] = device
+        print(device.status.get_attr_names())
+        self._client.publish(f"zigbee2mqtt/{device.status.sid}/get", '{"": ""}')
     
     def unregister_sub_device(self, device_id: str) -> None:
-        pass
+        del self._subdevices[device_id]
     
     def remove_device(self, device_id: str) -> None:
         self._client.publish("zigbee2mqtt/bridge/config/remove", device_id)
