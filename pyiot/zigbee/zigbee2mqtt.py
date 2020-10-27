@@ -105,3 +105,4 @@ class Zigbee2mqttPayload: #(ZigbeePayload):
         ret = {}
         ret[self._arguments.get(self._argument_name, self._argument_name)] = self._value.lower()
         return ret
+# TODO : biDict bidirectional dict
