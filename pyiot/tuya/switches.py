@@ -6,12 +6,13 @@ class SWTZ75(ZigbeeDevice, OnOff):
     
     def __init__(self, sid:str, gateway:ZigbeeGateway):
         super().__init__(sid, gateway)
+        self.status.add_alias('state', 'power')
     
     def on(self):
-        self.gateway.send_command(self.status.sid, 'power', 'on')
+        self.gateway.send_command(self.status.sid, 'state', 'on')
         
     def off(self):
-         self.gateway.send_command(self.status.sid, 'power', 'off')
+         self.gateway.send_command(self.status.sid, 'state', 'off')
     
     def is_on(self) -> bool:
         return self.status.get('power') == "on"
