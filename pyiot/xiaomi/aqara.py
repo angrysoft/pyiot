@@ -87,10 +87,10 @@ class CtrlNeutral(ZigbeeDevice, OnOff):
          self.gateway.send_command(self.status.sid, 'single', 'off')
     
     def is_on(self) -> bool:
-        return self.status.get('power') == "on"
+        return self.status.get('power').lower() == "on"
     
     def is_off(self) -> bool:
-        return self.status.get('power') == "off"
+        return self.status.get('power').lower() == "off"
         
 
 class CtrlNeutral2(ZigbeeDevice, MutliSwitch):
@@ -110,10 +110,10 @@ class CtrlNeutral2(ZigbeeDevice, MutliSwitch):
         self.gateway.send_command(self.status.sid, f'{switch_name}', 'off')
         
     def is_on(self,  switch_name:str) -> bool:
-        return self.status.get(switch_name) == "on"
+        return self.status.get(switch_name).lower() == "on"
     
     def is_off(self,  switch_name:str) -> bool:
-        return self.status.get(switch_name) == "off"
+        return self.status.get(switch_name).lower() == "off"
 
 
 class Plug(ZigbeeDevice, OnOff, Toggle):
@@ -126,19 +126,19 @@ class Plug(ZigbeeDevice, OnOff, Toggle):
         self.writable = True
     
     def on(self) -> None:
-        self.gateway.send_command(self.status.sid, 'status', 'on')
+        self.gateway.send_command(self.status.sid, 'power', 'on')
         
     def off(self) -> None:
-        self.gateway.send_command(self.status.sid, 'status', 'off')
+        self.gateway.send_command(self.status.sid, 'power', 'off')
         
     def is_on(self) -> bool:
-        return self.status.power == "on"
+        return self.status.power.lower() == "on"
     
     def is_off(self) -> bool:
-        return self.status.power == "off"
+        return self.status.power.lower() == "off"
     
     def toggle(self) -> None:
-        self.gateway.send_command(self.status.sid, 'status', 'toggle')
+        self.gateway.send_command(self.status.sid, 'power', 'toggle')
 
 
 class SensorSwitchAq2(ZigbeeDevice):

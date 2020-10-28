@@ -1,4 +1,6 @@
+from pyiot.zigbee.converter import Converter
 from . import ZigbeeGateway, ZigbeeDevice
+from pyiot.zigbee.converter import Converter
 from pyiot.watchers import Watcher
 from pyiot.watchers.zigbee2mqtt import Zigbee2mqttWatcher
 import json
@@ -14,6 +16,7 @@ class Zigbee2mqttGateway(ZigbeeGateway):
         self._client.on_disconnect = self._on_disconnet
         self._client.connect("localhost", 1883, 60)
         self._subdevices:Dict[str, ZigbeeDevice] = dict()
+        self._converter = Converter()
         self.watcher: Watcher = Watcher(Zigbee2mqttWatcher(self._client))
         self.watcher.add_report_handler(self._handle_events)
         
@@ -38,21 +41,18 @@ class Zigbee2mqttGateway(ZigbeeGateway):
     def _handle_events(self, event:Dict[str,Any]):
         dev = self._subdevices.get(event.get('sid',''))
         if dev:
-            # c = Converter(dev.status.model, event)
-            # dev.status.update(c.to_device())
-            dev.status.update(event)
+            print(self._converter.to_status(dev.status.model, event))
+            dev.status.update(self._converter.to_status(dev.status.model, event))
         
     def set_device(self, device_id: str, payload: Dict[str, Any]) -> None:
         self._client.publish(f"zigbee2mqtt/{device_id}/set", json.dumps(payload))
     
     def send_command(self,device_id: str, argument_name: str, value: str):
-        # dev = self._subdevices.get(device_id)
-        # if dev:
-            # c = Converter(dev.status.model, dict(argument_name=value)
-            # dev.status.update(c.to_device())
-            # self.set_device(device_id, c.to_gateway('zigbee2mqtt')
-        payload = Zigbee2mqttPayload(argument_name, value)
-        self.set_device(device_id, payload.get_payload())
+        dev = self._subdevices.get(device_id)
+        if dev:
+            self.set_device(device_id, self._converter.to_gateway(dev.status.model, {argument_name: value}))
+        # payload = Zigbee2mqttPayload(argument_name, value)
+        # self.set_device(device_id, payload.get_payload())
     
     def get_device(self, device_id: str) -> Dict[str, Any]:
         return {}
@@ -66,14 +66,14 @@ class Zigbee2mqttGateway(ZigbeeGateway):
         self._client.publish("zigbee2mqtt/bridge/config/permit_join", string_status.get(status))
     
     def register_sub_device(self, device: ZigbeeDevice) -> None:
-        # TODO : send get devicei attributes
         self._subdevices[device.status.sid] = device
         self.add_topic(f"zigbee2mqtt/{device.status.sid}")
-        print(device.status.get_attr_names())
-        for x in device.status.get_attr_names():
-            if not x in ['sid', 'name', 'place', 'short_id']:
-                payload = Zigbee2mqttPayload(x, "")
-                self._client.publish(f"zigbee2mqtt/{device.status.sid}/get", json.dumps(payload.get_payload()))
+        self._converter.add_device(device.status.model, payloads.get(device.status.model, {}))
+        # print(device.status.get_attr_names())
+        # for x in device.status.get_attr_names():
+        #     if not x in ['sid', 'name', 'place', 'short_id']:
+        #         payload = Zigbee2mqttPayload(x, "")
+        #         self._client.publish(f"zigbee2mqtt/{device.status.sid}/get", json.dumps(payload.get_payload()))
     
     def unregister_sub_device(self, device_id: str) -> None:
         self.del_topic(f"zigbee2mqtt/{device_id}")
@@ -106,3 +106,16 @@ class Zigbee2mqttPayload: #(ZigbeePayload):
         ret[self._arguments.get(self._argument_name, self._argument_name)] = self._value.lower()
         return ret
 # TODO : biDict bidirectional dict
+
+# device model : device : gateway
+payloads = {
+    'ctrl_neutral1': {'single': 'single', 'linkquality': 'linkquality'},
+    'ctrl_neutral2': {'left': 'left', 'right': 'right', 'linkquality': 'linkquality'},
+    'plug': {'power': 'state', 'power_consumed': 'consumption', 'linkquality': 'linkquality', 'load_power': 'power', 'toggle': 'toggle'},
+    'magnet': {'status': 'contact'},
+    'weather.v1': {'temperature': 'temperature', 'humidity': 'humidity'},
+    'sensor_ht': {'temperature': 'temperature', 'humidity': 'humidity', 'pressure': 'pressure'},
+    'sensor_motion.aq2': {'occupancy': 'occupancy', 'illuminance': 'illuminance'},
+    'switch': {'click': 'single', 'doubleclick': 'double', 'tripleclick': 'triple'},
+    'sensor_switch.aq2': {'click': 'single', 'doubleclick': 'double', 'long_press': 'long', 'long_press_release': 'long_release click'},
+}
