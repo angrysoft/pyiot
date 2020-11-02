@@ -22,7 +22,7 @@ class BaseDevice:
         self.status.register_attribute(Attribute('sid', str, value=sid, readonly=True))
         self.status.register_attribute(Attribute('name', str))
         self.status.register_attribute(Attribute('place', str))
-        self.status.register_attribute(Attribute('model', str, readonly=True, oneshot=True))
+        self.status.register_attribute(Attribute('model', str)) #, readonly=True, oneshot=True))
     
     @classmethod
     def _get_trait_list(cls, classes:Tuple[type, ...]) -> None:

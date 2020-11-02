@@ -51,8 +51,6 @@ class Zigbee2mqttGateway(ZigbeeGateway):
         dev = self._subdevices.get(device_id)
         if dev:
             self.set_device(device_id, self._converter.to_gateway(dev.status.model, {argument_name: value}))
-        # payload = Zigbee2mqttPayload(argument_name, value)
-        # self.set_device(device_id, payload.get_payload())
     
     def get_device(self, device_id: str) -> Dict[str, Any]:
         return {}
@@ -84,28 +82,6 @@ class Zigbee2mqttGateway(ZigbeeGateway):
     
     def get_watcher(self) -> Watcher:
         return self.watcher
-    
-    
-class Zigbee2mqttPayload: #(ZigbeePayload):
-    def __init__(self, argument_name:str, value:str) -> None:
-        # if value in ['on', 'off', 'toggle']:
-        #     self._value = value.upper()
-        # else:
-        self._value = value
-            
-        self._argument_name = argument_name
-        self._arguments = {'status': 'state', 'power': 'state'}
-        
-    def get_payload(self) -> Dict[str, Any]:
-        ret = {}
-        ret[self._arguments.get(self._argument_name, self._argument_name)] = self._value.upper()
-        return ret
-    
-    def ret_payload(self):
-        ret = {}
-        ret[self._arguments.get(self._argument_name, self._argument_name)] = self._value.lower()
-        return ret
-# TODO : biDict bidirectional dict
 
 # device model : device : gateway
 payloads = {
