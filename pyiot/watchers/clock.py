@@ -1,11 +1,12 @@
 from time import sleep
+from datetime import datetime
 from . import WatcherBaseDriver
 from pyiot import BaseDevice
-from pyiot.virtual.clock import Time
+from pyiot.software import Time
 from typing import Callable, Optional, Dict, Any
 
-class BraviaWatcher(WatcherBaseDriver):
-    def __init__(self, sleep_time: int, device: Optional[BaseDevice] = None) -> None:
+class ClockWatcher(WatcherBaseDriver):
+    def __init__(self, device: Optional[BaseDevice] = None) -> None:
         self.sleep_time = 60
         self._loop = True
         self.device = device
@@ -27,7 +28,7 @@ class BraviaWatcher(WatcherBaseDriver):
             elif _time == self.device.status.sunset:
                 _sunset = True
             elif _time  == Time(1):
-                self.device.sun_info()
+                self.device.get_sun_info()
             
             handler({'cmd': 'report', 'sid': self.device.status.sid, 'data': {'time': _time, 'sunrise': _sunrise, 'sunset': _sunset}})
             sleep(60)

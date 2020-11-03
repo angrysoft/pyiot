@@ -1,5 +1,5 @@
 import unittest
-from pyiot.virtual.clock import Time
+from pyiot.software import Time
 
 
 class TestTime(unittest.TestCase):

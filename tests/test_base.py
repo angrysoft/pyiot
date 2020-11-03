@@ -9,7 +9,6 @@ class TestBase(unittest.TestCase):
     def test_a_sid(self):
         sid_attr = Attribute('sid', str, value="123345678900")
         self.status.register_attribute(sid_attr)
-        print(self.status.sid)
         self.assertEqual(self.status.sid, "123345678900")
     
     def test_a_readonly(self):
@@ -23,12 +22,10 @@ class TestBase(unittest.TestCase):
         self.status.register_attribute(ro_attr)
         
         self.status.test_oneshot = 'foo'
-        print(self.status.test_oneshot)
         self.assertEqual(self.status.test_oneshot , 'foo')
            
         with self.assertRaises(AttributeError):
             self.status.test_oneshot = 'bar'
-            print(self.status.test_oneshot)
             
             
         
