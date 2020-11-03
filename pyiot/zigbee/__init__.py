@@ -82,6 +82,4 @@ class ZigbeeDevice(BaseDevice):
         self.status.register_attribute(Attribute('linkquality', int))
         self.status.register_attribute(Attribute('short_id', int, readonly=True, oneshot=True))
         self.status.register_attribute(Attribute("low_voltage", int, readonly=True, value=2800))
-        self.writable = False
-        self.gateway.register_sub_device(self)
         self.watcher: Watcher = self.gateway.get_watcher()

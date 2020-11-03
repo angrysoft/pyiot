@@ -1,5 +1,6 @@
 from __future__ import annotations
 import binascii
+from pyiot.zigbee.converter import Converter
 from Cryptodome.Cipher import AES
 from pyiot.zigbee import ZigbeeGateway, ZigbeeDevice
 from pyiot.connections.udp import UdpConnection
@@ -9,6 +10,7 @@ from typing import Any, Dict, List
 
 class AqaraGateway(ZigbeeGateway):
     def __init__(self, ip:str = 'auto', port:int = 9898, sid:str = '', gwpasswd:str = ''):
+        self._converter = Converter()
         self.conn = UdpConnection()
         self.aes_key_iv = bytes([0x17, 0x99, 0x6d, 0x09, 0x3d, 0x28, 0xdd, 0xb3, 0xba, 0x69, 0x5a, 0x2e, 0x6f, 0x58, 0x56, 0x2e])
         self.multicast_addr = ('224.0.0.50', 4321)
@@ -56,9 +58,9 @@ class AqaraGateway(ZigbeeGateway):
         if _sid == self.sid and 'token' in event:
             self.token = event['token']
             
-        dev = self._subdevices.get(_sid)
+        dev = self._subdevices.get(event.get('sid',''))
         if dev:
-            dev.status.update(event.get('data', {}))
+            dev.status.update(self._converter.to_status(dev.status.model, event.get('data', {})))
     
     def set_device(self, device_id: str, payload: Dict[str, Any]) -> None:
         _payload = payload.copy()
@@ -69,9 +71,9 @@ class AqaraGateway(ZigbeeGateway):
         self.conn.recv_json()
             
     def send_command(self,device_id: str, argument_name: str, value: str):
-        payload = AqaraPayload(argument_name, value)
-        self.set_device(device_id, payload.get_payload())
-        
+        dev = self._subdevices.get(device_id)
+        if dev:
+            self.set_device(device_id, self._converter.to_gateway(dev.status.model, {argument_name: value}))
     
     def get_device(self, device_id: str) -> Dict[str, Any]:
         self.conn.send_json({'cmd': 'read', 'sid': device_id}, self.unicast_addr)
@@ -98,10 +100,11 @@ class AqaraGateway(ZigbeeGateway):
     
     def register_sub_device(self, device: ZigbeeDevice):
         self._subdevices[device.status.sid] = device
+        self._converter.add_device(device.status.model, payloads.get(device.status.model, {}))
         self.conn.send_json({'cmd': 'read', 'sid': device.status.sid}, self.unicast_addr)
         ret =  self.conn.recv_json()
         if ret.get('sid', '') == device.status.sid:
-            device.status.update(ret)
+            device.status.update(self._converter.to_status(ret.get('model', ''), ret.get('data', {})))
     
     def unregister_sub_device(self, device_id:str):
         del self._subdevices[device_id]
@@ -109,17 +112,16 @@ class AqaraGateway(ZigbeeGateway):
     def get_watcher(self) -> Watcher:
         return self.watcher
     
-class AqaraPayload: #(ZigbeePayload):
-    def __init__(self, argument_name:str, value:str) -> None:
-        self._value = value
-        self._argument_name = argument_name
-        self._arguments = {'left': 'channel_0', 'single': 'channel_0',
-                           'right': 'channel_1',
-                           'motion': 'occupancy'
-                           }
-        
-    def get_payload(self) -> Dict[str, Any]:
-        ret = {}
-        ret[self._arguments.get(self._argument_name, self._argument_name)] = self._value
-        return ret
-        
+
+# device model : device : gateway
+payloads = {
+    'ctrl_neutral1': {'single': 'channel_0', 'linkquality': 'linkquality'},
+    'ctrl_neutral2': {'left': 'channel_0', 'right': 'channel_1', 'linkquality': 'linkquality'},
+    'plug': {'power': 'status', 'power_consumed': 'power_consumed', 'linkquality': 'linkquality', 'load_power': 'load_power', 'toggle': 'toggle'},
+    'magnet': {'status': 'status'},
+    'weather.v1': {'temperature': 'temperature', 'humidity': 'humidity'},
+    'sensor_ht': {'temperature': 'temperature', 'humidity': 'humidity', 'pressure': 'pressure'},
+    'sensor_motion.aq2': {'occupancy': 'occupancy', 'illuminance': 'illuminance'},
+    'switch': {'state': 'status', 'doubleclick': 'doubleclick', 'tripleclick': 'tripleclick'},
+    'sensor_switch.aq2': {'click': 'single', 'doubleclick': 'double', 'long_press': 'long', 'long_press_release': 'long_release click'},
+}

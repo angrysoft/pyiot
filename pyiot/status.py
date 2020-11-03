@@ -76,7 +76,7 @@ class DeviceStatus(object):
         if name in self._attributes:
             self._attributes[name].value = value
     
-    def get_names(self) -> List[str]:
+    def get_attr_names(self) -> List[str]:
         return list(self._attributes.keys())
     
     def __getattr__(self, name: str) -> Any:

@@ -15,6 +15,11 @@ aqara_test() {
     python -m unittest -v tests/test_aqara.py
 }
 
+z2m_test() {
+    echo ">>> Run Zigbee2mqtt Test"
+    python -m unittest -v tests/test_z2m.py
+}
+
 bravia_test() {
     echo ">>> Run Sony Bravia Test"
     python -m unittest -v tests/test_sony_bravia.py
@@ -41,7 +46,7 @@ clock_test() {
 }
 
 print_tests() {
-    tests=("sonoff" "yeelight" "aqara" "aqara_gateway" "bravia" "base" "philips" "all")
+    tests=("sonoff" "yeelight" "aqara" "z2m" "aqara_gateway" "bravia" "base" "philips" "all")
     for test in ${tests[@]}
     do
         echo ">>> $test"
@@ -56,6 +61,7 @@ while [ "$1" != "" ]; do
         "sonoff") sonoff_test;;
         "yeelight") yeelight_test;;
         "aqara")aqara_test;;
+        "z2m")z2m_test;;
         "aqara_gateway")gateway_test;;
         "bravia")bravia_test;;
         "base")base_test;;

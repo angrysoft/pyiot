@@ -4,6 +4,7 @@ import unittest
 import os
 from pyiot.zigbee.aqaragateway import AqaraGateway
 
+
 # sid = '0x000000000545b741'
 ctrlNeural1 = '158d00024e2e5b'
 ctrlNeural2 = '158d00029b1929'
