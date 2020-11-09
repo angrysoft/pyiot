@@ -42,7 +42,6 @@ class BaseSONOFFDIYDevice(BaseDevice, OnOff):
         self.status.register_attribute(Attribute('rrsi', int))
         self.status.register_attribute(Attribute('ssid', str))
         self.status.register_attribute(Attribute('sledOnline', str))
-        self.status.register_attribute(Attribute('port', int))
         self.status.add_alias('switch', 'power')
         
         if ip:

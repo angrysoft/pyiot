@@ -44,7 +44,7 @@ class DeviceStatus(object):
     
     def register_attribute(self, attr: Attribute) -> None:
         if attr.name in self._attributes:
-            raise AttributeError(f'Attrubute with name {attr.name} already registred')
+            raise AttributeError(f'Attribute with name {attr.name} already registred')
         self._attributes[attr.name] = attr
     
     def unregister_attribute(self, attr_name: str) -> None:

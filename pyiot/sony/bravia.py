@@ -236,7 +236,6 @@ class KDL48W585B(BaseDevice, OnOff, Volume, Channels, Arrows, MediaButtons, Butt
         super().__init__(sid)
         self.status.register_attribute(Attribute('ip', str, value=ip))
         self.status.register_attribute(Attribute('psk', str, value=psk))
-        self.status.register_attribute(Attribute('power', str))
         self.status.register_attribute(Attribute('mac', str, value=mac))
         self.status.add_alias('dispNum', 'channel')
         self._event: Event = None
