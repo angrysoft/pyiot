@@ -1,5 +1,5 @@
 from . import BaseDiscovery
-from zeroconf import ServiceInfo, Zeroconf, ServiceStateChange, ServiceBrowser
+from zeroconf import ServiceInfo, Zeroconf, ServiceBrowser
 from threading import Event
 import socket
 import json
@@ -16,7 +16,7 @@ class DiscoverSonoff(BaseDiscovery):
     def _find(self):
         zeroconf = Zeroconf()
         self.searching.clear()
-        ServiceBrowser(zeroconf, "_ewelink._tcp.local.", handlers=[self._add_service])
+        ServiceBrowser(zeroconf, "_ewelink._tcp.local.", self)
         self.searching.wait(self.timeout)
         zeroconf.close()
             
@@ -32,15 +32,17 @@ class DiscoverSonoff(BaseDiscovery):
         self._find()
         return self._device
     
-    def _add_service(self, zeroconf: Zeroconf, service_type: str, name: str, state_change: ServiceStateChange) -> None:
-         if state_change is ServiceStateChange.Added:
-            info:Dict[str,Any] = self._parse(zeroconf.get_service_info(service_type, name))
-            if info:
-                if self._sid == info['id']: 
-                    self._device = info
-                    self.searching.set()
-                else:
-                    self._devices_list.append(info)
+    def remove_service(self, zeroconf: Zeroconf, service_type: str, name: str):
+        print(f"Service {name} removed")
+    
+    def add_service(self, zeroconf: Zeroconf, service_type: str, name: str) -> None:
+        info:Dict[str,Any] = self._parse(zeroconf.get_service_info(service_type, name))
+        if info:
+            if self._sid == info['id']: 
+                self._device = info
+                self.searching.set()
+            else:
+                self._devices_list.append(info)
 
     def _parse(self, info: ServiceInfo) -> Dict[str, Any]:
         ret:Dict[str,Any] = {}

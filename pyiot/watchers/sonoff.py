@@ -17,14 +17,14 @@ class EwelinkWatcher(WatcherBaseDriver):
         self.ev.wait()
         self.zeroconf.close()
             
-    def remove_service(self, zeroconf: Zeroconf, service_type: str, name: str, state_change: ServiceStateChange) -> None:
+    def remove_service(self, zeroconf: Zeroconf, service_type: str, name: str) -> None:
         pass
 
-    def add_service(self, zeroconf: Zeroconf, service_type: str, name: str, state_change: ServiceStateChange) -> None:
+    def add_service(self, zeroconf: Zeroconf, service_type: str, name: str) -> None:
         # info = zeroconf.get_service_info(type, name)
         pass
     
-    def update_service(self, zeroconf: Zeroconf, service_type: str, name: str, state_change: ServiceStateChange) -> None:
+    def update_service(self, zeroconf: Zeroconf, service_type: str, name: str) -> None:
         info = zeroconf.get_service_info(service_type, name)
         if self._handler is not None:
             self._handler(self._parse(info.properties))
