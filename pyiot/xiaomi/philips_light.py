@@ -17,12 +17,14 @@ __all__ = ['PhilipsBulb']
 from typing import List, Dict, Any
 from pyiot.traits import Dimmer, OnOff, ColorTemperature, Scene
 from pyiot import BaseDevice
+from pyiot.watchers.philips_bulb import PhilipsBulbWatcher
+from pyiot.watchers import Watcher
 from pyiot.discover.miio import DiscoverMiio
 from pyiot.connections.miio import MiioConnection
 from threading import Thread, Event
 
 
-class PhilipsBulb(BaseDevice, OnOff, Dimmer, ColorTemperature, Scene):
+class Candle(BaseDevice, OnOff, Dimmer, ColorTemperature, Scene):
     """ Class to controling philips bulb.
     
     Args:
@@ -46,7 +48,7 @@ class PhilipsBulb(BaseDevice, OnOff, Dimmer, ColorTemperature, Scene):
         self.status.add_alias('snm', 'scene')
         self._init_device()
         self._event: Event = None
-        self.watcher = Watcher(BraviaWatcher(30, self))
+        self.watcher = Watcher(PhilipsBulbWatcher(30, self))
     
     def _init_device(self):
         self.status.update(self.get_prop(['power', 'bright', 'cct', 'snm', 'dv']))
@@ -79,12 +81,6 @@ class PhilipsBulb(BaseDevice, OnOff, Dimmer, ColorTemperature, Scene):
         if 'result' in ret:
             return ret['result']
     
-    def refresh(self, attrs: List[str]):
-        data = self.get_prop(attrs)
-        self.status.update(data)
-        Thread(target=self._handle_events,
-               args=({'cmd': 'report', 'sid': self.status.sid, 'model': self.status.model, 'data': data},)).start()
-    
     def refresh_status(self, attrs: List[str]) -> None:
         data = self.get_prop(attrs)
         if data:
@@ -95,12 +91,12 @@ class PhilipsBulb(BaseDevice, OnOff, Dimmer, ColorTemperature, Scene):
     def on(self):
         """This method is used to switch on the smart LED"""
         self.conn.send('set_power', ['on'])
-        self.refresh(['power'])
+        self.refresh_status(['power'])
     
     def off(self):
         """This method is used to switch off the smart LED"""
         self.conn.send('set_power', ['off'])
-        self.refresh(['power'])
+        self.refresh_status(['power'])
     
     def is_on(self):
         return self.status.power == 'on'
@@ -117,7 +113,7 @@ class PhilipsBulb(BaseDevice, OnOff, Dimmer, ColorTemperature, Scene):
                 100 means maximum brightness while 1 means the minimum brightness. 
         """
         self.conn.send('set_bright', [value])
-        self.refresh(['bright', 'power'])
+        self.refresh_status(['bright', 'power'])
     
     def set_ct_pc(self, pc:int) -> None:
         f"""This method is used to change the color temperature of a smart LED.
@@ -130,14 +126,14 @@ class PhilipsBulb(BaseDevice, OnOff, Dimmer, ColorTemperature, Scene):
             pc = 1
 
         self.conn.send('set_cct', [int(pc)])
-        self.refresh(['cct'])
+        self.refresh_status(['cct'])
         
     def set_bricct(self, brightness:int , cct :int):
         self.conn.send("set_bricct", [brightness, cct])
-        self.refresh(['cct', 'bright', 'power']) 
+        self.refresh_status(['cct', 'bright', 'power']) 
     
     def set_scene(self, scene: Any, args:List[Any] = []) -> None:
         """Set scene number."""
         self.conn.send("apply_fixed_scene", [scene.value])
-        self.refresh(['snm', 'power'])
+        self.refresh_status(['snm', 'power'])
 

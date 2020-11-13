@@ -1,8 +1,7 @@
 from time import sleep
 import unittest
 import os
-from pyiot.xiaomi.philips_bulb import PhilipsBulb, PhilipsBulb_old
-
+from pyiot.xiaomi.philips_light import Candle
 
 sid = '235444403'
 
@@ -10,8 +9,8 @@ class TestPhilipsBulb(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         token = os.environ.get('PHTOKEN')
-        cls.dev = PhilipsBulb(token=token, sid=sid)
-        # cls.dev.watcher.add_report_handler(print)
+        cls.dev = Candle(token=token, sid=sid)
+        cls.dev.watcher.add_report_handler(print)
     
     def test_info(self):
         print(self.dev.status.power)
