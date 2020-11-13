@@ -4,8 +4,8 @@ from pyiot.sonoff import Mini, PowerState
 from time import sleep
 import unittest
 
-sid = '1000b6063e'
-# sid = "1000b6e1c8"
+# sid = '1000b6063e'
+sid = "1000b6e1c8"
 
 class TestSonoff(unittest.TestCase):
       @classmethod

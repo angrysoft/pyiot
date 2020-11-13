@@ -19,7 +19,7 @@ from pyiot.traits import Dimmer, OnOff, ColorTemperature, Scene
 from pyiot import BaseDevice
 from pyiot.discover.miio import DiscoverMiio
 from pyiot.connections.miio import MiioConnection
-from threading import Thread
+from threading import Thread, Event
 
 
 class PhilipsBulb(BaseDevice, OnOff, Dimmer, ColorTemperature, Scene):
@@ -41,18 +41,12 @@ class PhilipsBulb(BaseDevice, OnOff, Dimmer, ColorTemperature, Scene):
             self.ip = dev.get('ip','')
             self.port = dev.get('port', 0)
         self.conn = MiioConnection(token=token, ip=self.ip, port=self.port)
-        self._report_handelers = set()
         
         self.status.add_alias('cct', 'ct_pc')
         self.status.add_alias('snm', 'scene')
         self._init_device()
-        
-    def add_report_handler(self, handler):
-        self._report_handelers.add(handler)
-        
-    def _handle_events(self, event):
-        for handler in self._report_handelers:
-            handler(event)
+        self._event: Event = None
+        self.watcher = Watcher(BraviaWatcher(30, self))
     
     def _init_device(self):
         self.status.update(self.get_prop(['power', 'bright', 'cct', 'snm', 'dv']))
@@ -90,6 +84,13 @@ class PhilipsBulb(BaseDevice, OnOff, Dimmer, ColorTemperature, Scene):
         self.status.update(data)
         Thread(target=self._handle_events,
                args=({'cmd': 'report', 'sid': self.status.sid, 'model': self.status.model, 'data': data},)).start()
+    
+    def refresh_status(self, attrs: List[str]) -> None:
+        data = self.get_prop(attrs)
+        if data:
+            self.status.update(data)
+        if isinstance(self._event, Event) and not self._event.is_set():
+            self._event.set()
     
     def on(self):
         """This method is used to switch on the smart LED"""
