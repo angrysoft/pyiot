@@ -92,7 +92,6 @@ class MiioPacket():
             self.token  # overwritten by the MD5 checksum later
         )
 
-        
         packet = bytearray(head + encrypted)
         checksum = self.md5sum(bytes(packet))
         for i in range(0, 16):
