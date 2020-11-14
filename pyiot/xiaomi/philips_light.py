@@ -12,16 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__all__ = ['PhilipsBulb']
+__all__ = ['Candle']
 
 from typing import List, Dict, Any
 from pyiot.traits import Dimmer, OnOff, ColorTemperature, Scene
 from pyiot import BaseDevice
-from pyiot.watchers.philips_bulb import PhilipsBulbWatcher
+from pyiot.watchers.philips_light import PhilipsLightWatcher
 from pyiot.watchers import Watcher
 from pyiot.discover.miio import DiscoverMiio
 from pyiot.connections.miio import MiioConnection
-from threading import Thread, Event
+from threading import Event
 
 
 class Candle(BaseDevice, OnOff, Dimmer, ColorTemperature, Scene):
@@ -48,7 +48,7 @@ class Candle(BaseDevice, OnOff, Dimmer, ColorTemperature, Scene):
         self.status.add_alias('snm', 'scene')
         self._init_device()
         self._event: Event = None
-        self.watcher = Watcher(PhilipsBulbWatcher(30, self))
+        self.watcher = Watcher(PhilipsLightWatcher(30, self))
     
     def _init_device(self):
         self.status.update(self.get_prop(['power', 'bright', 'cct', 'snm', 'dv']))

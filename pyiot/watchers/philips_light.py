@@ -3,7 +3,7 @@ from . import WatcherBaseDriver
 from pyiot import BaseDevice
 from typing import Callable, Optional, Dict, Any
 
-class PhilipsBulbWatcher(WatcherBaseDriver):
+class PhilipsLightWatcher(WatcherBaseDriver):
     def __init__(self, sleep_time: int, device: Optional[BaseDevice] = None) -> None:
         self.sleep_time = sleep_time
         self._loop = True
