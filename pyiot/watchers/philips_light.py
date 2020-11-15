@@ -26,6 +26,5 @@ class PhilipsLightWatcher(WatcherBaseDriver):
                          'data': new_status})
             self.event.clear()
                 
-    
     def stop(self) -> None:
         self._loop = False
