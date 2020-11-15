@@ -20,6 +20,10 @@ class MutliSwitch(Trait):
         pass
     
     @abstractmethod
+    def toogle(self, switch_name:str):
+        pass
+    
+    @abstractmethod
     def is_on(self, switch_name:str) -> bool:
         pass
     
