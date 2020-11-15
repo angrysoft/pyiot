@@ -22,6 +22,7 @@ from pyiot.watchers import Watcher
 from pyiot.discover.miio import DiscoverMiio
 from pyiot.connections.miio import MiioConnection
 from threading import Event
+from time import sleep
 
 
 class Candle(BaseDevice, OnOff, Dimmer, ColorTemperature, Scene):
@@ -40,15 +41,18 @@ class Candle(BaseDevice, OnOff, Dimmer, ColorTemperature, Scene):
         if not self.ip:
             discover = DiscoverMiio()
             dev = discover.find_by_sid(sid)
+            print(dev)
             self.ip = dev.get('ip','')
             self.port = dev.get('port', 0)
         self.conn = MiioConnection(token=token, ip=self.ip, port=self.port)
-        
+        print( 'conn')
         self.status.add_alias('cct', 'ct_pc')
         self.status.add_alias('snm', 'scene')
         self._init_device()
+        
         self._event: Event = None
         self.watcher = Watcher(PhilipsLightWatcher(30, self))
+        print('here')
     
     def _init_device(self):
         self.status.update(self.get_prop(['power', 'bright', 'cct', 'snm', 'dv']))
@@ -60,14 +64,17 @@ class Candle(BaseDevice, OnOff, Dimmer, ColorTemperature, Scene):
         Args:
             *props (str): Variable length argument name of property to retrive
             
-                * `power on` - smart LED is turned on / off: smart LED is turned off
+                * `power` - smart LED is turned on / off: smart LED is turned off
                 * `bright` - Brightness percentage. Range 1 ~ 100
                 * `cct` - Color temperature. Range 1 ~ 100
-                * `snm`
+                * `snm` -
+                * `dv` -
         """
         ret: Dict[str, Any] = {}
-        for prop in set(props):
+        for prop in props:
             ret_props = self.conn.send('get_prop', [prop])
+            print(prop, ret_props)
+            sleep(0.5)
             try:
                 ret[prop] = ret_props['result'][0]
             except KeyError:
@@ -75,6 +82,17 @@ class Candle(BaseDevice, OnOff, Dimmer, ColorTemperature, Scene):
             except IndexError:
                 pass
         return ret
+        # ret: Dict[str, Any] = {}
+        # max_props:int = 2
+        
+        # while props:
+        #     _props_set = props[:max_props]
+        #     del props[:max_props]
+        #     ret = self.conn.send('get_prop', _props_set)
+        #     ret_props:List[Any] = ret.get('result', [])
+        #     print(_props_set, ret)
+        #     ret.update(dict(zip(_props_set, ret_props)))
+        # return ret
     
     def info(self):
         ret = self.conn.send("miIO.info")
