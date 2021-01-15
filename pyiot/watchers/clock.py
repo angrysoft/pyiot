@@ -15,22 +15,16 @@ class ClockWatcher(WatcherBaseDriver):
         while datetime.now().second:
             sleep(1)
                           
-        
         while self._loop:
-            _sunset :bool = False
-            _sunrise: bool = False
             _time: Time = Time()
             _time.set_now()
             
-            self.device.status.time = _time
-            if _time == self.device.status.sunrise:
-                _sunrise = True
-            elif _time == self.device.status.sunset:
-                _sunset = True
-            elif _time  == Time(1):
+            self.device.status.time = str(_time)
+            if _time  == Time(1):
                 self.device.get_sun_info()
             
-            handler({'cmd': 'report', 'sid': self.device.status.sid, 'data': {'time': _time, 'sunrise': _sunrise, 'sunset': _sunset}})
+            handler({'cmd': 'report', 'sid': self.device.status.sid,
+                     'data': {'time': self.device.status.time, 'sunrise': _time == self.device.status.sunrise, 'sunset': _time == self.device.status.sunset}})
             sleep(60)
     
     def stop(self) -> None:
