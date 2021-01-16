@@ -83,7 +83,6 @@ class DeviceStatus(object):
         if name in self._attributes:
             return self._attributes.get(name, self._empty).value
         else:
-            # raise AttributeError(f'object has no attribute {name}')
             return super().__getattribute__(name)
         
     def __setattr__(self, name: str, value: Any) -> None:

@@ -12,7 +12,6 @@ class BaseDevice:
         cls._attr_list:List[Attribute] = []
         cls._trait_sublases = Trait.__subclasses__()
         cls._get_trait_list(cls.__bases__)
-        # return super(BaseDevice, cls).__new__(cls)
         return object.__new__(cls)
     
     def __init__(self, sid:str) -> None:
@@ -22,7 +21,7 @@ class BaseDevice:
         self.status.register_attribute(Attribute('sid', str, value=sid, readonly=True))
         self.status.register_attribute(Attribute('name', str))
         self.status.register_attribute(Attribute('place', str))
-        self.status.register_attribute(Attribute('model', str)) #, readonly=True, oneshot=True))
+        self.status.register_attribute(Attribute('model', str))
     
     @classmethod
     def _get_trait_list(cls, classes:Tuple[type, ...]) -> None:
@@ -64,4 +63,11 @@ class BaseDevice:
     def device_status(self) -> Dict[str, Any]:
         ret = {'traits': self.traits, 'commands': self.commands}
         ret.update(self.status())
+        return ret
+    
+    def get_device_status(self) -> Dict[str, Any]:
+        ret:Dict[str, Any] = {'traits': self.traits, 'commands': self.commands}
+        status = self.status()
+        for item in status:
+            ret[item] = str(status[item])
         return ret

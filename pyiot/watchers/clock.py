@@ -13,7 +13,7 @@ class ClockWatcher(WatcherBaseDriver):
 
     def watch(self, handler: Callable[[Optional[Dict[str, Any]]], None]) -> None:
         while datetime.now().second:
-            sleep(1)
+            sleep(0.5)
                           
         while self._loop:
             _time: Time = Time()

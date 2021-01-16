@@ -1,7 +1,7 @@
 from __future__ import annotations
 from pyiot.status import Attribute
 from pyiot import BaseDevice
-from pyiot.watchers import Watcher, WatcherBaseDriver
+from pyiot.watchers import Watcher
 from pyiot.watchers.clock import ClockWatcher
 from pyiot.software import Time
 from datetime import datetime
