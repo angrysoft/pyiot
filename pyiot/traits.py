@@ -123,7 +123,7 @@ class IlluminanceStatus(Trait):
 
 class ColorTemperature(Trait):
     _commands:Tuple[str, ...] = ('set_ct_pc',)
-    _attributes: Tuple[Attribute] = (Attribute('ct_pc', str),)
+    _attributes: Tuple[Attribute] = (Attribute('ct_pc', int),)
     
     @abstractmethod
     def set_ct_pc(self, pc:int):
@@ -131,7 +131,7 @@ class ColorTemperature(Trait):
     
 class Rgb(Trait):
     _commands:Tuple[str, ...] = ('set_rgb', 'set_color')
-    _attributes: Tuple[Attribute] = (Attribute('rgb', str),)
+    _attributes: Tuple[Attribute] = (Attribute('rgb', int),)
     
     @abstractmethod
     def set_rgb(self, red:int, green:int, blue:int):

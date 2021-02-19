@@ -28,7 +28,7 @@ class YeelightWatcher(WatcherBaseDriver):
                 #          'data': jdata['params'].copy()})
                 handler(jdata['params'].copy())
     
-    def _ct2pc(self, value:int ):
+    def _ct2pc(self, value:int ) -> int :
         return int(100 - (self.dev.max_ct - value) / (self.dev.max_ct-self.dev.min_ct) * 100)
         
                 

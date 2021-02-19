@@ -1,17 +1,17 @@
 from time import sleep
 import unittest
-from pyiot.xiaomi.yeelight import Color, YeelightDev
+from pyiot.xiaomi.yeelight import Color, DeskLamp
 
 
-sid = '0x0000000007e7bae0'
+color_sid = '0x0000000007e7bae0'
 # sid = '0x000000000545b741'
-# sid = '0x0000000007200259'
+desk_sid = '0x0000000007200259'
 
 class TestColor(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.dev = Color(sid)
-        # cls.dev.watcher.add_report_handler(print)
+        cls.dev = Color(color_sid)
+        cls.dev.watcher.add_report_handler(print)
     
     def test_a_power(self):
         # sleep(1)
@@ -28,29 +28,29 @@ class TestColor(unittest.TestCase):
         self.assertTrue(self.dev.is_on())
         
     def test_a_get_props(self):
-        ret = self.dev.get_prop(['power',
-                                 'bright',
-                                 'ct',
-                                 'rgb',
-                                 'hue',
-                                 'sat',
-                                 'color_mode',
-                                 'flowing',
-                                 'delayoff',
-                                 'flow_params',
-                                 'musing_on',
-                                 'name',
-                                 'bg_power',
-                                 'bg_flowing',
-                                 'bg_flow_params',
-                                 'bg_ct',
-                                 'bg_mode',
-                                 'bg_bright',
-                                 'bg_rgb',
-                                 'bg_hue',
-                                 'bg_sat',
-                                 'nl_br',
-                                 'active_mode'])
+        ret = self.dev.api.get_prop(['power',
+                                    'bright',
+                                    'ct',
+                                    'rgb',
+                                    'hue',
+                                    'sat',
+                                    'color_mode',
+                                    'flowing',
+                                    'delayoff',
+                                    'flow_params',
+                                    'musing_on',
+                                    'name',
+                                    'bg_power',
+                                    'bg_flowing',
+                                    'bg_flow_params',
+                                    'bg_ct',
+                                    'bg_mode',
+                                    'bg_bright',
+                                    'bg_rgb',
+                                    'bg_hue',
+                                    'bg_sat',
+                                    'nl_br',
+                                    'active_mode'])
         print(ret)
         self.assertIsInstance(ret, dict)
     
@@ -85,10 +85,10 @@ class TestColor(unittest.TestCase):
     
     def test_c_ct(self):
         sleep(0.5)
-        self.dev.set_ct_abx(6000)
+        self.dev.api.set_ct_abx(6000)
         sleep(0.8)
         self.assertEqual(self.dev.status.ct, 6000)
-        self.dev.adjust_ct(-10)
+        self.dev.api.adjust_ct(-10)
         sleep(0.8)
         self.assertEqual(self.dev.status.ct, 5400)
     
@@ -102,7 +102,7 @@ class TestColor(unittest.TestCase):
         self.dev.set_bright(40)
         sleep(0.8)
         self.assertEqual(self.dev.status.bright, 40)
-        self.dev.adjust_bright(-10)
+        self.dev.api.adjust_bright(-10)
         sleep(0.8)
         self.assertEqual(self.dev.status.bright, 30)
     
@@ -110,3 +110,46 @@ class TestColor(unittest.TestCase):
         ret = self.dev.device_status()
         print(ret)
         self.assertIsInstance(ret, dict)
+        
+class TestDeskLamp(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.dev = DeskLamp(desk_sid)
+        cls.dev.watcher.add_report_handler(print)
+    
+    def test_a_power(self):
+        # sleep(1)
+        self.dev.on()
+        sleep(0.5)
+        self.assertTrue(self.dev.is_on())
+        sleep(1)
+        self.dev.off()
+        sleep(0.5)
+        self.assertTrue(self.dev.is_off())
+        sleep(1)
+        self.dev.execute('on')
+        sleep(0.5)
+        self.assertTrue(self.dev.is_on())
+    
+    def test_c_ct(self):
+        sleep(0.5)
+        self.dev.api.set_ct_abx(6000)
+        sleep(0.8)
+        self.assertEqual(self.dev.status.ct, 6000)
+        self.dev.api.adjust_ct(-10)
+        sleep(0.8)
+        self.assertEqual(self.dev.status.ct, 5400)
+    
+    def test_d_ct_pc(self):
+        sleep(0.5)
+        self.dev.set_ct_pc(50)
+        sleep(0.8)
+        self.assertEqual(self.dev.status.ct_pc, 50)
+    
+    def test_f_bright(self):
+        self.dev.set_bright(40)
+        sleep(0.8)
+        self.assertEqual(self.dev.status.bright, 40)
+        self.dev.api.adjust_bright(-10)
+        sleep(0.8)
+        self.assertEqual(self.dev.status.bright, 30)

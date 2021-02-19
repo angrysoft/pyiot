@@ -1,7 +1,6 @@
-from pyiot.exceptions import DeviceIsOffline
 import socket
-from typing import Optional, List
-from pyiot.exceptions import DeviceIsOffline, DeviceTimeout
+from typing import Optional
+from pyiot.exceptions import DeviceTimeout
 
 class TcpListener:
     pass

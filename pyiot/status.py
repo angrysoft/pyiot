@@ -4,7 +4,7 @@ class Attribute:
     def __init__(self, name:str, attr_type:Any, readonly:bool = False, oneshot: bool = False,
                  value:Optional[Any] = None, setter: Optional[Callable[[Any], None]] = None) -> None:
         self._name = name
-        self._type = attr_type
+        self._type:Any = attr_type
         self._readonly = readonly
         self._oneshot = oneshot
         if value is not None:
@@ -30,11 +30,17 @@ class Attribute:
     def value(self, _value:Any):
         if self.readonly:
             if not self._value and self._oneshot:
-                self._value = _value
+                self.__set_value(_value)
             else:
                 raise AttributeError(f'{self._name} is readonly')
         else:
-            self._value =_value
+            self.__set_value(_value)
+    
+    def __set_value(self, _value:Any):
+        if type(_value) == type(self._value):
+            self._value = _value
+        else:
+            self._value = self._type(_value)
         
         
 class DeviceStatus(object):
