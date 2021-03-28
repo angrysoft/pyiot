@@ -2,7 +2,7 @@ import unittest
 from pyiot.traits import *
 from pyiot import BaseDevice
 
-class Dev(BaseDevice, MutliSwitch):
+class Dev(BaseDevice, MultiSwitch):
     def __init__(self) -> None:
         self.status.switches = ['left', 'right']
     

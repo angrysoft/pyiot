@@ -7,7 +7,7 @@ class Trait(ABC):
     pass
 
   
-class MutliSwitch(Trait):
+class MultiSwitch(Trait):
     _commands:Tuple[str, ...] = ('on', 'off')
     _attributes: Tuple[Attribute, ...] = (Attribute('switches', list, readonly=True, oneshot=True),)
     

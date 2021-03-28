@@ -29,7 +29,7 @@ __all__ = [
 
 from pyiot.zigbee.aqaragateway import AqaraGateway
 from pyiot.zigbee import ZigbeeDevice, ZigbeeGateway
-from pyiot.traits import Dimmer, HumidityStatus,IlluminanceStatus, MotionStatus, MutliSwitch, \
+from pyiot.traits import Dimmer, HumidityStatus,IlluminanceStatus, MotionStatus, MultiSwitch, \
     OnOff, OpenClose, PressureStatus, Rgb, TemperatureStatus, Toggle
 from pyiot.status import Attribute
 
@@ -94,7 +94,7 @@ class CtrlNeutral(ZigbeeDevice, OnOff):
         return self.status.get('power').lower() == "off"
         
 
-class CtrlNeutral2(ZigbeeDevice, MutliSwitch):
+class CtrlNeutral2(ZigbeeDevice, MultiSwitch):
     def __init__(self, sid:str, gateway:ZigbeeGateway):
         super().__init__(sid, gateway)
         self.status.model = 'ctrl_neutral2'
