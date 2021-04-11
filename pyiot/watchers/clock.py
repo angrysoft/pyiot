@@ -24,7 +24,7 @@ class ClockWatcher(WatcherBaseDriver):
                 self.device.get_sun_info()
             
             handler({'cmd': 'report', 'sid': self.device.status.sid,
-                     'data': {'time': self.device.status.time, 'sunrise': _time == self.device.status.sunrise, 'sunset': _time == self.device.status.sunset}})
+                     'data': {'time': str(self.device.status.time), 'sunrise': _time == self.device.status.sunrise, 'sunset': _time == self.device.status.sunset}})
             sleep(60)
     
     def stop(self) -> None:
