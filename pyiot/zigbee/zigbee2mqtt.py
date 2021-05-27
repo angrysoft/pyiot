@@ -9,7 +9,7 @@ from typing import Any, Dict, List
 
 
 class Zigbee2mqttGateway(ZigbeeGateway):
-    def __init__(self, host: str = 'localhost', port: int = 1882, user: str ='', password: str ='', ssl: bool = False) -> None:
+    def __init__(self, host: str = 'localhost', port: int = 1882, user: str ='', password: str ='', ssl: bool = False, sid:str= '') -> None:
         self._topics = set()
         self._client = mqqt.Client()
         self._client.on_connect = self._on_connect
