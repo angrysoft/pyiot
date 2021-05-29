@@ -19,7 +19,7 @@ class ClockWatcher(WatcherBaseDriver):
             _time: Time = Time()
             _time.set_now()
             
-            self.device.status.time = str(_time)
+            self.device.status.time = _time
             if _time  == Time(1):
                 self.device.get_sun_info()
             

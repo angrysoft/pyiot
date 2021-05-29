@@ -15,7 +15,7 @@ class BaseDevice:
         return object.__new__(cls)
     
     def __init__(self, sid:str) -> None:
-        self.status = DeviceStatus()
+        self.status: DeviceStatus = DeviceStatus()
         for _attr in self._attr_list:
             self.status.register_attribute(deepcopy(_attr))
         self.status.register_attribute(Attribute('sid', str, value=sid, readonly=True))
