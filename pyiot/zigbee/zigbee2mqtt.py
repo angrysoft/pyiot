@@ -4,15 +4,15 @@ from pyiot.zigbee.converter import Converter
 from pyiot.watchers import Watcher
 from pyiot.watchers.zigbee2mqtt import Zigbee2mqttWatcher
 import json
-import paho.mqtt.client as mqqt
-from typing import Any, Dict, List
+import paho.mqtt.client as mqtt
+from typing import Any, Callable, Dict, List, Set
 
 
 class Zigbee2mqttGateway(ZigbeeGateway):
     def __init__(self, host: str = 'localhost', port: int = 1882, user: str ='', password: str ='', ssl: bool = False, sid:str= '') -> None:
-        self._topics = set()
-        self._client = mqqt.Client()
-        self._client.on_connect = self._on_connect
+        self._topics: Set[str] = set()
+        self._client: mqtt.Client = mqtt.Client()
+        self._client.on_connect: Callable[[...], None] = self._on_connect
         self._client.on_disconnect = self._on_disconnet
         self._client.connect("localhost", 1883, 60)
         self._subdevices:Dict[str, ZigbeeDevice] = dict()
@@ -20,12 +20,13 @@ class Zigbee2mqttGateway(ZigbeeGateway):
         self.watcher: Watcher = Watcher(Zigbee2mqttWatcher(self._client))
         self.watcher.add_report_handler(self._handle_events)
         
-    def _on_connect(self, client, userdata, flags, rc):
+    def _on_connect(self, client:mqtt.Client, userdata:Any, flags:Any, rc:Any) -> None:
         self._connected = True
-        for topic in self._topics:
+        to_subscribe: Set[str] = self._topics.copy()
+        for topic in to_subscribe:
             client.subscribe(topic)
         
-    def _on_disconnet(self, client, userdata, rc):
+    def _on_disconnet(self, client:mqtt.Client, userdata:Any, rc:Any):
         self._connected = False
         if rc != 0:
             client.reconnect()
