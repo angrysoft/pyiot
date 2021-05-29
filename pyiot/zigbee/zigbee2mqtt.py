@@ -33,7 +33,7 @@ class Zigbee2mqttGateway(ZigbeeGateway):
         if rc != 0:
             client.reconnect()
     
-    def _on_subscribe(self, client, userdata, mid, granted_qos)) -> None:
+    def _on_subscribe(self, client, userdata, mid, granted_qos) -> None:
         print('subscribe', client, userdata, mid, granted_qos)
             
     def add_topic(self, topic:str) -> None:
