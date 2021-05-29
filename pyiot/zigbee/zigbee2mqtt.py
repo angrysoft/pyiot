@@ -14,6 +14,7 @@ class Zigbee2mqttGateway(ZigbeeGateway):
         self._client: mqtt.Client = mqtt.Client()
         self._client.on_connect: Callable[[...], None] = self._on_connect
         self._client.on_disconnect = self._on_disconnet
+        self._client.on_subscribe = self._on_subscribe
         self._client.username_pw_set(username=user, password=password)
         self._client.connect(host=host, port=port, keepalive=60)
         self._subdevices:Dict[str, ZigbeeDevice] = dict()
@@ -31,6 +32,9 @@ class Zigbee2mqttGateway(ZigbeeGateway):
         self._connected = False
         if rc != 0:
             client.reconnect()
+    
+    def _on_subscribe(self, client, userdata, mid, granted_qos)) -> None:
+        print('subscribe', client, userdata, mid, granted_qos)
             
     def add_topic(self, topic:str) -> None:
         self._topics.add(topic)
