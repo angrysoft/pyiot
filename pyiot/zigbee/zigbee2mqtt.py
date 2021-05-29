@@ -9,12 +9,13 @@ from typing import Any, Callable, Dict, List, Set
 
 
 class Zigbee2mqttGateway(ZigbeeGateway):
-    def __init__(self, host: str = 'localhost', port: int = 1882, user: str ='', password: str ='', ssl: bool = False, sid:str= '') -> None:
+    def __init__(self, host: str = 'localhost', port: int = 1883, user: str ='', password: str ='', ssl: bool = False, sid:str= '') -> None:
         self._topics: Set[str] = set()
         self._client: mqtt.Client = mqtt.Client()
         self._client.on_connect: Callable[[...], None] = self._on_connect
         self._client.on_disconnect = self._on_disconnet
-        self._client.connect("localhost", 1883, 60)
+        self._client.username_pw_set(username=user, password=password)
+        self._client.connect(host=host, port=port, keepalive=60)
         self._subdevices:Dict[str, ZigbeeDevice] = dict()
         self._converter = Converter()
         self.watcher: Watcher = Watcher(Zigbee2mqttWatcher(self._client))
