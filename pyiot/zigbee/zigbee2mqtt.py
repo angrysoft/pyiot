@@ -14,7 +14,8 @@ class Zigbee2mqttGateway(ZigbeeGateway):
         self._client: mqtt.Client = mqtt.Client()
         self._client.on_connect: Callable[[...], None] = self._on_connect
         self._client.on_disconnect = self._on_disconnet
-        self._client.username_pw_set(username=user, password=password)
+        if user and password:
+            self._client.username_pw_set(username=user, password=password)
         self._client.connect(host=host, port=port, keepalive=60)
         self._subdevices:Dict[str, ZigbeeDevice] = dict()
         self._converter = Converter()
@@ -33,9 +34,9 @@ class Zigbee2mqttGateway(ZigbeeGateway):
             client.reconnect()
             
     def add_topic(self, topic:str) -> None:
-        print(f'add topic {topic}')
         self._topics.add(topic)
-        self._client.subscribe(topic)
+        ret = self._client.subscribe(topic)
+        print(f'add topic {topic}', ret)
     
     def del_topic(self, topic:str) -> None:
         self._topics.remove(topic)
