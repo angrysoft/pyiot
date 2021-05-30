@@ -45,7 +45,6 @@ class Zigbee2mqttGateway(ZigbeeGateway):
     def _handle_events(self, event:Dict[str,Any]):
         dev = self._subdevices.get(event.get('sid',''))
         if dev:
-            print(self._converter.to_status(dev.status.model, event))
             dev.status.update(self._converter.to_status(dev.status.model, event))
         
     def set_device(self, device_id: str, payload: Dict[str, Any]) -> None:
@@ -71,11 +70,8 @@ class Zigbee2mqttGateway(ZigbeeGateway):
         self._subdevices[device.status.sid] = device
         self.add_topic(f"zigbee2mqtt/{device.status.sid}")
         self._converter.add_device(device.status.model, payloads.get(device.status.model, {}))
-        # print(device.status.get_attr_names())
-        # for x in device.status.get_attr_names():
-        #     if not x in ['sid', 'name', 'place', 'short_id']:
-        #         payload = Zigbee2mqttPayload(x, "")
-        #         self._client.publish(f"zigbee2mqtt/{device.status.sid}/get", json.dumps(payload.get_payload()))
+        payload: Dict[str, str] = payloads.get(device.status.model, {})
+        self._client.publish(f"zigbee2mqtt/{device.status.sid}/get", json.dumps({x:"" for x in payload.values()}))
     
     def unregister_sub_device(self, device_id: str) -> None:
         self.del_topic(f"zigbee2mqtt/{device_id}")

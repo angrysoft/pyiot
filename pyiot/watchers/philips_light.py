@@ -1,6 +1,7 @@
 from threading import Event
 from . import WatcherBaseDriver
 from pyiot import BaseDevice
+from pyiot.exceptions import DeviceTimeout
 from typing import Callable, Optional, Dict, Any
 
 class PhilipsLightWatcher(WatcherBaseDriver):
@@ -16,7 +17,11 @@ class PhilipsLightWatcher(WatcherBaseDriver):
             old_status: Dict[str, Any] = self.device.status()
             ret = self.event.wait(self.sleep_time)
             if not ret:
-                self.device.refresh_status(['power', 'bright', 'cct', 'snm', 'dv'])
+                try:
+                    self.device.refresh_status(['power', 'bright', 'cct', 'snm', 'dv'])
+                except DeviceTimeout:
+                    self.event.clear()
+                    continue
             
             new_status = self.device.status()
             if new_status != old_status:
