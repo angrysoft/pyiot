@@ -5,7 +5,8 @@ import unittest
 from pyiot.zigbee.zigbee2mqtt import Zigbee2mqttGateway
 
 
-plug = '0x00158d000283b219'
+# plug = '0x00158d000283b219'
+plug = '0x00158d00027d0065'
 sensor_motion = '0x00124b001cd609d8'
 
 ctrlNeural1 = '0x00158d00024e2e5b'
@@ -47,7 +48,7 @@ sensor_motionaq2 = '0x00158d0002ec03fe'
 #     def test_senosrmotion(self):
 #         dev = SNZB03(sensor_motion, gateway=self.agw)
 #         print(dev.device_status())
-#         input()
+#  
 
 class TestAqara(unittest.TestCase):
     @classmethod
@@ -96,7 +97,7 @@ class TestAqara(unittest.TestCase):
         sleep(1)
         self.assertTrue(dev.is_off('right'))
     
-    @unittest.skip("demonstrating skipping")    
+    # @unittest.skip("demonstrating skipping")    
     def test_Plug(self):
         dev = Plug(plug, gateway=self.agw)
         print(dev.commands,dev.traits)

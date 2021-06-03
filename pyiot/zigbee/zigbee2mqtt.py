@@ -45,7 +45,7 @@ class Zigbee2mqttGateway(ZigbeeGateway):
     def _handle_events(self, event:Dict[str,Any]):
         dev = self._subdevices.get(event.get('sid',''))
         if dev:
-            dev.status.update(self._converter.to_status(dev.status.model, event))
+            dev.status.update(self._converter.to_status(dev.status.model, event.get('data', {})))
         
     def set_device(self, device_id: str, payload: Dict[str, Any]) -> None:
         self._client.publish(f"zigbee2mqtt/{device_id}/set", json.dumps(payload))
