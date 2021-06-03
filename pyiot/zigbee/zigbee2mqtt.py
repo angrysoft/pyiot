@@ -19,8 +19,8 @@ class Zigbee2mqttGateway(ZigbeeGateway):
         self._client.connect(host=host, port=port, keepalive=60)
         self._subdevices:Dict[str, ZigbeeDevice] = dict()
         self._converter = Converter()
-        self.watcher: Watcher = Watcher(Zigbee2mqttWatcher(self._client))
-        self.watcher.add_report_handler(self._handle_events)
+        self.watcher: Watcher = Watcher(Zigbee2mqttWatcher(self._client, self))
+        # self.watcher.add_report_handler(self._handle_events)
         
     def _on_connect(self, client:mqtt.Client, userdata:Any, flags:Any, rc:Any) -> None:
         self._connected = True

@@ -4,7 +4,8 @@ from os.path import basename
 import json
 
 class Zigbee2mqttWatcher(WatcherBaseDriver):
-    def __init__(self, client):
+    def __init__(self, client, gateway):
+        self._gateway = gateway
         self._client = client
         self._client.on_message = self._on_message
         self._connected = False
@@ -16,7 +17,12 @@ class Zigbee2mqttWatcher(WatcherBaseDriver):
         msg = {}
         msg['cmd'] = 'report'
         msg['sid'] = basename(message.topic)
-        msg['data'] = (json.loads(message.payload))
+        dev = self._gateway._subdevices.get(msg['sid'])
+        if dev:
+            msg['data'] = self._gateway._converter.to_status(dev.status.model, json.loads(message.payload))
+            dev.status.update(msg['data'])
+        else:
+            msg['data'] = json.loads(message.payload)
         self._handler(msg)
 
     def watch(self, handler:Callable[[Optional[Dict[str,Any]]], None]) -> None:
