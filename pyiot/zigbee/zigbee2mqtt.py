@@ -72,7 +72,7 @@ class Zigbee2mqttGateway(ZigbeeGateway):
         self._converter.add_device(device.status.model, payloads.get(device.status.model, {}))
         # payload: Dict[str, str] = payloads.get(device.status.model, {})
         # for x in payload.values():
-        # self._client.publish(f"zigbee2mqtt/{device.status.sid}/get", f'{{"linkquality":""}}')
+        # self._client.publish(f"zigbee2mqtt/{device.status.sid}/get", f'{{"":""}}')
     
     def unregister_sub_device(self, device_id: str) -> None:
         self.del_topic(f"zigbee2mqtt/{device_id}")
@@ -86,8 +86,8 @@ class Zigbee2mqttGateway(ZigbeeGateway):
 
 # device model : device : gateway
 payloads = {
-    'ctrl_neutral1': {'single': 'single', 'linkquality': 'linkquality'},
-    'ctrl_neutral2': {'left': 'left', 'right': 'right', 'linkquality': 'linkquality'},
+    'ctrl_neutral1': {'state': 'state', 'linkquality': 'linkquality'},
+    'ctrl_neutral2': {'left': 'state_left', 'right': 'state_right', 'linkquality': 'linkquality'},
     'plug': {'power': 'state', 'power_consumed': 'consumption', 'linkquality': 'linkquality', 'load_power': 'power', 'toggle': 'toggle'},
     'magnet': {'status': 'contact'},
     'weather.v1': {'temperature': 'temperature', 'humidity': 'humidity'},
@@ -95,4 +95,5 @@ payloads = {
     'sensor_motion.aq2': {'occupancy': 'occupancy', 'illuminance': 'illuminance'},
     'switch': {'click': 'single', 'doubleclick': 'double', 'tripleclick': 'triple'},
     'sensor_switch.aq2': {'click': 'single', 'doubleclick': 'double', 'long_press': 'long', 'long_press_release': 'long_release click'},
+    'GZCGQ01LM': {'illuminance': 'illuminance', 'lux': 'illuminance_lux'}
 }

@@ -78,14 +78,14 @@ class CtrlNeutral(ZigbeeDevice, OnOff):
         super().__init__(sid, gateway)
         self.status.model = 'ctrl_neutral1'
         self.status.add_alias('channel_0', 'power')
-        self.status.add_alias('single', 'power')
+        self.status.add_alias('state', 'power')
         self.gateway.register_sub_device(self)
     
     def on(self):
-        self.gateway.send_command(self.status.sid, 'single', 'on')
+        self.gateway.send_command(self.status.sid, 'state', 'on')
         
     def off(self):
-         self.gateway.send_command(self.status.sid, 'single', 'off')
+         self.gateway.send_command(self.status.sid, 'state', 'off')
     
     def is_on(self) -> bool:
         return self.status.get('power').lower() == "on"
@@ -122,6 +122,8 @@ class CtrlNeutral2(ZigbeeDevice, MultiSwitch):
 
 
 class Plug(ZigbeeDevice, OnOff, Toggle):
+    """Model	QBKG03LM"""
+    
     def __init__(self, sid:str, gateway: ZigbeeGateway):
         super().__init__(sid, gateway)
         self.status.model = 'plug'
@@ -193,4 +195,14 @@ class SensorMotionAq2(ZigbeeDevice, MotionStatus, IlluminanceStatus):
         super().__init__(sid, gateway)
         self.status.model = 'sensor_motion.aq2'
         self.status.add_alias('lux', 'illuminance')
+        self.gateway.register_sub_device(self)
+
+
+class LightDetectionSensor(ZigbeeDevice, IlluminanceStatus):
+    """Model	GZCGQ01LM"""
+    
+    def __init__(self, sid:str, gateway: ZigbeeGateway) -> None:
+        super().__init__(sid, gateway)
+        self.status.model = 'GZCGQ01LM'
+        self.status.register_attribute(Attribute('lux', int))
         self.gateway.register_sub_device(self)

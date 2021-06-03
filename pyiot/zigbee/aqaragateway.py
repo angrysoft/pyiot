@@ -115,7 +115,7 @@ class AqaraGateway(ZigbeeGateway):
 
 # device model : device : gateway
 payloads = {
-    'ctrl_neutral1': {'single': 'channel_0', 'linkquality': 'linkquality'},
+    'ctrl_neutral1': {'state': 'channel_0', 'linkquality': 'linkquality'},
     'ctrl_neutral2': {'left': 'channel_0', 'right': 'channel_1', 'linkquality': 'linkquality'},
     'plug': {'power': 'status', 'power_consumed': 'power_consumed', 'linkquality': 'linkquality', 'load_power': 'load_power', 'toggle': 'toggle'},
     'magnet': {'status': 'status'},

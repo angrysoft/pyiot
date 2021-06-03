@@ -2,8 +2,6 @@ from . import WatcherBaseDriver
 from typing import Callable, Optional, Dict, Any
 from os.path import basename
 import json
-from pyiot.zigbee.converter import Converter
-
 
 class Zigbee2mqttWatcher(WatcherBaseDriver):
     def __init__(self, client):
