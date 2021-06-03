@@ -14,8 +14,9 @@ class Zigbee2mqttWatcher(WatcherBaseDriver):
     def _on_message(self, client, userdata, message):
         # print(message.topic, json.loads(message.payload))
         msg = {}
+        msg['cmd'] = 'report'
         msg['sid'] = basename(message.topic)
-        msg.update(json.loads(message.payload))
+        msg['data'] = (json.loads(message.payload))
         self._handler(msg)
 
     def watch(self, handler:Callable[[Optional[Dict[str,Any]]], None]) -> None:
