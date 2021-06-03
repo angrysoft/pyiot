@@ -13,7 +13,6 @@ class Zigbee2mqttWatcher(WatcherBaseDriver):
         self._loop = True
             
     def _on_message(self, client, userdata, message):
-        # print(message.topic, json.loads(message.payload))
         msg = {}
         msg['cmd'] = 'report'
         msg['sid'] = basename(message.topic)

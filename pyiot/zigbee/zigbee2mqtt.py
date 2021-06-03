@@ -20,7 +20,6 @@ class Zigbee2mqttGateway(ZigbeeGateway):
         self._subdevices:Dict[str, ZigbeeDevice] = dict()
         self._converter = Converter()
         self.watcher: Watcher = Watcher(Zigbee2mqttWatcher(self._client, self))
-        # self.watcher.add_report_handler(self._handle_events)
         
     def _on_connect(self, client:mqtt.Client, userdata:Any, flags:Any, rc:Any) -> None:
         self._connected = True
@@ -41,11 +40,6 @@ class Zigbee2mqttGateway(ZigbeeGateway):
     def del_topic(self, topic:str) -> None:
         self._topics.remove(topic)
         self._client.unsubscribe(topic)
-    
-    def _handle_events(self, event:Dict[str,Any]):
-        dev = self._subdevices.get(event.get('sid',''))
-        if dev:
-            dev.status.update(self._converter.to_status(dev.status.model, event.get('data', {})))
         
     def set_device(self, device_id: str, payload: Dict[str, Any]) -> None:
         self._client.publish(f"zigbee2mqtt/{device_id}/set", json.dumps(payload))
