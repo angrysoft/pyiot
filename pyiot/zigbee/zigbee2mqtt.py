@@ -34,8 +34,7 @@ class Zigbee2mqttGateway(ZigbeeGateway):
             
     def add_topic(self, topic:str) -> None:
         self._topics.add(topic)
-        ret = self._client.subscribe(topic)
-        print(f'add topic {topic}', ret)
+        self._client.subscribe(topic)
     
     def del_topic(self, topic:str) -> None:
         self._topics.remove(topic)
