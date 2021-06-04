@@ -88,6 +88,6 @@ payloads = {
     'sensor_ht': {'temperature': 'temperature', 'humidity': 'humidity', 'pressure': 'pressure'},
     'sensor_motion.aq2': {'occupancy': 'occupancy', 'illuminance': 'illuminance'},
     'switch': {'click': 'single', 'doubleclick': 'double', 'tripleclick': 'triple'},
-    'sensor_switch.aq2': {'click': 'single', 'doubleclick': 'double', 'long_press': 'long', 'long_press_release': 'long_release click'},
+    'sensor_switch.aq2': {'click': 'single', 'doubleclick': 'double', 'long_press': 'long', 'long_press_release': 'long_release'},
     'GZCGQ01LM': {'illuminance': 'illuminance', 'lux': 'illuminance_lux'}
 }
