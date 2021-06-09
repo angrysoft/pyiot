@@ -69,9 +69,10 @@ class DeviceStatus(object):
             raise ValueError(f'No registered attribute named {attribute_name}')
         
     def update(self, value:Dict[str,Any]) -> None:
-        for _name in value:
+        _data = value.get('data', value)
+        for _name in _data:
             try:
-                self.set(_name, value[_name])
+                self.set(_name, _data[_name])
             except AttributeError:
                 pass
     

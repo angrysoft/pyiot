@@ -20,7 +20,10 @@ class BraviaWatcher(WatcherBaseDriver):
             
             new_status = self.device.status()
             if new_status != old_status:
-                handler(new_status)
+                handler({'cmd': 'report',
+                         'sid': self.device.status.sid,
+                         'model': self.device.status.model,
+                         'data': new_status})
             self.event.clear()
                 
     
