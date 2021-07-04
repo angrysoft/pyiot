@@ -396,6 +396,8 @@ class DeskLamp(Mono, ColorTemperature):
 class Color(DeskLamp, Rgb, Hsv):
     def __init__(self, sid:str):
         super().__init__(sid)
+        self.min_ct = 1700
+        self.max_ct = 6500
         
     def set_rgb(self, red: int = 0, green: int = 0, blue: int = 0) -> None:
         """This method is used to change the color of a smart LED.
