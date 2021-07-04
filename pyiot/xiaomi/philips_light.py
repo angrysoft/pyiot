@@ -22,7 +22,6 @@ from pyiot.watchers import Watcher
 from pyiot.discover.miio import DiscoverMiio
 from pyiot.connections.miio import MiioConnection
 from threading import Event
-from time import sleep
 
 
 class Candle(BaseDevice, OnOff, Dimmer, ColorTemperature, Scene):

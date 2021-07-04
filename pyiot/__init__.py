@@ -48,10 +48,10 @@ class BaseDevice:
     def traits(self) -> Tuple[str, ...]:
         return tuple(self._traits)
           
-    def execute(self, cmd:str, **kwargs:Any):
+    def execute(self, cmd:str, *args:Any):
         if cmd in self.commands:
             _cmd = getattr(self, cmd)
-            _cmd(**kwargs)
+            _cmd(*args)
                 
     def query(self, name:str) -> Any:
         return self.status.get(name)
