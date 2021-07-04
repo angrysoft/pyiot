@@ -32,10 +32,13 @@ class EwelinkWatcher(WatcherBaseDriver):
     def _parse(self, prop):
         ret = {}
         if b'data1' in prop:
+            _data = json.loads(prop[b'data1'])
+            if 'switch' in _data:
+                _data['power'] = _data.pop('switch')
             ret = {'cmd': 'report',
                    'sid': prop[b'id'].decode(),
                    'model': prop[b'type'].decode(),
-                   'data': json.loads(prop[b'data1'])}
+                   'data': _data}
         return ret
 
     def stop(self):

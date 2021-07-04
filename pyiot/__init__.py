@@ -50,7 +50,6 @@ class BaseDevice:
           
     def execute(self, command:Tuple[str, ...]):
         cmd, *args = command
-        print(f'::execute:: {cmd}, {args}')
         if cmd in self.commands:
             _cmd = getattr(self, cmd)
             if args:
