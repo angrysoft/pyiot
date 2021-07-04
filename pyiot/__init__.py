@@ -48,7 +48,8 @@ class BaseDevice:
     def traits(self) -> Tuple[str, ...]:
         return tuple(self._traits)
           
-    def execute(self, cmd: str, **kwargs:Any):
+    def execute(self, **kwargs:Any):
+        cmd, value = kwargs.popitem()
         if cmd in self.commands:
             _cmd = getattr(self, cmd)
             _cmd(**kwargs)
