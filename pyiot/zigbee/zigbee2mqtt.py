@@ -79,7 +79,7 @@ class Zigbee2mqttGateway(ZigbeeGateway):
 
 # device model : device : gateway
 payloads = {
-    'ctrl_neutral1': {'state': 'state', 'linkquality': 'linkquality'},
+    'ctrl_neutral1': {'power': 'state', 'linkquality': 'linkquality'},
     'ctrl_neutral2': {'left': 'state_left', 'right': 'state_right', 'linkquality': 'linkquality'},
     'plug': {'power': 'state', 'power_consumed': 'consumption', 'linkquality': 'linkquality', 'load_power': 'power', 'toggle': 'toggle'},
     'magnet': {'status': 'contact'},
