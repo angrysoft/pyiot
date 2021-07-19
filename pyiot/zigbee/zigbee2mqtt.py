@@ -64,7 +64,7 @@ class Zigbee2mqttGateway(ZigbeeGateway):
         self.add_topic(f"zigbee2mqtt/{device.status.sid}")
         self._converter.add_device(device.status.model, payloads.get(device.status.model, {}))
         # payload: Dict[str, str] = payloads.get(device.status.model, {})
-        for x in payload.get('device_statuses', []):
+        for x in statuses.get(device.status.model, []):
             self._client.publish(f"zigbee2mqtt/{device.status.sid}/get", f'{{${x}:""}}')
     
     def unregister_sub_device(self, device_id: str) -> None:
@@ -89,4 +89,17 @@ payloads = {
     'switch': {'click': 'single', 'doubleclick': 'double', 'tripleclick': 'triple'},
     'sensor_switch.aq2': {'click': 'single', 'doubleclick': 'double', 'long_press': 'long', 'long_press_release': 'long_release'},
     'GZCGQ01LM': {'illuminance': 'illuminance', 'lux': 'illuminance_lux'}
+}
+
+statuses = {
+    'ctrl_neutral1': ['state'],
+    'ctrl_neutral2': ['state_left', 'state_right'],
+    'plug': [],
+    'magnet': [],
+    'weather.v1': [],
+    'sensor_ht': [],
+    'sensor_motion.aq2': [],
+    'switch': [],
+    'sensor_switch.aq2': [],
+    'GZCGQ01LM': []
 }
