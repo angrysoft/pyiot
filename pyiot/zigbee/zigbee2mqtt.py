@@ -94,7 +94,7 @@ payloads = {
 statuses = {
     'ctrl_neutral1': ['state'],
     'ctrl_neutral2': ['state_left', 'state_right'],
-    'plug': [],
+    'plug': ['state'],
     'magnet': [],
     'weather.v1': [],
     'sensor_ht': [],
