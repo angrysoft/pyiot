@@ -73,5 +73,8 @@ class BaseDevice:
         ret:Dict[str, Any] = {'traits': self.traits, 'commands': self.commands}
         status = self.status()
         for item in status:
-            ret[item] = str(status[item])
+            if type(status[item]) is dict:
+                ret[item] = status[item]
+            else:
+                ret[item] = str(status[item])
         return ret
