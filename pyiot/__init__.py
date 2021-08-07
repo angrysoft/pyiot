@@ -19,8 +19,8 @@ class BaseDevice:
         for _attr in self._attr_list:
             self.status.register_attribute(deepcopy(_attr))
         self.status.register_attribute(Attribute('sid', str, value=sid, readonly=True))
-        self.status.register_attribute(Attribute('name', str))
-        self.status.register_attribute(Attribute('place', str))
+        self.status.register_attribute(Attribute('name', dict))
+        self.status.register_attribute(Attribute('place', dict))
         self.status.register_attribute(Attribute('model', str))
     
     @classmethod
