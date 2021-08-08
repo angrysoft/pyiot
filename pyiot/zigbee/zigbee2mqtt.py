@@ -65,7 +65,7 @@ class Zigbee2mqttGateway(ZigbeeGateway):
         self._converter.add_device(device.status.model, payloads.get(device.status.model, {}))
         # payload: Dict[str, str] = payloads.get(device.status.model, {})
         for x in statuses.get(device.status.model, []):
-            self._client.publish(f"zigbee2mqtt/{device.status.sid}/get", f'{{${x}:""}}')
+            self._client.publish(f"zigbee2mqtt/{device.status.sid}/get", f'{{"{x}":""}}')
     
     def unregister_sub_device(self, device_id: str) -> None:
         self.del_topic(f"zigbee2mqtt/{device_id}")
