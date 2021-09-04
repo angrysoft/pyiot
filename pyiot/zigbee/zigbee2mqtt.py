@@ -52,7 +52,7 @@ class Zigbee2mqttGateway(ZigbeeGateway):
         return {}
     
     def get_device_list(self) -> List[Dict[str, Any]]:
-        self._client.publish("zigbee2mqtt/bridge/config/devices/get ", '')
+        self._client.publish("zigbee2mqtt/bridge/config/devices/get", '')
         return []
     
     def set_accept_join(self, status: bool) -> None:
@@ -82,7 +82,7 @@ payloads = {
     'ctrl_neutral1': {'power': 'state', 'linkquality': 'linkquality'},
     'ctrl_neutral2': {'left': 'state_left', 'right': 'state_right', 'linkquality': 'linkquality'},
     'plug': {'power': 'state', 'power_consumed': 'consumption', 'linkquality': 'linkquality', 'load_power': 'power', 'toggle': 'toggle'},
-    'magnet': {'status': 'contact'},
+    'magnet': {'contact': 'contact'},
     'weather.v1': {'temperature': 'temperature', 'humidity': 'humidity'},
     'sensor_ht': {'temperature': 'temperature', 'humidity': 'humidity', 'pressure': 'pressure'},
     'sensor_motion.aq2': {'occupancy': 'occupancy', 'illuminance': 'illuminance'},

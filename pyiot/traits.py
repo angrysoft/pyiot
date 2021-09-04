@@ -84,6 +84,18 @@ class Toggle(Trait):
         pass
 
 
+class Contact(Trait):
+    _commands:Set[str] = set()
+    _attributes: Tuple[Attribute, ...] = (Attribute('contact', bool),)
+
+    @abstractmethod    
+    def is_open(self) -> bool:
+        pass
+    
+    @abstractmethod    
+    def is_close(self) -> bool:
+        pass
+
 class OpenClose(Trait):
     _commands:Set[str] = set()
     _attributes: Tuple[Attribute, ...] = (Attribute('status', str),)

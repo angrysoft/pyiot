@@ -29,7 +29,7 @@ __all__ = [
 
 from pyiot.zigbee.aqaragateway import AqaraGateway
 from pyiot.zigbee import ZigbeeDevice, ZigbeeGateway
-from pyiot.traits import Dimmer, HumidityStatus,IlluminanceStatus, MotionStatus, MultiSwitch, \
+from pyiot.traits import Contact, Dimmer, HumidityStatus,IlluminanceStatus, MotionStatus, MultiSwitch, \
     OnOff, OpenClose, PressureStatus, Rgb, TemperatureStatus, Toggle
 from pyiot.status import Attribute
 
@@ -177,17 +177,17 @@ class WeatherV1(ZigbeeDevice, TemperatureStatus, HumidityStatus, PressureStatus)
         self.gateway.register_sub_device(self)
   
 
-class Magnet(ZigbeeDevice, OpenClose):
+class Magnet(ZigbeeDevice, Contact):
     def __init__(self, sid:str, gateway: ZigbeeGateway):
         super().__init__(sid, gateway)
         self.status.model = 'magnet'
         self.gateway.register_sub_device(self)
     
     def is_open(self) -> bool:
-        return self.status.status == 'open'
+        return not self.status.contact
     
     def is_close(self) -> bool:
-        return self.status.status == 'close'
+        return self.status.contact
 
 
 class SensorMotionAq2(ZigbeeDevice, MotionStatus, IlluminanceStatus):
