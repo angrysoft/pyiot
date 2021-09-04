@@ -118,7 +118,7 @@ class PressureStatus(Trait):
 
 class IlluminanceStatus(Trait):
     _commands:Tuple[str, ...] = tuple()
-    _attributes: Tuple[Attribute] = (Attribute('illuminance', str),)
+    _attributes: Tuple[Attribute] = (Attribute('illuminance', int),)
 
 
 class ColorTemperature(Trait):
