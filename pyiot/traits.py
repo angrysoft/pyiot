@@ -20,7 +20,7 @@ class MultiSwitch(Trait):
         pass
     
     @abstractmethod
-    def toogle(self, switch_name:str):
+    def toggle(self, switch_name:str):
         pass
     
     @abstractmethod
