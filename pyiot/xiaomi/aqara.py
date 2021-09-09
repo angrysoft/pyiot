@@ -111,8 +111,8 @@ class CtrlNeutral2(ZigbeeDevice, MultiSwitch):
     def off(self, switch_name:str):
         self.gateway.send_command(self.status.sid, f'{switch_name}', 'off')
         
-    def toogle(self, switch_name:str):
-        self.gateway.send_command(self.status.sid, f'{switch_name}', 'toogle')
+    def toggle(self, switch_name:str):
+        self.gateway.send_command(self.status.sid, f'{switch_name}', 'toggle')
         
     def is_on(self,  switch_name:str) -> bool:
         return self.status.get(switch_name).lower() == "on"
