@@ -11,21 +11,27 @@ class TestSonoff(unittest.TestCase):
       @classmethod
       def setUpClass(cls):
             cls.dev = Mini(sid)
-      
+
       def test_a_set_power(self):
+            wait_for_status = 2
             self.dev.on()
-            sleep(1)
+            sleep(wait_for_status)
+            print(f'set on: is {self.dev.status.power} expected on')
             self.assertTrue(self.dev.is_on())
+            sleep(wait_for_status)
             self.dev.off()
-            sleep(1)
+            sleep(wait_for_status)
+            print(f'set off: is {self.dev.status.power} expected off')
             self.assertTrue(self.dev.is_off())
-            sleep(1)
+            
             self.dev.execute('on')
-            sleep(1)
+            sleep(wait_for_status)
+            print(f'execute on: is {self.dev.status.power} expected on')
             self.assertTrue(self.dev.is_on())
-            sleep(1)
+
             self.dev.execute('off')
-            sleep(1)
+            sleep(wait_for_status)
+            print(f'execute off: is {self.dev.status.power} expected off')
             self.assertTrue(self.dev.is_off())
             
       def test_c_power(self):

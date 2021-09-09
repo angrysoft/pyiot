@@ -54,7 +54,9 @@ class BaseSONOFFDIYDevice(BaseDevice, OnOff):
         self.watcher.add_report_handler(self.report)
     
     def report(self, data: Dict[str, Any]):
-        if self.status.sid == data.get('id'):
+        print(data)
+        if self.status.sid == data.get('sid'):
+            print('updateing')
             self.status.update(data.get('data', {}))
         
     def _find_device(self):
