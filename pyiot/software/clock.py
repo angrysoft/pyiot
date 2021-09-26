@@ -15,7 +15,7 @@ class Clock(BaseDevice):
         self.status.register_attribute(Attribute('sunrise', Time))
         self.status.register_attribute(Attribute('sunset', Time))
         self.status.register_attribute(Attribute('time', Time))
-        self.status.place = 'all'
+        self.status.place = {"en": "all", "pl":"Wszędzie"}
         self.watcher = Watcher(ClockWatcher(self))
         self.get_sun_info()
     
