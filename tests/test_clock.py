@@ -27,7 +27,7 @@ class TestTime(unittest.TestCase):
     def test_gt(self):
         one = Time(23, 0)
         two = Time(20, 0)
-        self.assertGreater(one, two)
+        self.assertGreater(Time(23, 0), Time(20, 0))
     
     def test_ge(self):
         one = Time(23, 0)
@@ -40,4 +40,7 @@ class TestTime(unittest.TestCase):
     def test_repr(self):
         one = Time(23,22)
         print(type(one), one)
-        self.assertIsInstance(one.__repr__(), str)
+        self.assertEqual(one.__repr__(), "23:22:00")
+    
+    def test_get_time_now(self):
+        self.assertIsInstance(Time.get_time_now(), Time)

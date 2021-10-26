@@ -14,6 +14,12 @@ class Time:
         self._minute = _date.minute
         self._seconds = _date.second
     
+    @staticmethod
+    def get_time_now():
+        result = Time()
+        result.set_now()
+        return result
+    
     @property
     def hour(self) -> int:
         return self._hour
