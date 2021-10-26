@@ -34,6 +34,10 @@ class DiscoverSonoff(BaseDiscovery):
     
     def remove_service(self, zeroconf: Zeroconf, service_type: str, name: str):
         print(f"Service {name} removed")
+        
+    def update_service(self, zeroconf: Zeroconf, service_type: str, name: str):
+        print(f"Service {name} updated")
+
     
     def add_service(self, zeroconf: Zeroconf, service_type: str, name: str) -> None:
         info:Dict[str,Any] = self._parse(zeroconf.get_service_info(service_type, name))
