@@ -11,7 +11,7 @@ class Zigbee2mqttWatcher(WatcherBaseDriver):
         self._connected = False
         self._handler = None
         self._loop = True
-            
+        
     def _on_message(self, client, userdata, message):
         msg = {}
         msg['cmd'] = 'report'
@@ -27,7 +27,7 @@ class Zigbee2mqttWatcher(WatcherBaseDriver):
     def watch(self, handler:Callable[[Optional[Dict[str,Any]]], None]) -> None:
         while self._loop:
             self._handler = handler
-            self._client.loop()
+            self._client.loop_forever()
     
     def stop(self):
         self._loop = False

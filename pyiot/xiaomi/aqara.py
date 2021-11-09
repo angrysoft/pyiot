@@ -30,7 +30,7 @@ __all__ = [
 from pyiot.zigbee.aqaragateway import AqaraGateway
 from pyiot.zigbee import ZigbeeDevice, ZigbeeGateway
 from pyiot.traits import Contact, Dimmer, HumidityStatus,IlluminanceStatus, MotionStatus, MultiSwitch, \
-    OnOff, OpenClose, PressureStatus, Rgb, TemperatureStatus, Toggle
+    OnOff, PressureStatus, Rgb, TemperatureStatus, Toggle
 from pyiot.status import Attribute
 
 

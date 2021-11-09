@@ -82,13 +82,17 @@ payloads = {
     'ctrl_neutral1': {'power': 'state', 'linkquality': 'linkquality'},
     'ctrl_neutral2': {'left': 'state_left', 'right': 'state_right', 'linkquality': 'linkquality'},
     'plug': {'power': 'state', 'power_consumed': 'consumption', 'linkquality': 'linkquality', 'load_power': 'power', 'toggle': 'toggle'},
-    'magnet': {'contact': 'contact'},
-    'weather.v1': {'temperature': 'temperature', 'humidity': 'humidity'},
-    'sensor_ht': {'temperature': 'temperature', 'humidity': 'humidity', 'pressure': 'pressure'},
-    'sensor_motion.aq2': {'occupancy': 'occupancy', 'illuminance': 'illuminance'},
-    'switch': {'click': 'single', 'doubleclick': 'double', 'tripleclick': 'triple'},
-    'sensor_switch.aq2': {'click': 'single', 'doubleclick': 'double', 'long_press': 'long', 'long_press_release': 'long_release'},
-    'GZCGQ01LM': {'illuminance': 'illuminance', 'lux': 'illuminance_lux'}
+    'magnet': {'contact': 'contact', 'linkquality': 'linkquality'},
+    'weather.v1': {'temperature': 'temperature', 'humidity': 'humidity', 'linkquality': 'linkquality'},
+    'sensor_ht': {'temperature': 'temperature', 'humidity': 'humidity', 'pressure': 'pressure', 'linkquality': 'linkquality'},
+    'sensor_motion.aq2': {'occupancy': 'occupancy', 'illuminance': 'illuminance', 'linkquality': 'linkquality'},
+    'switch': {'click': 'single', 'doubleclick': 'double', 'tripleclick': 'triple', 'linkquality': 'linkquality'},
+    'sensor_switch.aq2': {'click': 'single', 'doubleclick': 'double', 'long_press': 'long', 'long_press_release': 'long_release', 'linkquality': 'linkquality'},
+    'GZCGQ01LM': {'illuminance': 'illuminance', 'lux': 'illuminance_lux', 'linkquality': 'linkquality'},
+    'SNZB01': {'linkquality': 'linkquality'},
+    'SNZB02': {'contact': 'contact', 'linkquality': 'linkquality'},
+    'SNZB03': {'occupancy': 'occupancy', 'linkquality': 'linkquality'}
+
 }
 
 statuses = {
@@ -101,5 +105,8 @@ statuses = {
     'sensor_motion.aq2': [],
     'switch': [],
     'sensor_switch.aq2': [],
-    'GZCGQ01LM': []
+    'GZCGQ01LM': [],
+    'SNZB01': [],
+    'SNZB02': [],
+    'SNZB03': []
 }

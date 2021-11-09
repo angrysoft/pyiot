@@ -53,6 +53,11 @@ print_tests() {
     done
 }
 
+sonoff_zigbee() {
+    echo ">>> Run sonoff zigbee"
+    python -m unittest -v tests/test_sonoff_zigbee.py
+}
+
 
 while [ "$1" != "" ]; do
     arg=$1;shift
@@ -67,6 +72,7 @@ while [ "$1" != "" ]; do
         "base")base_test;;
         "philips")philips_test;;
         "clock")clock_test;;
+        "sonoff_zigbee")sonoff_zigbee;;
         "all")
         sonoff_test &&
         yeelight_test &&
