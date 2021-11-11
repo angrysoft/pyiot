@@ -264,7 +264,7 @@ class KDL48W585B(BaseDevice, OnOff, Volume, Channels, Arrows, MediaButtons, Butt
         self.dev_api.off()
         self.refresh_status()
         
-    def is_on(self):
+    def is_on(self) -> bool:
         self.status.power = self.dev_api.check_power_status()
         return self.status.power == 'on'
     

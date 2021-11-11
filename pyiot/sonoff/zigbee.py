@@ -23,3 +23,15 @@ class SNZB03(ZigbeeDevice, MotionStatus):
     def __init__(self, sid:str, gateway: ZigbeeGateway):
         super().__init__(sid, gateway)
         self.gateway.register_sub_device(self)
+
+
+class SNZB04(ZigbeeDevice, Contact):
+    def __init__(self, sid: str, gateway: ZigbeeGateway):
+        super().__init__(sid, gateway)
+        self.gateway.register_sub_device(self)
+
+    def is_open(self) -> bool:
+        return not self.status.contact
+    
+    def is_close(self) -> bool:
+        return self.status.contact

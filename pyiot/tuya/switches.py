@@ -7,6 +7,7 @@ class SWTZ75(ZigbeeDevice, OnOff):
     def __init__(self, sid:str, gateway:ZigbeeGateway):
         super().__init__(sid, gateway)
         self.status.add_alias('state', 'power')
+        self.gateway.register_sub_device(self)
     
     def on(self):
         self.gateway.send_command(self.status.sid, 'state', 'on')
