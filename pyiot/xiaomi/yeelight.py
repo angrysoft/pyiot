@@ -13,7 +13,8 @@
 # limitations under the License.
 
 from __future__ import annotations
-__all__ = ['YeelightApi', 'Mono', 'Color', 'Bslamp1', 'DeskLamp']
+
+__all__ = ["YeelightApi", "Mono", "Color", "Bslamp1", "DeskLamp"]
 from pyiot.connections import IdGen
 from pyiot.exceptions import DeviceIsOffline, DeviceTimeout
 from pyiot.connections.tcp import TcpConnection
@@ -27,21 +28,22 @@ import json
 from time import sleep
 from typing import Dict, List, Any
 
+
 class YeelightApi:
-    def __init__(self, ip:str, port:int) -> None:
-        self.answers: Dict[Any, Dict[str,Any]] = dict()
+    def __init__(self, ip: str, port: int) -> None:
+        self.answers: Dict[Any, Dict[str, Any]] = dict()
         self.answer_id = IdGen()
-        self.efx: str = 'smooth'
+        self.efx: str = "smooth"
         self.duration: int = 500
         self.conn = TcpConnection(ip, port)
-    
+
     def get_prop(self, props: List[str]) -> Dict[str, Any]:
         """
         This method is used to retrieve current property of smart LED.
-        
+
         Args:
             props (str): Variable length argument name of property to retrive (max 18 in one)
-            
+
                 * `power on` - smart LED is turned on / off: smart LED is turned off
                 * `bright` - Brightness percentage. Range 1 ~ 100
                 * `ct` - Color temperature. Range 1700 ~ 6500(k)
@@ -67,41 +69,41 @@ class YeelightApi:
                 * `active_mode` - ...
         """
         ret: Dict[str, Any] = {}
-        
+
         while props:
             _props_set = props[:17]
             del props[:17]
-            _id = self.send('get_prop', _props_set)
+            _id = self.send("get_prop", _props_set)
             if _id in self.answers:
-                ret_props:List[Any] = self.answers.get(_id, {}).get('result', [])
+                ret_props: List[Any] = self.answers.get(_id, {}).get("result", [])
                 ret.update(dict(zip(_props_set, ret_props)))
         return ret
-    
-    def set_ct_abx(self, ct:int):
+
+    def set_ct_abx(self, ct: int):
         """This method is used to change the color temperature of a smart LED.
-        
+
         Args:
-            ct (int): The target color temperature. 
+            ct (int): The target color temperature.
                 The type is integer and range is 1700 ~ 6500 (k).
-                
-            efx (:obj:`str`, optional): support two values: `sudden` and `smooth`. 
-                If effect is `sudden`, then change will be directly , under this case, parameter `duration` is ignored. 
+
+            efx (:obj:`str`, optional): support two values: `sudden` and `smooth`.
+                If effect is `sudden`, then change will be directly , under this case, parameter `duration` is ignored.
                 If effect is `smooth`, then the total time of gradual change is specified in parameter `duration`.
                 Default is `smooth`
-            
+
             duration (:obj:`int`, optional): Specifies the total time of the gradual changing.
                 The unit is milliseconds. The minimum support duration is 30 milliseconds.
                 Default is `500`"""
-                
-        self.send('set_ct_abx', [ct, self.efx, self.duration])
-        
-    def set_power(self, state:str, mode: int = 0) -> None:
+
+        self.send("set_ct_abx", [ct, self.efx, self.duration])
+
+    def set_power(self, state: str, mode: int = 0) -> None:
         """This method is used to switch on or off the smart LED (software managed on/off).
-        
+
         Args:
             state (str): can only be `on` or `off`.
                 `on` means turn on the smart LED, `off` means turn off the smart LED.
-            
+
             mode (:obj:`int`, optional):
                 * 0: Normal turn on operation (default value)
                 * 1: Turn on and switch to CT mode.
@@ -111,24 +113,28 @@ class YeelightApi:
                 * 5: Turn on and switch to Night light mode. (Ceiling light only)."""
 
         if mode not in (0, 1, 2, 3, 4):
-            raise ValueError('mode')
-        self.send('set_power', [state, self.efx, self.duration, mode])
-    
+            raise ValueError("mode")
+        self.send("set_power", [state, self.efx, self.duration, mode])
+
     def set_default(self):
         """This method is used to save current state of smart LED in persistent memory.
         So if user powers off and then powers on the smart LED again (hard power reset),
         the smart LED will show last saved state."""
 
-        return self.send('set_default')
+        return self.send("set_default")
 
-    def start_cf(self, count: int = 0, action: int = 0, 
-                 flow_expression: str = "1000, 2, 2700, 100, 500, 1, 255, 10, 5000, 7, 0,0, 500, 2, 5000, 1"):
+    def start_cf(
+        self,
+        count: int = 0,
+        action: int = 0,
+        flow_expression: str = "1000, 2, 2700, 100, 500, 1, 255, 10, 5000, 7, 0,0, 500, 2, 5000, 1",
+    ):
         """This method is used to start a color flow. Color flow is a series of smart
         LED visible state changing. It can be brightness changing, color changing or color
         temperature changing. This is the most powerful command. All our recommended scenes,
         e.g. Sunrise/Sunset effect is implemented using this method. With the flow expression, user
         can actually “program” the light effect.
-        
+
         Args:
             count (int): The total number of visible state changing before color flow stopped.
                 0 means infinite loop on the state changing.
@@ -137,42 +143,42 @@ class YeelightApi:
                 * 1 means smart LED stay at the state when the flow is stopped.
                 * 2 means turn off the smart LED after the flow is stopped.
             flow_expression (str): is the expression of the state changing series.
-        
+
         Each visible state changing is defined to be a flow tuple that contains 4 elements: [duration, mode, value, brightness].
         A flow expression is a series of flow tuples."""
 
         self.check_range(action, 0, 2)
-        self.send('start_cf', [count, action, flow_expression])
+        self.send("start_cf", [count, action, flow_expression])
 
     def stop_cf(self):
         """This method is used to stop a running color flow."""
 
-        self.send('stop_cf')
+        self.send("stop_cf")
 
     def set_scene(self, scene_class: Any, args: List[Any] = []):
         """This method is used to set the smart LED directly to specified state.
         If the smart LED is off, then it will turn on the smart LED firstly and then apply the specified command.
-        
+
         Args:
             scene_class (str):
                 * ``color`` means change the smart LED to specified color and brightness.
                 * ``hsv`` means change the smart LED to specified color and brightness.
                 * ``ct`` means change the smart LED to specified ct and brightness.
                 * ``cf`` means start a color flow in specified fashion.
-                * ``auto_delay_off`` means turn on the smart LED to specified brightness and 
+                * ``auto_delay_off`` means turn on the smart LED to specified brightness and
                     start a sleep timer to turn off the light after the specified minutes.
-            
-            *args (int): args depends of scene_class """
+
+            *args (int): args depends of scene_class"""
 
         params: List[Any] = list()
         params.append(scene_class)
         params.extend(args)
-        self.send('set_scene', params)
+        self.send("set_scene", params)
 
-    def cron_add(self, cron_type:int, value:int):
+    def cron_add(self, cron_type: int, value: int):
         """This method is used to start a timer job on the smart LED.
         for now only one cron type is working (power off)
-        
+
         Args:
             cron_type (int): Currently can only be 0. (means power off)
             value (int): The length of the timer (in minutes)."""
@@ -180,80 +186,80 @@ class YeelightApi:
         if cron_type != 0:
             cron_type = 0
 
-        self.send('cron_add', [cron_type, value])
+        self.send("cron_add", [cron_type, value])
 
-    def cron_get(self, cron_type:int):
+    def cron_get(self, cron_type: int):
         """This method is used to retrieve the setting of the current cron job of the specified type.
-        
+
         Args:
             cron_type (int):  the type of the cron job. (currently only support 0)."""
 
-        return self.send('cron_get', [cron_type])
+        return self.send("cron_get", [cron_type])
 
-    def cron_del(self, cron_type:int):
+    def cron_del(self, cron_type: int):
         """This method is used to stop the specified cron job.
-        
+
         Args:
             cron_type (int):  the type of the cron job. (currently only support 0)."""
 
         if cron_type != 0:
             cron_type = 0
 
-        self.send('cron_del' [cron_type])
+        self.send("cron_del"[cron_type])
 
-    def set_adjust(self, action:str, prop:str = 'bright'):
+    def set_adjust(self, action: str, prop: str = "bright"):
         """This method is used to change brightness, CT or color of a smart LED
         without knowing the current value, it's main used by controllers.
-        
+
         Args:
             action (str): The direction of the adjustment. The valid value can be:
-                
+
                 * increase: increase the specified property
                 * decrease: decrease the specified property
                 * circle: increase the specified property, after it reaches the max value, go back to minimum value.
             prop (str): The property to adjust. The valid value can be:
-                
+
                 * bright: adjust brightness.
                 * ct: adjust color temperature.
-                * color: adjust color. (When “prop" is “color", the “action" can only be “circle", 
+                * color: adjust color. (When “prop" is “color", the “action" can only be “circle",
                     otherwise, it will be deemed as invalid request.)"""
 
-        if action not in ['increase', 'decrease', 'circle']:
-            raise ValueError('action: increase, decrease, circle')
-        if prop not in ['bright', 'ct', 'color']:
-            raise ValueError('prop: bright, ct, color')
-        if prop == 'color':
-            action = 'circle'
-        self.send('set_adjust', [action, prop])
+        if action not in ["increase", "decrease", "circle"]:
+            raise ValueError("action: increase, decrease, circle")
+        if prop not in ["bright", "ct", "color"]:
+            raise ValueError("prop: bright, ct, color")
+        if prop == "color":
+            action = "circle"
+        self.send("set_adjust", [action, prop])
 
-    def adjust_bright(self, percentage:int):
+    def adjust_bright(self, percentage: int):
         """This method is used to adjust the brightness by specified percentage
         within specified duration."""
 
-        self.adjust('adjust_bright', percentage)
+        self.adjust("adjust_bright", percentage)
 
-    def adjust_ct(self, percentage:int):
+    def adjust_ct(self, percentage: int):
         """This method is used to adjust the color temperature by specified
         percentage within specified duration."""
 
-        self.adjust('adjust_ct', percentage)
+        self.adjust("adjust_ct", percentage)
 
-    def adjust_color(self, percentage:int):
+    def adjust_color(self, percentage: int):
         """This method is used to adjust the color within specified duration."""
 
-        self.adjust('adjust_color', percentage)
-    
-    def set_music(self, action:int, host:str, port:str):
+        self.adjust("adjust_color", percentage)
+
+    def set_music(self, action: int, host: str, port: str):
         """This method is used to start or stop music mode on a device. Under music
         mode, no property will be reported and no message quota is checked.
-        
+
         Args:
             action (int):
             0: turn off music mode.
             1: turn on music mode.,
             host (str): the IP address of the music server.
             port (str): the TCP port music application is listening on.
-        
+
         When control device wants to start music mode, it needs start a TCP
         server firstly and then call “set_music” command to let the device know the IP and Port of the
         TCP listen socket. After received the command, LED device will try to connect the specified
@@ -262,31 +268,29 @@ class YeelightApi:
         The control device can stop music mode by explicitly send a stop command or just by closing
         the socket."""
 
-        self.send('set_music', [action, host, port])
-    
-    def adjust(self, mode:str, percentage:int):
+        self.send("set_music", [action, host, port])
+
+    def adjust(self, mode: str, percentage: int):
 
         self.send(mode, [percentage, self.duration])
 
-    def set_name(self, name:str):
+    def set_name(self, name: str):
         """This method is used to name the device. The name will be stored on the
         device and reported in discovering response. User can also read the name through “get_prop”
         method.
-        
+
         Args:
             name (str): the name of the device"""
 
-        self.send('set_name', [name])
+        self.send("set_name", [name])
 
-    def send(self, method:str, params: List[Any]=[]) -> int:
-        _id:int  = self.answer_id.get_next_id()
+    def send(self, method: str, params: List[Any] = []) -> int:
+        _id: int = self.answer_id.get_next_id()
         try:
-            _msg = json.dumps({'id': _id,
-                               'method': method,
-                               'params': params})
+            _msg = json.dumps({"id": _id, "method": method, "params": params})
             self.conn.send(_msg.encode())
             sleep(0.1)
-            self.conn.send('\r\n'.encode())
+            self.conn.send("\r\n".encode())
             self._get_result()
         except DeviceIsOffline:
             pass
@@ -295,142 +299,144 @@ class YeelightApi:
         finally:
             self.conn.close()
         return _id
-    
+
     def _get_result(self):
         data_bytes = self.conn.recv(1024, retry=1)
-        ret = ''
+        ret = ""
         if data_bytes:
             try:
                 ret = json.loads(data_bytes.decode())
-                if 'id' in ret:
-                    self.answers[ret.get('id')] = ret
+                if "id" in ret:
+                    self.answers[ret.get("id")] = ret
             except json.decoder.JSONDecodeError:
                 pass
 
     @staticmethod
-    def check_range(value:int, begin:int = 0, end:int = 100, msg: str='not in range'):        
+    def check_range(
+        value: int, begin: int = 0, end: int = 100, msg: str = "not in range"
+    ):
         if value < begin or value > end:
             raise ValueError(msg)
 
 
 class Mono(BaseDevice, OnOff, Toggle, Dimmer):
-    """ Class to controling yeelight devices color bulb BedSide lamp etc.
-    
+    """Class to controling yeelight devices color bulb BedSide lamp etc.
+
     Args:
         ip (str): ipv4 address to device
         port (:obj:`int`, optional): Port number. Defaults is 55443."""
-        
-    def __init__(self, sid:str):
+
+    def __init__(self, sid: str):
         super().__init__(sid)
-        self.min_ct:int = 1700
-        self.max_ct:int = 6500
-        self.status.register_attribute(Attribute('ip', str))
-        self.status.register_attribute(Attribute('port', int))
-        self.status.register_attribute(Attribute('color_mode', int))
+        self.min_ct: int = 1700
+        self.max_ct: int = 6500
+        self.status.register_attribute(Attribute("ip", str))
+        self.status.register_attribute(Attribute("port", int))
+        self.status.register_attribute(Attribute("color_mode", int))
         self._init_device()
         self.api = YeelightApi(self.status.ip, self.status.port)
-        
+
         self.watcher = Watcher(YeelightWatcher(self))
         self.watcher.add_report_handler(self.status.update)
-    
+
     def _init_device(self):
         dev = DiscoverYeelight()
         dev = dev.find_by_sid(self.status.sid)
         if not dev:
-            raise DeviceIsOffline(f'Device is offline {self.status.sid}')
+            raise DeviceIsOffline(f"Device is offline {self.status.sid}")
         self.status.update(dev)
-    
+
     def on(self) -> None:
         """This method is used to switch on the smart LED"""
 
-        self.api.set_power('on')
+        self.api.set_power("on")
 
     def off(self) -> None:
         """This method is used to switch off the smart LED"""
 
-        self.api.set_power('off')
-    
+        self.api.set_power("off")
+
     def is_on(self):
-        return self.status.power == 'on'
-    
+        return self.status.power == "on"
+
     def is_off(self):
-        return self.status.power == 'off'
+        return self.status.power == "off"
 
     def toggle(self):
         """This method is used to toggle the smart LED."""
-        self.api.send('toggle')
-    
+        self.api.send("toggle")
+
     def set_bright(self, value: int):
         """This method is used to change the brightness of a smart LED.
-        
+
         Args:
-            value (int): The target brightness. The type is integer and ranges from 1 to 100. 
+            value (int): The target brightness. The type is integer and ranges from 1 to 100.
                 The brightness is a percentage instead of a absolute value.
-                100 means maximum brightness while 1 means the minimum brightness.     
+                100 means maximum brightness while 1 means the minimum brightness.
         """
         if value <= 0:
             value = 1
-        self.api.send('set_bright', [value, self.api.efx, self.api.duration])
-            
+        self.api.send("set_bright", [value, self.api.efx, self.api.duration])
+
 
 class DeskLamp(Mono, ColorTemperature):
-    def __init__(self, sid:str):
+    def __init__(self, sid: str):
         super().__init__(sid)
-        self.status.register_attribute(Attribute('ct', int))
+        self.status.register_attribute(Attribute("ct", int))
         self.min_ct = 2700
         self.max_ct = 6500
-        
+
     def set_ct_pc(self, pc: int):
         """This method is used to change the color temperature of a smart LED with percent scale.
-        
+
         Args:
-            pc (int): Percentage target color temperature. 
+            pc (int): Percentage target color temperature.
                 The type is integer and range is 0 ~ 100 (%).
         """
-        
+
         value = int(self.min_ct + ((self.max_ct - self.min_ct) * pc / 100))
-        self.api.check_range(value, self.min_ct, self.max_ct, msg=f'ct value range 0 - 100')
+        self.api.check_range(
+            value, self.min_ct, self.max_ct, msg=f"ct value range 0 - 100"
+        )
         self.api.set_ct_abx(value)
 
 
 class Color(DeskLamp, Rgb, Hsv):
-    def __init__(self, sid:str):
+    def __init__(self, sid: str):
         super().__init__(sid)
         self.min_ct = 1700
         self.max_ct = 6500
-        
+
     def set_rgb(self, red: int = 0, green: int = 0, blue: int = 0) -> None:
         """This method is used to change the color of a smart LED.
-        
+
         Args:
             red (int): Red color value from 0 to 255.
             green (int): Green color value from 0 to 255.
             blue (int): Blue color value from 0 to 255."""
         rgb = (int(red) << 16) + (int(green) << 8) + int(blue)
-        self.api.send('set_rgb', [rgb, self.api.efx, self.api.duration])
-    
-    def set_color(self, rgb:int) -> None:
+        self.api.send("set_rgb", [rgb, self.api.efx, self.api.duration])
+
+    def set_color(self, rgb: int) -> None:
         """This method is used to change the color of a smart LED.
-        
+
         Args:
             rgb (int): Color value in RGB."""
 
-        self.api.send('set_rgb', [rgb, self.api.efx, self.api.duration])
+        self.api.send("set_rgb", [rgb, self.api.efx, self.api.duration])
 
     def set_hsv(self, hue: int, sat: int) -> None:
         """This method is used to change the color of a smart LED.
-        
+
         Args:
             hue (int): The target hue value, whose type is integer.
                 It should be expressed in decimal integer ranges from 0 to 359.
             sat (int): The target saturation value whose type is integer. It's range is 0 to 100."""
-        
-        self.api.check_range(hue, end=359, msg='hue 0-359')
-        self.api.check_range(sat, msg='sat 0-100')
-        self.api.send('set_hsv', [hue, sat, self.api.efx, self.api.duration])
-    
-    
+
+        self.api.check_range(hue, end=359, msg="hue 0-359")
+        self.api.check_range(sat, msg="sat 0-100")
+        self.api.send("set_hsv", [hue, sat, self.api.efx, self.api.duration])
+
+
 class Bslamp1(Color):
     pass
-
-    

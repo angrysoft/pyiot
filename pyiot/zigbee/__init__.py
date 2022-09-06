@@ -10,52 +10,52 @@ class ZigbeeGateway(ABC):
     @abstractmethod
     def set_device(self, device_id: str, payload: Dict[str, Any]) -> None:
         """Set deivice state
-        
+
         Args:
             device_id (str): Device unique identification string
             payload (dict): Device attributes to set
         """
         pass
-    
+
     @abstractmethod
-    def send_command(self,device_id: str, argument_name: str, value: str):
+    def send_command(self, device_id: str, argument_name: str, value: str):
         pass
-    
+
     @abstractmethod
     def get_device(self, device_id: str) -> Dict[str, Any]:
         """Get device attribute status.
-        
+
         Args:
             device_id (str): Device unique identification string
-        
+
         Returns:
             dict: device attributes
         """
         pass
-    
+
     @abstractmethod
     def get_device_list(self) -> List[Dict[str, Any]]:
         """Retrun sub-devices list assigned with gateway
-        
+
         Returns:
             list: sub-devices list
         """
         pass
-    
+
     @abstractmethod
     def set_accept_join(self, status: bool = True) -> None:
         """Allow/Disallow adding sub-devices
-        
+
         Args:
             status (bool): True to allow adding sub-device False disallow
         """
         pass
-    
+
     @abstractmethod
     def remove_device(self, device_id: str) -> None:
         """Delete a sub-device"""
         pass
-    
+
     @abstractmethod
     def register_sub_device(self, device: ZigbeeDevice) -> None:
         """Register sub-device for status update
@@ -64,22 +64,26 @@ class ZigbeeGateway(ABC):
             device (ZigbeeDevice): Device instance
         """
         pass
-    
+
     @abstractmethod
-    def unregister_sub_device(self, device_id:str):
+    def unregister_sub_device(self, device_id: str):
         pass
-    
+
     @abstractmethod
     def get_watcher(self) -> Watcher:
         pass
-    
-    
+
+
 class ZigbeeDevice(BaseDevice):
-    def __init__(self, sid:str, gateway:ZigbeeGateway):
+    def __init__(self, sid: str, gateway: ZigbeeGateway):
         super().__init__(sid)
         self.gateway = gateway
-        self.status.register_attribute(Attribute('voltage', int))
-        self.status.register_attribute(Attribute('linkquality', int))
-        self.status.register_attribute(Attribute('short_id', int, readonly=True, oneshot=True))
-        self.status.register_attribute(Attribute("low_voltage", int, readonly=True, value=2800))
+        self.status.register_attribute(Attribute("voltage", int))
+        self.status.register_attribute(Attribute("linkquality", int))
+        self.status.register_attribute(
+            Attribute("short_id", int, readonly=True, oneshot=True)
+        )
+        self.status.register_attribute(
+            Attribute("low_voltage", int, readonly=True, value=2800)
+        )
         self.watcher: Watcher = self.gateway.get_watcher()

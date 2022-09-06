@@ -1,4 +1,3 @@
-
 from . import BaseDiscovery
 from pyiot.connections.miio import MiioPacket
 from pyiot.connections.udp import UdpBroadcastConnection
@@ -14,7 +13,7 @@ class DiscoverMiio(BaseDiscovery):
         self.hellobytes = bytes.fromhex(
             "21310020ffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
         )
-        
+
     def find_all(self) -> List[Dict[str, Any]]:
         """Scan for devices in the network.
         This method is used to discover supported devices by sending a
@@ -24,7 +23,7 @@ class DiscoverMiio(BaseDiscovery):
         self.conn.send(self.hellobytes, (self.addr, self.port))
         while True:
             try:
-                data, addr  = self.conn.recv(retry=0)
+                data, addr = self.conn.recv(retry=0)
                 head = MiioPacket.parse_head(data)
                 ip, port = addr
                 ret.append(dict(ip=ip, port=port, header=head))
@@ -33,8 +32,7 @@ class DiscoverMiio(BaseDiscovery):
             except Exception:
                 break
         return ret
-    
-    
+
     def find_by_sid(self, sid: str) -> Dict[str, Any]:
         """Scan for devices in the network.
         This method is used to discover supported devices by sending a
@@ -42,12 +40,12 @@ class DiscoverMiio(BaseDiscovery):
         """
         ret: Dict[str, Any] = {}
         self.conn.send(self.hellobytes, (self.addr, self.port))
-    
+
         while True:
             try:
-                data, addr  = self.conn.recv()
+                data, addr = self.conn.recv()
                 head = MiioPacket.parse_head(data)
-                if str(head['device_id']) == sid:
+                if str(head["device_id"]) == sid:
                     ip, port = addr
                     ret = dict(ip=ip, port=port, header=head)
                     break
