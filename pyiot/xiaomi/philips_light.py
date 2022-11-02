@@ -15,7 +15,7 @@
 __all__ = ["Candle"]
 
 from typing import List, Dict, Any
-from pyiot.traits import Dimmer, OnOff, ColorTemperature, Scene
+from pyiot.traits import Dimmer, OnOff, ColorTemperature, Scene, Toggle
 from pyiot import BaseDevice
 from pyiot.watchers.philips_light import PhilipsLightWatcher
 from pyiot.watchers import Watcher
@@ -24,7 +24,7 @@ from pyiot.connections.miio import MiioConnection
 from threading import Event
 
 
-class Candle(BaseDevice, OnOff, Dimmer, ColorTemperature, Scene):
+class Candle(BaseDevice, OnOff, Dimmer, ColorTemperature, Scene, Toggle):
     """Class to controling philips bulb.
 
     Args:
@@ -97,6 +97,13 @@ class Candle(BaseDevice, OnOff, Dimmer, ColorTemperature, Scene):
     def off(self):
         """This method is used to switch off the smart LED"""
         self.conn.send("set_power", ["off"])
+        self.refresh_status(["power"])
+
+    def toggle(self) -> None:
+        if self.is_on():
+            self.conn.send("set_power", ["off"])
+        else:
+            self.conn.send("set_power", ["on"])
         self.refresh_status(["power"])
 
     def is_on(self):
