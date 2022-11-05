@@ -13,7 +13,7 @@ class TestPhilipsBulb(unittest.TestCase):
         cls.dev = Candle(token=token, sid=sid)
         cls.dev.watcher.add_report_handler(print)
 
-    # @unittest.skip('temp')
+    @unittest.skip('info')
     def test_info(self):
         print(self.dev.status.power)
         info = self.dev.info()
@@ -28,6 +28,12 @@ class TestPhilipsBulb(unittest.TestCase):
         sleep(1)
         self.assertTrue(self.dev.is_off())
         sleep(1)
+        # self.dev.toggle()
+        # sleep(1)
+        # self.assertTrue(self.dev.is_on())
+        # self.dev.toggle()
+        # sleep(1)
+        # self.assertTrue(self.dev.is_off())
 
     # @unittest.skip('temp')
     def test_d_ct_pc(self):

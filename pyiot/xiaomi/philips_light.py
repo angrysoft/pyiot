@@ -101,10 +101,9 @@ class Candle(BaseDevice, OnOff, Dimmer, ColorTemperature, Scene, Toggle):
 
     def toggle(self) -> None:
         if self.is_on():
-            self.conn.send("set_power", ["off"])
+            self.off()
         else:
-            self.conn.send("set_power", ["on"])
-        self.refresh_status(["power"])
+            self.on()
 
     def is_on(self):
         return self.status.power == "on"
@@ -124,7 +123,7 @@ class Candle(BaseDevice, OnOff, Dimmer, ColorTemperature, Scene, Toggle):
         self.refresh_status(["bright", "power"])
 
     def set_ct_pc(self, pc: int) -> None:
-        f"""This method is used to change the color temperature of a smart LED.
+        """This method is used to change the color temperature of a smart LED.
 
         Args:
             pc (int): The target color temperature.
