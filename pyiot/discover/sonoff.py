@@ -53,6 +53,7 @@ class DiscoverSonoff(BaseDiscovery):
     def _parse(self, info: ServiceInfo) -> Dict[str, Any]:
         ret: Dict[str, Any] = {}
         props: Dict[bytes, Any] = info.properties
+        print(props)
         if b"data1" in props:
             try:
                 ret = {
@@ -61,7 +62,8 @@ class DiscoverSonoff(BaseDiscovery):
                     "ip": socket.inet_ntoa(info.addresses[0]),
                     "port": info.port,
                 }
-                ret.update(json.loads(props[b"data1"]))
+                if b"encrypt" not in props:
+                    ret.update(json.loads(props[b"data1"]))
             except IndexError:
                 pass
         return ret
