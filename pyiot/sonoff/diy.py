@@ -33,9 +33,9 @@ class Pulse(Enum):
 
 class BaseSONOFFDIYDevice(BaseDevice, OnOff):
     """Base class for sonnoff DIY device: to parint device you need hotspot with
-        WiFi SSID: sonoffDiy
-    ​    WiFi password: 20170618sn
-        then you need to discover device and if you have an ip of device you can set new wifi ssid and password with set_wifi method
+    WiFi SSID: sonoffDiy
+    WiFi password: 20170618sn
+    then you need to discover device and if you have an ip of device you can set new wifi ssid and password with set_wifi method
     """
 
     def __init__(self, sid: str, ip: str = "", port: int = 8081):
