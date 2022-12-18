@@ -1,5 +1,5 @@
 from pyiot.zigbee import ZigbeeDevice, ZigbeeGateway
-from pyiot.traits import Contact, MotionStatus
+from pyiot.traits import Contact, MotionStatus, TemperatureStatus, HumidityStatus
 
 
 class SNZB01(ZigbeeDevice):
@@ -8,7 +8,7 @@ class SNZB01(ZigbeeDevice):
         self.gateway.register_sub_device(self)
 
 
-class SNZB02(ZigbeeDevice, Contact):
+class SNZB02(ZigbeeDevice, TemperatureStatus, HumidityStatus):
     def __init__(self, sid: str, gateway: ZigbeeGateway):
         super().__init__(sid, gateway)
         self.gateway.register_sub_device(self)
